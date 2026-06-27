@@ -301,6 +301,23 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">SQL Managed Instance で TDE＋カスタマーマネージドキー、暗号化強度を最大化したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">RSA 3072</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>TDE（透過的データ暗号化）のカスタマーマネージドキーは Key Vault に置く <strong>RSA キー（非対称鍵）のみ</strong>。</li>
+        <li>サポートされるキー長は <strong>RSA 2048 と RSA 3072 のみ</strong>（RSA 4096 は対象外）。</li>
+        <li>強度最大化 → <strong>RSA 3072</strong>（鍵長が長いほど強度が高い）。</li>
+      </ul>
+      <div class="tip">⚠ AES-256 はデータ本体の暗号化（DEK）に使われる対称鍵でAzureが自動適用するもの。カスタマーが Key Vault で指定するのは RSA キー。混同しないこと。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">特権アカウント（全体管理者等）へのアクセスをジャストインタイムで制御したい</span>
       <span class="arrow">→</span>
       <span class="answer">Azure AD PIM（Privileged Identity Management）</span>
@@ -349,6 +366,24 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">Azure SQL Database のサービスティア選択</span>
+      <span class="arrow">→</span>
+      <span class="answer">用途別の選択ガイド</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>ティア</th><th>ストレージ</th><th>レプリカ</th><th>特徴・選ぶ場面</th></tr>
+        <tr><td>General Purpose</td><td>リモートSSD</td><td>1</td><td>標準的なワークロード。コスト重視</td></tr>
+        <tr><td><strong>Business Critical</strong></td><td><strong>ローカルSSD</strong></td><td><strong>3〜4（AlwaysOn AG）</strong></td><td><strong>I/Oレイテンシ最小・可用性ゾーン対応・自動フェールオーバー。高可用性要件に最適</strong></td></tr>
+        <tr><td>Hyperscale</td><td>分散ページサーバー</td><td>可変</td><td>最大100TB超の超大規模DB向け。大容量要件がないなら選ばない</td></tr>
+      </table>
+      <div class="tip">「I/Oレイテンシ最小 ＋ 可用性ゾーン障害でも稼働」→ Business Critical 一択。Hyperscaleは大容量要件がある場合のみ。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">オンプレのSQL ServerをなるべくそのままAzureに移行したい</span>
       <span class="arrow">→</span>
       <span class="answer">Azure SQL Managed Instance</span>
@@ -377,6 +412,28 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数DBのコストを最小化しつつまとめて管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure SQL Database エラスティックプール</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>複数のSQL DatabaseがCPU・メモリ・ストレージを<strong>共有プール</strong>から使用 → 個別課金より安い。</li>
+        <li>2DBでも有効：片方がアイドル時にもう片方がリソースを多く使える。</li>
+        <li>「<strong>複数DB ＋ コスト最小化 ＋ 管理最小化</strong>」がキーワード → エラスティックプールを選ぶ。</li>
+        <li>可用性ゾーン・自動フェールオーバーグループにも対応。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">単一SQL DB×N個 vs エラスティックプール</div>
+        単一DB×N = 各DBが独自リソースを持つ → DBごとに課金・個別管理が必要<br>
+        エラスティックプール = リソースを共有 → ピーク分散でコスト削減・一元管理
+      </div>
+    </div>
+  </div>
+
   <div class="group-title">NoSQL / グローバル分散DB</div>
 
   <div class="card">
@@ -392,8 +449,10 @@
         <li>API選択肢：NoSQL（SQL構文）/ MongoDB / Cassandra / Gremlin（グラフ）/ Table。</li>
         <li>整合性レベル5段階：Strong / Bounded Staleness / Session / Consistent Prefix / Eventual。</li>
         <li>RU（Request Unit）課金：1RU = 1KBドキュメントの読み取りコスト。</li>
+        <li><strong>書き込みレイテンシ（99パーセンタイルで15ms以内）とスループット（RU/s）の両方にSLAを提供</strong>する唯一のAzureサービス。</li>
       </ul>
       <div class="tip">整合性レベルの選択は頻出。「最高の一貫性=Strong」「最高のパフォーマンス=Eventual」。</div>
+      <div class="tip">「書き込みレイテンシ・スループットのSLAが必要」→ Cosmos DB 一択。Blob・SQL DBにはスループットSLAがない。</div>
     </div>
   </div>
 
@@ -410,7 +469,8 @@
       <ul>
         <li>アクセス層：Hot（頻繁）/ Cool（30日以上）/ Cold（90日以上）/ Archive（180日以上、取り出しに時間がかかる）。</li>
         <li>ライフサイクル管理ポリシーで自動的に層を移動・削除できる。</li>
-        <li>不変ストレージ（WORM）：法規制対応・改ざん防止。</li>
+        <li>不変ストレージ（WORM）：法規制対応・改ざん防止。設定方法は<strong>BLOBアクセスポリシー（不変性ポリシー）</strong>を作成する。</li>
+        <li>不変性ポリシーの種類：<strong>期間ベース保持ポリシー</strong>（指定期間は変更・削除不可、新規書き込みは可）／ <strong>訴訟ホールド</strong>（期間指定なしで保持）。</li>
         <li>Data Lake Storage Gen2：Blob + 階層型名前空間（ビッグデータ分析向け）。</li>
       </ul>
       <div class="compare">
@@ -569,6 +629,12 @@
         可用性ゾーン = 異なる物理DC（ゾーン）に分散。SLA 99.99%。より高い冗長性。
       </div>
       <div class="tip">「99.99%のSLAが必要」→ 可用性ゾーンを選ぶ。</div>
+      <div class="compare">
+        <div class="compare-title">ホストグループ vs VMスケールセット（AZ対応の違い）</div>
+        ホストグループ = 1AZに固定 → N個のAZ障害に耐えるにはN+1個必要<br>
+        VMスケールセット（通常）= 1つで複数AZにまたがって配置可能 → 1つで3AZ対応<br>
+        VMスケールセット（Dedicated Host使用時）= ホストグループに紐付くため1AZ固定 → ホストグループと同数（3AZ対応なら3つ）必要
+      </div>
     </div>
   </div>
 
@@ -630,6 +696,23 @@
         <tr><td>Azure Logic Apps</td><td>ワークフロー自動化・ノーコード統合</td></tr>
         <tr><td>Azure Batch</td><td>大規模並列バッチ処理（HPC）</td></tr>
       </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">VMを物理ハードウェアレベルで他テナントと分離したい（専用ホスト）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Dedicated Host + ホストグループ</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Azure Dedicated Host = 単一顧客専用の物理サーバー。他テナントとハードウェアを共有しない。</li>
+        <li><strong>ホストグループは1つの可用性ゾーンにのみ紐付く</strong>。</li>
+        <li>「N個のAZ障害に耐える」→ 必要なホストグループ数 = N+1（例：2AZ障害 → 3ホストグループ）。</li>
+      </ul>
+      <div class="tip">「他のワークロードと物理ハードウェアを共有しない」→ Azure Dedicated Host が唯一の選択肢。</div>
     </div>
   </div>
 
