@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AZ-305 チートシート</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #4f8ef7;
+      --accent2: #7c5cbf;
+      --hot: #e05c5c;
+      --green: #3ecf8e;
+      --yellow: #f0c060;
+      --text: #e2e6f0;
+      --muted: #8890a8;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.6; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+    header h1 { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    header p { font-size: 0.82rem; color: var(--muted); }
+
+    .tab-bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 62px; z-index: 99; }
+    .tab-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: all .2s; }
+    .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+    .content { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-title { font-size: 1.15rem; font-weight: 700; color: var(--accent); margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+    .card-header { padding: 12px 16px; background: var(--surface2); display: flex; align-items: center; gap: 10px; }
+    .card-header .keyword { font-size: 0.88rem; color: var(--muted); font-weight: 500; }
+    .card-header .arrow { color: var(--accent); font-weight: 700; margin: 0 4px; }
+    .card-header .answer { font-weight: 700; color: var(--text); font-size: 1rem; }
+    .card-header .badge { margin-left: auto; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; white-space: nowrap; }
+    .badge-hot { background: rgba(224,92,92,0.2); color: var(--hot); border: 1px solid var(--hot); }
+    .badge-note { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid var(--accent); }
+
+    .card-body { padding: 12px 16px; font-size: 0.87rem; color: var(--muted); }
+    .card-body ul { padding-left: 16px; }
+    .card-body li { margin-bottom: 4px; }
+    .card-body .tip { display: inline-block; background: rgba(240,192,96,0.12); color: var(--yellow); border-left: 3px solid var(--yellow); padding: 6px 10px; margin-top: 8px; border-radius: 0 4px 4px 0; font-size: 0.83rem; }
+    .card-body .compare { background: var(--surface2); border-radius: 6px; padding: 8px 12px; margin-top: 8px; }
+    .card-body .compare-title { font-size: 0.78rem; color: var(--accent2); font-weight: 600; margin-bottom: 4px; }
+
+    .group-title { font-size: 0.78rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: .08em; margin: 24px 0 10px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 8px; }
+    th { background: var(--surface2); color: var(--accent); padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    tr:last-child td { border-bottom: none; }
+    td:first-child { color: var(--text); font-weight: 500; }
+
+    @media (max-width: 600px) {
+      .tab-bar { padding: 10px 12px; top: 56px; }
+      .content { padding: 14px; }
+      .card-header { flex-wrap: wrap; }
+      .card-header .badge { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>AZ-305 チートシート</h1>
+    <p>Microsoft Azure Solutions Architect Expert ／ 公式スキルアウトライン準拠</p>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab('id')">① ID・ガバナンス・監視</button>
+  <button class="tab-btn" onclick="showTab('storage')">② データストレージ</button>
+  <button class="tab-btn" onclick="showTab('bc')">③ 事業継続性</button>
+  <button class="tab-btn" onclick="showTab('infra')">④ インフラ</button>
+  <button class="tab-btn" onclick="showTab('app')">⑤ アプリアーキテクチャ</button>
+</div>
+
+<div class="content">
+
+<!-- ============================================================ -->
+<!-- ① ID・ガバナンス・監視 -->
+<!-- ============================================================ -->
+<div id="tab-id" class="section active">
+  <div class="section-title">① ID・ガバナンス・監視</div>
+
+  <div class="group-title">認証・認可</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure ADの多要素認証を強制したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Conditional Access（条件付きアクセス）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>「誰が・どのアプリに・どの条件で」アクセスするかを制御するポリシーエンジン。</li>
+        <li>MFA要求・準拠デバイス要件・特定IPブロックなどを組み合わせられる。</li>
+        <li>Azure AD Premium P1 以上が必要。</li>
+      </ul>
+      <div class="tip">⚠ セキュリティデフォルト（無料）と混同しない。カスタムポリシーが必要なら必ずConditional Access。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">アプリがAzureリソースにアクセスする（パスワード不要）</span>
+      <span class="arrow">→</span>
+      <span class="answer">マネージドID（Managed Identity）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>システム割り当て：リソースに1対1で紐付く。リソース削除で自動削除。</li>
+        <li>ユーザー割り当て：複数リソースで共有可能。ライフサイクルを独立管理。</li>
+      </ul>
+      <div class="tip">アプリのキー/パスワード管理が不要になる → Key Vaultとセットで語られることが多い。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">最小権限でAzureリソースへのアクセスを管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure RBAC（ロールベースアクセス制御）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>スコープ：管理グループ ＞ サブスクリプション ＞ リソースグループ ＞ リソース</li>
+        <li>Owner / Contributor / Reader が代表的な組み込みロール。</li>
+        <li>カスタムロールも作成可能（JSON定義）。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">RBAC vs Azure AD ロール</div>
+        RBAC = Azureリソース（VM・ストレージ等）への権限管理<br>
+        Azure AD ロール = Azure AD自体（ユーザー・グループ管理等）への権限管理
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">外部ユーザー（取引先など）にAzure ADのアプリへアクセスさせたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure AD B2B</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>招待されたゲストユーザーが自社のAzure ADテナントにアクセス。</li>
+        <li>B2C（一般消費者向けID管理）と混同しない。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">B2B vs B2C</div>
+        B2B = 企業間コラボ（パートナー、取引先）<br>
+        B2C = エンドユーザー向けアプリのID管理（Googleログイン等のソーシャルID連携）
+      </div>
+    </div>
+  </div>
+
+  <div class="group-title">ガバナンス</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">全サブスクリプションに一律ルールを強制したい（例：特定リージョンのみ許可）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Policy</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>準拠していないリソースを検出・拒否・自動修復できる。</li>
+        <li>管理グループに割り当てて組織全体に適用するのが典型パターン。</li>
+        <li>イニシアチブ（Initiative）＝複数ポリシーをまとめたセット。</li>
+      </ul>
+      <div class="tip">RBAC と混同注意：RBACは「誰が何をできるか」、Policyは「何を作れるか」のルール。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数サブスクリプションを階層管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">管理グループ（Management Groups）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>最大6階層（ルート管理グループ含む）。</li>
+        <li>Azure Policy・RBAC を管理グループに割り当てると配下のサブスクリプションに継承される。</li>
+        <li>大企業の組織構造（部門別サブスク）をそのまま反映できる。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">リソースの誤削除・誤変更を防ぎたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">リソースロック（Resource Locks）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>CanNotDelete：削除不可・変更は可。</li>
+        <li>ReadOnly：削除・変更ともに不可（= 読み取り専用）。</li>
+        <li>所有者でもロック解除しなければ削除できない。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">コストタグ付け・リソースのグループ化・テンプレートデプロイを一括管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Blueprints / Landing Zone</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Blueprints = Policy・RBAC・ARMテンプレートを1パッケージにして繰り返しデプロイ。</li>
+        <li>Landing Zone = 大規模組織向けの推奨アーキテクチャパターン（CAF準拠）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">監視・セキュリティ</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">全リソースのログ・メトリクスを一元監視したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Monitor</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>メトリクス（数値）＋ログ（Log Analytics）の両方を扱う統合監視サービス。</li>
+        <li>アラート → アクショングループ（メール/SMS/Webhook/Functionなど）で自動対応。</li>
+        <li>Application Insights はアプリ専用の監視機能で、Monitorの一部。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azureリソースの設定ミス・セキュリティリスクを継続的に評価したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Microsoft Defender for Cloud（旧 Security Center）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>セキュアスコアで現状の姿勢を数値化し、推奨アクションを提示。</li>
+        <li>Defender プラン（有料）を有効にするとVM・SQL・コンテナなどへの脅威検出も可能。</li>
+        <li>マルチクラウド（AWS・GCP）のリソースも監視対象にできる。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure全体のセキュリティインシデントをSIEMで管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Microsoft Sentinel</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>クラウドネイティブSIEM/SOAR。Log Analyticsワークスペース上に構築。</li>
+        <li>AIで脅威を検出し、プレイブック（Logic Apps）で自動対応。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">シークレット・証明書・暗号化キーを安全に管理したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Key Vault</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Secrets（接続文字列等）・Keys（暗号化キー）・Certificates を一元管理。</li>
+        <li>HSM（ハードウェアセキュリティモジュール）バックアップオプションあり（Premium SKU）。</li>
+        <li>マネージドIDと組み合わせてコードにシークレットを書かないのが正解パターン。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">特権アカウント（全体管理者等）へのアクセスをジャストインタイムで制御したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure AD PIM（Privileged Identity Management）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>通常は権限なし → 必要なときだけ一時的に昇格（承認フロー付き）。</li>
+        <li>利用にはAzure AD Premium P2が必要。</li>
+        <li>アクセスレビューで定期的に権限の棚卸しも可能。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ② データストレージ -->
+<!-- ============================================================ -->
+<div id="tab-storage" class="section">
+  <div class="section-title">② データストレージ</div>
+
+  <div class="group-title">リレーショナルDB</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">フルマネージドなSQL Server（PaaS）が必要</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure SQL Database</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>OS・パッチ・バックアップはMicrosoftが管理。SLA 99.99%。</li>
+        <li>DTU モデル / vCore モデルの2種類の購入方式。</li>
+        <li>Hyperscale：最大100TB、読み取りスケールアウト対応の大規模向けサービス。</li>
+        <li>サーバーレス：アイドル時は自動一時停止でコスト削減。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">SQL DB vs SQL Managed Instance vs SQL Server on VM</div>
+        SQL DB = 完全PaaS（一部機能制限あり）<br>
+        SQL MI = SQL Serverとほぼ100%互換。リフト＆シフト移行向け<br>
+        SQL on VM = 完全コントロール必要・特殊拡張機能が必要な場合
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">オンプレのSQL ServerをなるべくそのままAzureに移行したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure SQL Managed Instance</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>SQL Agentジョブ・CLR・リンクサーバー・Service Brokerなど、SQL DBでは使えない機能が使える。</li>
+        <li>VNet内にデプロイされるため、既存オンプレシステムとの統合が容易。</li>
+        <li>Database Migration Service（DMS）でオンラインマイグレーション可能。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">フルマネージドなMySQL / PostgreSQL / MariaDB が必要</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Database for MySQL / PostgreSQL / MariaDB</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>OSS系DBのフルマネージドPaaS。バックアップ・HA・パッチ自動化。</li>
+        <li>Flexible Server が現在の推奨SKU（Single Serverは非推奨化方向）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">NoSQL / グローバル分散DB</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">グローバル分散・低レイテンシ・マルチモデルのNoSQLが必要</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Cosmos DB</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>マルチリージョン書き込み対応。SLA 99.999%（マルチリージョン時）。</li>
+        <li>API選択肢：NoSQL（SQL構文）/ MongoDB / Cassandra / Gremlin（グラフ）/ Table。</li>
+        <li>整合性レベル5段階：Strong / Bounded Staleness / Session / Consistent Prefix / Eventual。</li>
+        <li>RU（Request Unit）課金：1RU = 1KBドキュメントの読み取りコスト。</li>
+      </ul>
+      <div class="tip">整合性レベルの選択は頻出。「最高の一貫性=Strong」「最高のパフォーマンス=Eventual」。</div>
+    </div>
+  </div>
+
+  <div class="group-title">ストレージ（Blob・File・Queue・Table）</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">大量の非構造化データ（画像・動画・バックアップ）を安価に保存したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Blob Storage</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>アクセス層：Hot（頻繁）/ Cool（30日以上）/ Cold（90日以上）/ Archive（180日以上、取り出しに時間がかかる）。</li>
+        <li>ライフサイクル管理ポリシーで自動的に層を移動・削除できる。</li>
+        <li>不変ストレージ（WORM）：法規制対応・改ざん防止。</li>
+        <li>Data Lake Storage Gen2：Blob + 階層型名前空間（ビッグデータ分析向け）。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">アクセス層の選択基準</div>
+        Hot = 毎日アクセス / Cool = 月に数回 / Archive = 年に1回程度・監査保存
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">SMB/NFSのファイル共有をクラウドで使いたい（オンプレのファイルサーバー移行）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Files</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>SMB 3.0 / NFS 4.1 対応。Windowsドライブとしてマウント可能。</li>
+        <li>Azure File Sync：オンプレのファイルサーバーとクラウドをリアルタイム同期。キャッシュ機能付き。</li>
+        <li>Premium（SSD）/ Standard（HDD）の2ティア。</li>
+      </ul>
+      <div class="tip">「オンプレのファイルサーバーをクラウド化したい」→ Azure Files + File Sync が鉄板。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">アプリ間のメッセージキューが必要（簡易・大量）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Queue Storage（簡易） / Azure Service Bus（高機能）</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">Queue Storage vs Service Bus</div>
+        Queue Storage = シンプル・大量メッセージ（最大64KB/件、最大80GB）<br>
+        Service Bus = 順序保証・重複排除・セッション・Dead Letter Queue（DLQ）など高機能
+      </div>
+      <div class="tip">「メッセージの順序保証が必要」「1件256KBを超えたい」→ Service Bus を選ぶ。</div>
+    </div>
+  </div>
+
+  <div class="group-title">キャッシュ・検索</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">DBへのクエリ負荷を減らしたい / セッション管理をしたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Cache for Redis</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>インメモリキャッシュ。Read-through / Write-behind パターンで利用。</li>
+        <li>セッション状態の外部化（スケールアウト時に有効）。</li>
+        <li>リーダーボード・Pub/Sub にも使われる。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">全文検索・AI検索機能をアプリに組み込みたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure AI Search（旧 Cognitive Search）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Blobやデータベースからインデクサーでデータを取り込み、全文検索を提供。</li>
+        <li>AI Enrichment：OCR・言語検出・エンティティ抽出を組み合わせ可能。</li>
+        <li>ベクター検索（RAGパターン）にも対応。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ③ 事業継続性 -->
+<!-- ============================================================ -->
+<div id="tab-bc" class="section">
+  <div class="section-title">③ 事業継続性（DR・バックアップ・HA）</div>
+
+  <div class="group-title">重要指標（必ず暗記）</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">RTO / RPO の定義</span>
+      <span class="arrow">→</span>
+      <span class="answer">RTO = 復旧時間目標　／　RPO = 復旧時点目標</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>RTO</strong>（Recovery Time Objective）：障害発生からサービス復旧までの最大許容時間。</li>
+        <li><strong>RPO</strong>（Recovery Point Objective）：障害発生時に許容できる最大データ損失時間。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">判断の基準</div>
+        RTO短い = サービス止められない → 自動フェールオーバー必須<br>
+        RPO短い = データ損失NG → 同期レプリケーション or 高頻度バックアップ
+      </div>
+      <div class="tip">「RTO=0, RPO=0」の要件 → Active-Active 構成（Azure Traffic Manager + 複数リージョン）。</div>
+    </div>
+  </div>
+
+  <div class="group-title">バックアップ</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">VM・SQL・Blob・ファイルの一元バックアップ管理をしたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Backup</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Recovery Services Vault にバックアップデータを保管。</li>
+        <li>オンプレ（MARS エージェント）からもバックアップ可能。</li>
+        <li>論理的削除（Soft Delete）：誤削除から14日間保護。</li>
+        <li>Backup Center でマルチサブスクリプションのバックアップを一元管理。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">ディザスタリカバリ（DR）</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">VMやオンプレサーバーのDRを自動化したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Site Recovery（ASR）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Azure → Azure / オンプレ → Azure / Azure → オンプレ のレプリケーションが可能。</li>
+        <li>フェールオーバーテストを本番に影響なく実施できる。</li>
+        <li>RPO は数秒〜数分、RTOは数分〜数時間（ポリシー次第）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">高可用性（HA）パターン</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">同一リージョン内でVMの冗長性を確保したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">可用性セット（Availability Set）/ 可用性ゾーン（Availability Zones）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">可用性セット vs 可用性ゾーン</div>
+        可用性セット = 同一DC内で障害ドメイン・更新ドメインに分散。SLA 99.95%<br>
+        可用性ゾーン = 異なる物理DC（ゾーン）に分散。SLA 99.99%。より高い冗長性。
+      </div>
+      <div class="tip">「99.99%のSLAが必要」→ 可用性ゾーンを選ぶ。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">マルチリージョンで自動フェールオーバーしたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Traffic Manager + 複数リージョン構成</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Traffic Manager は DNS ベースのグローバルロードバランサー（L7ではなくDNS）。</li>
+        <li>ルーティング方式：Priority（優先度）/ Weighted（重み）/ Performance（最低レイテンシ）/ Geographic。</li>
+        <li>障害検出（ヘルスチェック）に基づいて自動的にDNSを切り替え。</li>
+      </ul>
+      <div class="tip">「グローバルDR」= Traffic Manager。「リージョン内HA」= Load Balancer / App Gateway。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure SQL Databaseのマルチリージョン DR を設定したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">アクティブ geo レプリケーション / フェールオーバーグループ</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>アクティブ geo レプリケーション：最大4つのセカンダリDB（読み取り可能）を別リージョンに作成。</li>
+        <li>フェールオーバーグループ：接続文字列を変えずに自動フェールオーバー。複数DBをまとめて管理。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ④ インフラ -->
+<!-- ============================================================ -->
+<div id="tab-infra" class="section">
+  <div class="section-title">④ インフラ（コンピューティング・ネットワーク）</div>
+
+  <div class="group-title">コンピューティング選択</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">どのコンピューティングサービスを選ぶか</span>
+      <span class="arrow">→</span>
+      <span class="answer">用途別の選択ガイド</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>サービス</th><th>選ぶ場面</th></tr>
+        <tr><td>Azure VM</td><td>IaaS・フル制御・レガシーアプリ移行</td></tr>
+        <tr><td>Azure App Service</td><td>Web/API アプリ。PaaS。OS管理不要</td></tr>
+        <tr><td>Azure Kubernetes Service（AKS）</td><td>コンテナオーケストレーション・マイクロサービス</td></tr>
+        <tr><td>Azure Container Instances（ACI）</td><td>単発・シンプルなコンテナ実行（オーケストレーション不要）</td></tr>
+        <tr><td>Azure Functions</td><td>イベント駆動・サーバーレス・短時間処理</td></tr>
+        <tr><td>Azure Logic Apps</td><td>ワークフロー自動化・ノーコード統合</td></tr>
+        <tr><td>Azure Batch</td><td>大規模並列バッチ処理（HPC）</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">VMのコストを最小化したい（中断可能なワークロード）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Spot VM</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>通常価格比最大90%割引。ただしAzure側の都合で強制停止（立ち退き）される場合あり。</li>
+        <li>バッチ処理・レンダリング・テスト環境など中断を許容できるワークロード向け。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">コスト削減オプション比較</div>
+        Reserved VM（予約）= 1〜3年コミットで最大72%割引。停止は自由<br>
+        Spot VM = 最大90%割引。ただし強制停止リスクあり<br>
+        Azure Hybrid Benefit = 既存のWindowsServer/SQLライセンスをAzureで利用
+      </div>
+    </div>
+  </div>
+
+  <div class="group-title">ネットワーク</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">ロードバランサーの選択</span>
+      <span class="arrow">→</span>
+      <span class="answer">用途別の選択ガイド</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>サービス</th><th>レイヤー</th><th>スコープ</th><th>特徴</th></tr>
+        <tr><td>Azure Load Balancer</td><td>L4（TCP/UDP）</td><td>リージョン内</td><td>シンプル・高パフォーマンス。非HTTP含む</td></tr>
+        <tr><td>Application Gateway</td><td>L7（HTTP/S）</td><td>リージョン内</td><td>WAF・SSL終端・URLルーティング・Cookie セッション</td></tr>
+        <tr><td>Azure Front Door</td><td>L7（HTTP/S）</td><td>グローバル</td><td>グローバルCDN＋LB＋WAF。Anycastで最寄りPoPへ誘導</td></tr>
+        <tr><td>Traffic Manager</td><td>DNS</td><td>グローバル</td><td>DNSベース。HTTP以外も対応。フェールオーバー・地理分散</td></tr>
+      </table>
+      <div class="tip">「WAF付きグローバルLB」→ Azure Front Door。「WAF付きリージョンLB」→ Application Gateway。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">オンプレとAzureを安全に接続したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">VPN Gateway（インターネット経由）/ ExpressRoute（専用線）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">VPN Gateway vs ExpressRoute</div>
+        VPN Gateway = インターネット経由の暗号化トンネル（IPsec）。安価・導入容易<br>
+        ExpressRoute = 専用閉域網（キャリア経由）。高帯域・低レイテンシ・SLA保証
+      </div>
+      <div class="tip">「高帯域・低レイテンシ・セキュアな専用接続が必要」→ ExpressRoute が正解。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数のVNetをハブ&スポーク構成でセキュアに接続したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Virtual WAN / VNet Peering + ハブVNet</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>VNet Peering：低レイテンシのVNet間接続（同一リージョン / クロスリージョン対応）。推移的ルーティングは不可。</li>
+        <li>Virtual WAN：大規模なハブ&スポークをマネージドで管理。推移的ルーティングが可能。</li>
+        <li>Azure Firewall：ハブVNetに配置してEast-West / North-South トラフィックを検査。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AzureサービスへのアクセスをVNet内に閉じたい（パブリックIP不要）</span>
+      <span class="arrow">→</span>
+      <span class="answer">プライベートエンドポイント（Private Endpoint）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Blob・SQL・Key Vaultなどに対してVNet内のプライベートIPアドレスを割り当てる。</li>
+        <li>インターネットを経由せずにAzureサービスへアクセス可能。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">Private Endpoint vs Service Endpoint</div>
+        Private Endpoint = VNet内にプライベートIPを作成。より強固な分離<br>
+        Service Endpoint = VNetからAzureサービスへの経路最適化。パブリックIPは残る
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Webアプリを外部アクセスなしにVNet内から安全に公開したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">App Service + VNet統合 / App Service Environment（ASE）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>VNet統合：App ServiceからVNet内のリソースへのアウトバウンド接続を有効化。</li>
+        <li>Private Endpoint for App Service：App ServiceへのインバウンドをVNet内に限定。</li>
+        <li>ASE（App Service Environment）：完全にVNet内に配置する専用環境（高コスト・高セキュリティ）。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ⑤ アプリアーキテクチャ -->
+<!-- ============================================================ -->
+<div id="tab-app" class="section">
+  <div class="section-title">⑤ アプリケーションアーキテクチャ</div>
+
+  <div class="group-title">メッセージング・統合</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">メッセージングサービスの選択</span>
+      <span class="arrow">→</span>
+      <span class="answer">用途別の選択ガイド</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>サービス</th><th>選ぶ場面</th></tr>
+        <tr><td>Azure Service Bus</td><td>信頼性の高いメッセージキュー。順序保証・DLQ・セッション・重複排除</td></tr>
+        <tr><td>Azure Event Hubs</td><td>大量のイベントストリーム取り込み（IoT・ログ・テレメトリ）。Kafka互換</td></tr>
+        <tr><td>Azure Event Grid</td><td>イベント駆動アーキテクチャ。リソース変更などのイベントをFunctionやLogic Appsに転送</td></tr>
+        <tr><td>Azure Queue Storage</td><td>シンプルで大量のキュー（64KB/件まで）</td></tr>
+      </table>
+      <div class="tip">「大量データの取り込み・ストリーム処理」→ Event Hubs。「信頼性の高いメッセージ」→ Service Bus。「イベント通知」→ Event Grid。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">サービス間の疎結合・イベント駆動アーキテクチャを実現したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Event Grid</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>パブリッシャー（Blob作成・リソース変更等）→ Event Grid → サブスクライバー（Function・Logic Apps・Webhook）。</li>
+        <li>プッシュ型（サブスクライバーにイベントを配信）。ポーリング不要。</li>
+        <li>カスタムトピックを作成して独自イベントも発行できる。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">API管理・統合</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数のバックエンドAPIを一元管理・保護・監視したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure API Management（APIM）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>APIゲートウェイ：レート制限・認証・キャッシュ・変換をポリシーで設定。</li>
+        <li>開発者ポータルで APIドキュメント・テスト環境を自動公開。</li>
+        <li>バックエンドはAzure FunctionでもオンプレAPIでも可。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="group-title">サーバーレス・自動化</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">イベントに応じて短時間のコードを実行したい（サーバーレス）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Functions</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>トリガー：HTTP / Timer / Blob / Queue / Event Hub / Service Bus / Event Grid など多数。</li>
+        <li>消費プラン（サーバーレス）：実行回数・時間で課金。自動スケール。</li>
+        <li>Durable Functions：複数ステップのワークフローをオーケストレーション。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">Functions vs Logic Apps</div>
+        Functions = コード（C#/Python/JS等）で記述。開発者向け<br>
+        Logic Apps = GUIでワークフローを組み立て。300以上のコネクタ。ノーコード向け
+      </div>
+    </div>
+  </div>
+
+  <div class="group-title">CDN・静的コンテンツ配信</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">静的コンテンツをグローバルに高速配信したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure CDN / Azure Front Door</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Azure CDN：コンテンツをエッジにキャッシュ。Blob Storageと統合が簡単。</li>
+        <li>Azure Front Door：CDN＋グローバルLB＋WAF＋ヘルスチェック。Webアプリ全体を対象。</li>
+      </ul>
+      <div class="tip">「Webアプリのグローバル加速＋WAF」→ Front Door。「静的ファイルのキャッシュだけ」→ CDN。</div>
+    </div>
+  </div>
+
+  <div class="group-title">マイクロサービス・コンテナ</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">マイクロサービスの分散アプリケーションを構築したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Kubernetes Service（AKS） / Azure Container Apps</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">AKS vs Container Apps vs ACI</div>
+        AKS = フル制御のK8s。複雑だが柔軟性最高<br>
+        Container Apps = マネージドK8s（制御は少ない）。KEDA/Daprが統合済み。マイクロサービス向け<br>
+        ACI = 単一コンテナを素早く起動するだけ。オーケストレーション不要な場合
+      </div>
+    </div>
+  </div>
+
+  <div class="group-title">アーキテクチャパターン</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">大量の同時リクエストでもスケールするWebアプリを設計したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">ステートレス設計 + 水平スケール + キャッシュ</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>セッション状態をRedisに外部化（ステートレス化）→ App Serviceのインスタンスを自由にスケール。</li>
+        <li>CDN で静的コンテンツをキャッシュ → オリジンへの負荷軽減。</li>
+        <li>読み取り負荷 → Cache-Aside パターン（キャッシュになければDBから取得してキャッシュに書く）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">レガシーモノリスをクラウドネイティブに段階的移行したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Strangler Fig パターン</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>既存システムを残しながら、機能を少しずつマイクロサービスに切り出す。</li>
+        <li>Azure API ManagementやAzure Front Doorをファサードとして置き、背後のルーティングを切り替えながら移行。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div><!-- .content -->
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo({ top: 0 });
+  }
+</script>
+</body>
+</html>
