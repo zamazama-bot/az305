@@ -336,16 +336,16 @@ const QUESTIONS_SET2 = [
 },
 {
   domain: "インフラ",
-  scenario: "Contoso社はAzure Bastionを使用してVMへ安全に接続していますが、ネイティブのSSH/RDPクライアント（ローカルのターミナルやリモートデスクトップアプリ）から直接接続したいという要望が開発チームから出ています。現在使用しているBastionのSKUではこの機能が利用できません。",
-  question: "この要件を満たすために変更すべきBastionの設定はどれですか？",
+  scenario: "Contoso社は新しいバックエンドAPIをAzureにデプロイしようとしています。要件は次のとおりです：(1) 実行環境のOSパッチ適用やミドルウェア管理はAzure側に任せたい、(2) リクエストが来ていない時間帯はコストを発生させたくない、(3) 突発的なトラフィック急増に対して秒単位で自動スケールしてほしい、(4) Kubernetesの知識を持つ運用担当者はいない。",
+  question: "この要件に最も適したコンピューティングサービスはどれですか？",
   choices: [
-    "Bastionのインスタンス数（スケールユニット）を増やす",
-    "Bastionのパブリックアクセス設定を無効化する",
-    "BastionのSKUをStandard（またはネイティブクライアントをサポートする上位SKU）にアップグレードする",
-    "Bastionを削除し、踏み台VMを手動で構築する"
+    "Azure Kubernetes Service（AKS）",
+    "Azure Container Apps（消費コンプランで最小レプリカ数0）",
+    "Azure仮想マシン（VMSS、常時2台以上稼働）",
+    "App Service（Premium v3プラン、常時起動）"
   ],
-  answer: 2,
-  explanation: "Azure Bastionは複数のSKU階層（Basic、Standard、Premiumなど）を提供しており、ローカルのSSH/RDPクライアント（az network bastion tunnelコマンドや対応クライアントアプリ経由）を使ったネイティブクライアント接続は<strong>Basic SKUでは利用できず</strong>、上位のSKUへのアップグレードが必要な機能です。上位SKUではこの他にも、IPベースの接続（Bastion経由でVNet外のIPへ接続）、ピアリングされたVNet越しの接続、複数同時セッションのサポートなど、拡張された接続オプションが利用可能になります。<br><br>インスタンス数（スケールユニット）の増加は、同時に処理できるセッション数やスループット（帯域）を増やすためのスケーリング設定であり、ネイティブクライアントのサポート可否とは無関係です。<br><br>パブリックアクセスの無効化は、Bastion自体へのアクセス経路をプライベートのみに制限するセキュリティ強化の設定であり、今回の要件（ネイティブクライアント対応）とは直接関係しません。<br><br>Bastionを削除して踏み台VM（ジャンプボックス）を手動構築する方法は、Bastionが提供するマネージドなセキュリティ上の利点（対象VMにパブリックIPを持たせる必要がない、ブラウザ/クライアントからTLS経由でセキュアに接続できる、パッチ管理不要など）を失うことになり、要件を満たすための適切な解決策ではありません。"
+  answer: 1,
+  explanation: "<strong>Azure Container Apps</strong>はKubernetesをベースにしたマネージドサーバーレスコンテナ実行環境で、内部的にAKSやKEDAを使用しつつも、ユーザーはKubernetesのクラスター管理・ノード管理・Kubernetes APIの知識を必要としません。<strong>消費（Consumption）プラン</strong>で最小レプリカ数を0に設定すれば、リクエストがない時間帯はインスタンス数がゼロになりコストが発生せず、リクエスト受信をトリガーに数秒でスケールアウトできるため、4つの要件をすべて満たします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>コンピューティング選定の判断軸</div><div class='exp-decision'><div class='dec-row'><span class='dec-cond'>フルのK8s制御・複雑なオーケストレーションが必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>AKS</span></div><div class='dec-row dec-yes'><span class='dec-cond'>K8s知識不要・ゼロスケール・イベント駆動？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>Container Apps</span></div><div class='dec-row'><span class='dec-cond'>OSレベルの完全な制御が必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>VM / VMSS</span></div><div class='dec-row'><span class='dec-cond'>Webアプリで常時稼働・ゼロスケール不要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>App Service</span></div></div></div><br><br><strong>AKS</strong>はフルのKubernetes制御が可能で高い柔軟性を持ちますが、クラスターのアップグレード・ノードプール管理・Kubernetes特有の運用知識が必要であり、「Kubernetesの知識を持つ運用担当者はいない」という制約に反します。<strong>VMSSでの常時稼働構成</strong>はOSパッチ適用が自己責任になる上、常時2台以上稼働させるためリクエストがない時間帯もコストが発生し続け、要件(1)(2)に反します。<strong>App Service（常時起動のPremium v3）</strong>はOS管理は不要になるものの、既定ではインスタンスが常時起動し続けるため、リクエストがない時間帯のコストをゼロにはできません（App Serviceにも自動スケールはありますが、真のゼロスケールにはFunctionsの消費プランかContainer Appsが適しています）。"
 },
 {
   domain: "インフラ",
@@ -362,16 +362,16 @@ const QUESTIONS_SET2 = [
 },
 {
   domain: "インフラ",
-  scenario: "Contoso社はミッションクリティカルなVMベースのアプリケーションを設計しています。単一データセンター内の障害（電源、ネットワークスイッチなど）だけでなく、データセンター全体の障害からもアプリケーションを保護し、99.99%のSLAを達成したいと考えています。",
-  question: "この要件を満たす構成はどれですか？",
+  scenario: "Contoso社は東日本リージョンと西日本リージョンの両方にWebアプリケーションをデプロイしています。単一リージョン内での複数インスタンス間の負荷分散に加えて、リージョン障害時に他方のリージョンへ自動的にトラフィックを振り向ける仕組みが必要です。さらに、WAF（Webアプリケーションファイアウォール）による保護と、静的コンテンツのグローバルなキャッシュ配信も同時に実現したいと考えています。",
+  question: "この要件を最も少ないコンポーネント数で満たせる構成はどれですか？",
   choices: [
-    "可用性セット（Availability Set）内にVMを分散配置する",
-    "可用性ゾーン（Availability Zones）にまたがってVMを分散配置する",
-    "同一の障害ドメイン内にすべてのVMを配置する",
-    "近接配置グループ内にすべてのVMを配置する"
+    "Azure Load Balancer（Standard SKU、複数リージョンにインスタンスを配置）",
+    "Azure Front Door（WAFポリシー + キャッシュ機能を含む）",
+    "Azure Traffic Managerのみ（DNSベースのリージョン間フェイルオーバー）",
+    "各リージョンにApplication Gatewayを配置し、DNSラウンドロビンで振り分ける"
   ],
   answer: 1,
-  explanation: "<strong>可用性ゾーン</strong>は、1つのAzureリージョン内にある、独立した電源・冷却・ネットワークを持つ物理的に分離された1つ以上のデータセンターの集まりです。2つ以上の可用性ゾーンにVMを分散配置する構成にすると、いずれか1つのデータセンター（ゾーン）全体で障害が発生しても他のゾーンでサービスを継続できるため、データセンター規模の障害への耐性が得られ、Microsoftはこの構成に対して<strong>99.99%のVM可用性SLA</strong>を提供しています。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>判断フロー</div><div class='exp-decision'><div class='dec-row dec-yes'><span class='dec-cond'>データセンター全体の障害にも耐える必要がある？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>可用性ゾーン（99.99%）</span></div><div class='dec-row'><span class='dec-cond'>同一DC内のラック/電源障害のみ考慮すればよい？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>可用性セット（99.95%）</span></div></div></div><br><br><strong>可用性セット</strong>は、単一のデータセンター内で複数の更新ドメイン（同時に再起動されるVMのグループ）と障害ドメイン（同一のラック・電源・ネットワークスイッチを共有するVMのグループ）にVMを分散させることで、ラックレベルやメンテナンス起因の障害から保護する仕組みですが、データセンター自体が丸ごと停止するような大規模障害には対応できず、SLAも99.95%にとどまります。<br><br>同一の障害ドメインにすべてのVMを集約する構成は、その障害ドメインが単一障害点となり、可用性を高めるどころかリスクを増大させるため要件に反します。<br><br>近接配置グループはレイテンシを最小化するために物理的にVMを近づける仕組みであり、目的が可用性向上とは異なるうえ、データセンター障害への耐性という点では可用性ゾーンとはむしろ相反する方向の構成です。"
+  explanation: "<strong>Azure Front Door</strong>はグローバルなレイヤー7（HTTP/S）ロードバランサーで、複数リージョンへのトラフィック分散とヘルスプローブに基づく自動フェイルオーバー、<strong>WAFポリシー</strong>によるWebアプリケーション保護、静的コンテンツの<strong>CDNキャッシュ配信</strong>までを単一のサービスでまとめて提供します。Anycastネットワークにより世界中のエッジPoPで最寄りの正常なリージョンへ振り分けるため、リージョン障害時も自動的に健全な方へトラフィックが切り替わります。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ロードバランサー系サービスの使い分け</div><table class='exp-compare'><tr><th>サービス</th><th>レイヤー</th><th>スコープ</th><th>WAF</th><th>CDN</th></tr><tr><td>Load Balancer</td><td>L4</td><td>リージョン内</td><td class='ng'>×</td><td class='ng'>×</td></tr><tr><td>Application Gateway</td><td>L7</td><td>リージョン内</td><td class='ok'>○</td><td class='ng'>×</td></tr><tr class='hl'><td>Front Door</td><td>L7</td><td>グローバル</td><td class='ok'>○</td><td class='ok'>○</td></tr><tr><td>Traffic Manager</td><td>DNS</td><td>グローバル</td><td class='ng'>×</td><td class='ng'>×</td></tr></table></div><br><br><strong>Load Balancer</strong>はリージョン内のL4負荷分散に限定され、リージョンをまたぐグローバル分散やWAF・CDN機能は持ちません。<strong>Traffic Managerのみ</strong>はDNSベースでリージョン間フェイルオーバーは実現できますが、WAFやキャッシュ機能を持たないため、それらを実現するには追加のコンポーネント（各リージョンのApplication Gateway＋CDN等）が別途必要になり、「最も少ないコンポーネント数」という条件に反します。<strong>各リージョンにApplication Gateway＋DNSラウンドロビン</strong>もWAFは実現できますが、CDNキャッシュ機能がなく、DNSラウンドロビンはヘルスチェックに基づく自動フェイルオーバーを行わないため、障害時に不健全なリージョンへもトラフィックが送られ続けるリスクがあります。"
 },
 {
   domain: "インフラ",
@@ -440,16 +440,16 @@ const QUESTIONS_SET2 = [
 },
 {
   domain: "インフラ",
-  scenario: "Contoso社は開発・テスト環境でAzure Spot VMを使用してコストを削減しています。Azureの容量逼迫によりVMが退避（エビクション）される際、退避後に同じVMを後で再起動できるように、ディスクの状態を保持しておきたいと考えています。",
-  question: "この要件を満たすために設定すべきSpot VMの退避ポリシーはどれですか？",
+  scenario: "Contoso社はオンプレミスのVMware環境で稼働する300台のサーバーをAzureに移行する計画を立てています。移行に先立ち、各サーバーの実際のCPU/メモリ使用率の実績データに基づいて、Azureでの適切なVMサイズとおおよその月額コストを見積もりたいと考えています。また、オンプレミスのサーバーがAzureへの移行に対応しているかどうか（互換性）も事前に確認したいとしています。",
+  question: "この要件を満たすために使用すべきツールはどれですか？",
   choices: [
-    "エビクションポリシーを「削除（Delete）」に設定する",
-    "エビクションポリシーを「割り当て解除（Deallocate）」に設定する",
-    "エビクションポリシーは設定できないため、常にVMは完全に削除される",
-    "エビクションポリシーを「一時停止（Pause）」に設定する"
+    "Azure Total Cost of Ownership（TCO）計算ツール",
+    "Azure Migrate（検出とアセスメント機能）",
+    "Azure Advisorのコスト推奨事項",
+    "Azure Pricing calculator（手動でVMスペックを入力）"
   ],
   answer: 1,
-  explanation: "Spot VMのエビクションポリシーを<strong>「割り当て解除（Deallocate）」</strong>に設定すると、Azure側の容量逼迫によって退避が発生した際、VMのコンピューティングリソース（CPU/メモリの割り当て）は解放されて課金が止まりますが、OSディスクやデータディスクなどのストレージリソースはそのまま保持されます。後で容量に余裕ができた際に同じVM定義で再起動すれば、退避前の状態（ディスクの内容）を引き継いで作業を再開できます。<br><br>「削除（Delete）」ポリシーを設定すると、退避時にVM本体だけでなく関連するディスクやNICなどのリソースも自動的に削除されてしまうため、状態を保持したいという今回の要件には合致しません（ただし、ストレージコストを完全にゼロにしたい使い捨てワークロードでは有効な選択です）。<br><br>「一時停止（Pause）」というポリシーはAzure Spot VMのエビクションポリシーとしては存在しません。設定可能なのはDeallocateとDeleteの2種類のみです。<br><br>エビクションポリシー自体は作成時に必ずどちらかを選択できる設定項目であるため、「設定できない」という選択肢も誤りです。"
+  explanation: "<strong>Azure Migrate</strong>の検出・アセスメント機能は、オンプレミスのVMware/Hyper-V環境やAWS/GCP上のサーバーを対象に、稼働中のサーバーを自動的に検出（Discovery）した上で、一定期間の実際のCPU・メモリ・ディスクI/O使用率のパフォーマンス実績データを収集します。このデータに基づいて、過剰・過小のいずれでもない適切なAzure VMサイズを推奨し（サイジング）、月額コストの見積もりを算出するとともに、OS/アプリケーションのAzureとの互換性（移行準備状況）も評価します。移行計画の初期段階で行うアセスメント作業として、AZ-305で問われる典型的な移行設計プロセスです。<br><br><strong>TCO計算ツール</strong>は、オンプレミスの総保有コスト（ハードウェア・電力・人件費など）とAzureのコストを比較し、移行によるコスト削減効果を試算するための財務比較ツールであり、個々のサーバーの実績データに基づくVMサイジングは行いません。<strong>Azure Advisor</strong>は既にAzure上で稼働しているリソースに対するベストプラクティス推奨を提示する機能であり、移行前のオンプレミスサーバーは評価対象にできません。<strong>Pricing calculator</strong>はユーザーが手動で選択したVMスペック・サービスの料金を計算するだけのツールで、実際のオンプレミスサーバーの使用率データを収集・分析してサイジングを推奨する機能は持ちません。"
 },
 {
   domain: "インフラ",
@@ -595,7 +595,7 @@ const QUESTIONS_SET2 = [
     "Service Bus トピックで3つのサブスクリプションを作成し、各サブスクライバーが独立してメッセージを処理する"
   ],
   answer: 1,
-  explanation: "<strong>Durable Functions のファンアウト/ファンイン パターン</strong>では、オーケストレーター関数が<strong>Task.WhenAll</strong>（.NET）のような仕組みで複数のアクティビティ関数（サムネイル生成・コンテンツ検出・メタデータ抽出）を並列に起動し、すべてが完了するのを待ってから結果をまとめて次の処理（DB書き込み）に進めます。オーケストレーターの実行状態はイベントソーシングによってストレージに永続化されるため、待機中や再試行中でもコンピューティングリソースを無駄に消費せず、耐障害性の高い「全完了待ち」の同期ポイントをコードで簡潔に表現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ファンアウト/ファンイン</div><div class='exp-flow'><div class='flow-box hl'>オーケストレーター</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>サムネイル生成<br>+ コンテンツ検出<br>+ メタデータ抽出</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>結果集約 &<br>DB書き込み</div></div></div><br><br><strong>Event Grid</strong>で3つの独立したサブスクリプションを作ると、各処理は互いに完全に独立して動作するため、「3つすべてが完了した時点」という同期ポイントを検知する仕組みが存在せず、これを実現するには自前でカウンターやステータステーブルなどの集約ロジックを追加実装する必要があり複雑になります。<br><br><strong>Logic Apps の並列分岐</strong>自体は複数アクションの並列実行をサポートしますが、選択肢にある「そのまま終了する」という設計では各分岐の完了を待って集約する仕組みが欠けており要件を満たしません（Logic Appsでも分岐の合流自体は可能ですが、複雑な集約ロジックはDurable Functionsの方がコードで柔軟に制御できます）。<br><br><strong>Service Bus トピックのサブスクライバー</strong>も互いに独立して非同期にメッセージを処理するため、全処理完了を待つ仕組みを自前で構築する必要があり、ファンアウト/ファンインパターンほど直接的ではありません。"
+  explanation: "<strong>Durable Functions のファンアウト/ファンイン パターン</strong>では、オーケストレーター関数が複数のアクティビティ関数（サムネイル生成・コンテンツ検出・メタデータ抽出）を並列に起動し、「すべてのタスクが完了するのを待ち合わせる」という制御をコードで簡潔に記述したうえで、完了後に結果をまとめて次の処理（DB書き込み）に進めます。オーケストレーターの実行状態はイベントソーシングによってストレージに永続化されるため、待機中や再試行中でもコンピューティングリソースを無駄に消費せず、耐障害性の高い「全完了待ち」の同期ポイントをコードで簡潔に表現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ファンアウト/ファンイン</div><div class='exp-flow'><div class='flow-box hl'>オーケストレーター</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>サムネイル生成<br>+ コンテンツ検出<br>+ メタデータ抽出</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>結果集約 &<br>DB書き込み</div></div></div><br><br><strong>Event Grid</strong>で3つの独立したサブスクリプションを作ると、各処理は互いに完全に独立して動作するため、「3つすべてが完了した時点」という同期ポイントを検知する仕組みが存在せず、これを実現するには自前でカウンターやステータステーブルなどの集約ロジックを追加実装する必要があり複雑になります。<br><br><strong>Logic Apps の並列分岐</strong>自体は複数アクションの並列実行をサポートしますが、選択肢にある「そのまま終了する」という設計では各分岐の完了を待って集約する仕組みが欠けており要件を満たしません（Logic Appsでも分岐の合流自体は可能ですが、複雑な集約ロジックはDurable Functionsの方がコードで柔軟に制御できます）。<br><br><strong>Service Bus トピックのサブスクライバー</strong>も互いに独立して非同期にメッセージを処理するため、全処理完了を待つ仕組みを自前で構築する必要があり、ファンアウト/ファンインパターンほど直接的ではありません。"
 },
 {
   domain: "アプリアーキテクチャ",
@@ -608,7 +608,7 @@ const QUESTIONS_SET2 = [
     "Azure Automation Runbook をWebhookでトリガーし、承認まで待機ループを実行する"
   ],
   answer: 1,
-  explanation: "<strong>Durable Functions の外部イベント待機パターン（Human interactionパターン）</strong>では、オーケストレーター関数内で<strong>waitForExternalEvent</strong>（.NETでは<strong>WaitForExternalEvent</strong>）を呼び出すと、その時点の実行状態がAzure Storageに永続化され、オーケストレーターの実行自体が一時停止（チェックポイント）します。この間はコンピューティングリソースをまったく消費しません。後から<strong>raiseEvent</strong> APIで承認イベントが送られてくると、永続化された状態から実行が再開されます。数時間〜数日という長い待機時間でも、消費型（Consumption）プランであれば実質的な課金は発生しないため、コスト最小化の要件に最適です。<br><br><strong>タイマートリガーによる定期ポーリング</strong>は、待機している間も1分ごとに関数の実行が発生し、その都度実行回数・実行時間に応じた課金とAPI呼び出しコストが積み上がるため非効率です。<br><br><strong>Logic Apps の再帰ポーリングループ</strong>も同様に、繰り返しのHTTP呼び出しのたびにアクション実行としてカウントされ、長時間の待機にはコストと複雑さが増します（Logic AppsにもWebhookアクションで似た待機を実現する方法はありますが、選択肢にある「再帰ループでのポーリング」は非効率な設計です）。<br><br><strong>Automation Runbook</strong>で待機ループを回す方法は、Runbookのジョブが実行され続けている間ずっと課金対象となるため、長時間の休止を前提とした承認待ちには不適切です。"
+  explanation: "<strong>Durable Functions の外部イベント待機パターン（Human interactionパターン）</strong>では、オーケストレーター関数が「外部からの承認イベントを待つ」という状態をコード上で表現すると、その時点の実行状態がAzure Storageに永続化され、オーケストレーターの実行自体が一時停止（チェックポイント）します。この間はコンピューティングリソースをまったく消費しません。後から承認イベントが送られてくると、永続化された状態から実行が再開されます。数時間〜数日という長い待機時間でも、消費型（Consumption）プランであれば実質的な課金は発生しないため、コスト最小化の要件に最適です。<br><br><strong>タイマートリガーによる定期ポーリング</strong>は、待機している間も1分ごとに関数の実行が発生し、その都度実行回数・実行時間に応じた課金とAPI呼び出しコストが積み上がるため非効率です。<br><br><strong>Logic Apps の再帰ポーリングループ</strong>も同様に、繰り返しのHTTP呼び出しのたびにアクション実行としてカウントされ、長時間の待機にはコストと複雑さが増します（Logic AppsにもWebhookアクションで似た待機を実現する方法はありますが、選択肢にある「再帰ループでのポーリング」は非効率な設計です）。<br><br><strong>Automation Runbook</strong>で待機ループを回す方法は、Runbookのジョブが実行され続けている間ずっと課金対象となるため、長時間の休止を前提とした承認待ちには不適切です。"
 },
 {
   domain: "アプリアーキテクチャ",
@@ -625,16 +625,16 @@ const QUESTIONS_SET2 = [
 },
 {
   domain: "アプリアーキテクチャ",
-  scenario: "動画エンコーディングを行うバッチ処理システムがVirtual Machine Scale Sets上で稼働しています。処理対象はAzure Storage キューに積まれ、キュー内のメッセージ数に応じてワーカーVMの台数を増減させたいと考えています。CPU使用率などの標準メトリクスではなく、キューの滞留メッセージ数を基準にスケーリングしたいという要件があります。",
-  question: "VMSSでこの要件を実装する方法として最も適切なものはどれですか？",
+  scenario: "Contoso社の注文処理システムでは、同一注文に属する複数のメッセージ（注文確定→在庫引当→出荷指示）を必ず送信順に、かつ同じコンシューマーインスタンスで処理する必要があります。また、処理に繰り返し失敗するメッセージは自動的に隔離し、後から原因調査できるようにしたいと考えています。",
+  question: "この要件を満たすために使用すべきAzureサービスと機能の組み合わせはどれですか？",
   choices: [
-    "Azure Monitor autoscale でCPU使用率ベースのスケールルールのみを設定する",
-    "Azure Monitor autoscale でカスタムメトリクス（Storage キューの長さ）に基づくスケールルールを設定する",
-    "Azure Functions の Consumption プランに処理を移行し、VMSSは廃止する",
-    "Logic Apps でキューの長さを定期的にポーリングし、Azure CLIでVMSSのインスタンス数を手動更新するフローを作成する"
+    "Azure Event Hubsのパーティションキー機能のみを使用する",
+    "Azure Service Busのメッセージセッション（FIFO順序保証）とDead-Letter Queue（DLQ）を使用する",
+    "Azure Storage Queueに順序を保証するオプションを追加して使用する",
+    "Event Gridのイベント配信保証機能のみを使用する"
   ],
   answer: 1,
-  explanation: "Azure Monitor autoscaleは、VMSSに対してCPU使用率・メモリ使用率といった組み込みのプラットフォームメトリクスだけでなく、<strong>Azure Storage キューの承認済みメッセージ数（Approximate Message Count）</strong>のような<strong>カスタムメトリクス</strong>を条件としたスケールルールを設定できます。これにより「キューに滞留しているメッセージ数がX件を超えたらスケールアウト、Y件を下回ったらスケールイン」という、実際の処理待ちワークロード量に直結した精度の高いスケーリングを実現できます。<br><br><strong>CPU使用率のみのルール</strong>では、キューにメッセージが大量に滞留していてもワーカーのCPU使用率が低い（例：I/O待ちが中心の処理）場合はスケールアウトされず処理遅延が拡大するおそれがあり、逆に一時的にCPUが高くてもキューが空であれば無駄なスケールアウトが発生する可能性があり、要件に直接合致しません。<br><br><strong>Functions Consumptionプランへの移行</strong>はキュートリガーとの相性が良い有効な代替アーキテクチャですが、設問は「VMSS上でこの要件を実装する方法」を尋ねており、既存基盤を維持する前提から外れます。<br><br><strong>Logic Appsによるポーリングとインスタンス数の手動更新フロー</strong>は自動化はされているものの、Azure Monitor autoscaleというネイティブなスケーリング機構を使わず独自のポーリング・API呼び出しロジックを保守する必要があり、標準的でシンプルな解決策とは言えません。"
+  explanation: "<strong>Azure Service Bus</strong>は<strong>メッセージセッション</strong>機能を使うと、同じセッションID（この場合は注文IDなど）を持つメッセージ群を1つの論理的な順序付きシーケンスとして扱い、同一のコンシューマーが送信順どおりに処理することを保証できます。さらに、指定回数処理に失敗したメッセージは自動的に<strong>Dead-Letter Queue（DLQ）</strong>という専用の副キューへ隔離されるため、正常なメッセージ処理を止めることなく、後から失敗メッセージだけを個別に調査・再処理できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>メッセージング3サービスの使い分け</div><table class='exp-compare'><tr><th>サービス</th><th>順序保証</th><th>DLQ</th><th>主な用途</th></tr><tr class='hl'><td>Service Bus</td><td class='ok'>○ (セッション)</td><td class='ok'>○</td><td>信頼性の高いエンタープライズメッセージング</td></tr><tr><td>Event Hubs</td><td>パーティション内のみ</td><td class='ng'>×</td><td>大量イベントのストリーム取り込み</td></tr><tr><td>Event Grid</td><td class='ng'>×</td><td>△ (デッドレター設定は可能)</td><td>イベント駆動のpub/sub通知</td></tr></table></div><br><br><strong>Event Hubs</strong>のパーティションキーは同一パーティション内での順序をおおむね保てますが、これは大量データの高スループットなストリーム取り込みに最適化された機能であり、DLQのような個別メッセージの失敗管理機構は持ちません。<strong>Storage Queue</strong>はシンプルで安価なキューサービスですが、そもそもFIFO順序保証やセッション、DLQといった高度なメッセージング機能を持たず、要件を満たせません。<strong>Event Grid</strong>はイベントの発生を購読者へ配信するpub/subの仕組みであり、順序保証やセッションという概念を持たないため、注文処理のような厳密な順序性が求められるワークフローには不向きです。"
 },
 {
   domain: "アプリアーキテクチャ",
