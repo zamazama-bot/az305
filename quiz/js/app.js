@@ -19,6 +19,35 @@
     answers:   []
   };
 
+  // ── 進捗の保存（端末ローカル・localStorage）────────────────────────────
+
+  var STORAGE_PREFIX = 'az305quiz_progress_set_';
+
+  function saveProgress() {
+    if (!state.activeSet) return;
+    try {
+      localStorage.setItem(
+        STORAGE_PREFIX + state.activeSet.id,
+        JSON.stringify({ current: state.current, answers: state.answers })
+      );
+    } catch (e) { /* ストレージ利用不可でも致命的ではないので無視 */ }
+  }
+
+  function loadProgress(id) {
+    try {
+      var raw = localStorage.getItem(STORAGE_PREFIX + id);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function clearProgress(id) {
+    try { localStorage.removeItem(STORAGE_PREFIX + id); } catch (e) { /* noop */ }
+  }
+
+  function getAnsweredCount(answers) {
+    return answers.filter(function (a) { return a !== undefined; }).length;
+  }
+
   // ── スコア計算（answers 配列から都度算出）────────────────────────────
 
   function getCorrectCount() {
@@ -61,12 +90,30 @@
     setProgressVisible(false);
 
     var cards = SETS.map(function (set) {
+      var saved      = loadProgress(set.id);
+      var answered   = saved ? getAnsweredCount(saved.answers) : 0;
+      var inProgress = saved && answered > 0 && answered < set.questions.length;
+
+      var resumeRow = inProgress
+        ? '<div class="set-resume">&#128190; 進行中：' + answered + ' / ' + set.questions.length + ' 問回答済み</div>'
+        : '';
+
+      var buttonsHtml = inProgress
+        ? (
+            '<div class="set-btn-row">' +
+            '  <span class="set-btn" onclick="event.stopPropagation();startSet(' + set.id + ')">続きから &rarr;</span>' +
+            '  <span class="set-btn set-btn-secondary" onclick="event.stopPropagation();startSet(' + set.id + ',true)">最初から</span>' +
+            '</div>'
+          )
+        : '<div class="set-btn">開始する &rarr;</div>';
+
       return (
         '<div class="set-card" onclick="startSet(' + set.id + ')">' +
         '  <div class="set-label">' + set.label + '</div>' +
         '  <div class="set-count">' + set.questions.length + ' 問</div>' +
         '  <div class="set-desc">' + set.desc + '</div>' +
-        '  <div class="set-btn">開始する &rarr;</div>' +
+        resumeRow +
+        buttonsHtml +
         '</div>'
       );
     }).join('');
@@ -77,9 +124,11 @@
       '  <p class="start-sub">合格ライン: 700点 / 1000点（約70%正解）</p>' +
       '  <div class="set-grid">' + cards + '</div>' +
       '</div>';
+
+    window.scrollTo(0, 0);
   }
 
-  window.startSet = function (id) {
+  window.startSet = function (id, forceRestart) {
     var found = null;
     for (var i = 0; i < SETS.length; i++) {
       if (SETS[i].id === id) { found = SETS[i]; break; }
@@ -87,8 +136,16 @@
     if (!found) return;
 
     state.activeSet = found;
-    state.current   = 0;
-    state.answers   = [];
+
+    var saved = !forceRestart && loadProgress(id);
+    if (saved && saved.answers && saved.current < found.questions.length) {
+      state.current = saved.current;
+      state.answers = saved.answers;
+    } else {
+      state.current = 0;
+      state.answers = [];
+      clearProgress(id);
+    }
 
     setProgressVisible(true);
     renderQuestion();
@@ -97,6 +154,7 @@
   // ── 問題描画 ───────────────────────────────────────────────────────────
 
   function renderQuestion() {
+    window.scrollTo(0, 0);
     updateProgress();
 
     var q        = state.activeSet.questions[state.current];
@@ -242,6 +300,7 @@
     // answers に記録
     state.answers[state.current] = selected;
     updateProgress();
+    saveProgress();
 
     var q      = state.activeSet.questions[state.current];
     var isLast = state.current === state.activeSet.questions.length - 1;
@@ -260,17 +319,19 @@
       return;
     }
     state.current++;
+    saveProgress();
     renderQuestion();
   };
 
   window.prevQuestion = function () {
     if (state.current <= 0) return;
     state.current--;
+    saveProgress();
     renderQuestion();
   };
 
   window.goBack = function () {
-    if (confirm('セット選択画面に戻りますか？（進捗はリセットされます）')) {
+    if (confirm('セット選択画面に戻りますか？（続きから再開できるよう進捗は保存されます）')) {
       state.activeSet = null;
       state.answers   = [];
       renderStart();
@@ -280,7 +341,9 @@
   // ── 結果画面 ────────────────────────────────────────────────────────────
 
   function renderResult() {
+    window.scrollTo(0, 0);
     setProgressVisible(false);
+    clearProgress(state.activeSet.id);
 
     var total   = state.activeSet.questions.length;
     var correct = getCorrectCount();

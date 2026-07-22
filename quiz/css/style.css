@@ -537,6 +537,31 @@ header p  { font-size: 0.8rem; opacity: .82; margin-top: 2px; }
   color: #0078d4;
 }
 
+.set-resume {
+  font-size: .78rem;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef9ee;
+  border: 1px solid #f0d9a8;
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.set-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.set-btn-secondary {
+  font-size: .82rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+.set-btn-secondary:hover { color: #374151; text-decoration: underline; }
+
 /* ===== Result extras ===== */
 .result-set-label {
   font-size: .78rem;
