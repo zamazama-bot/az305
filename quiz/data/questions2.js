@@ -12,9 +12,9 @@ const QUESTIONS_SET2 = [
   question: "このシナリオにおける実際のRPO（目標復旧時点）はおよそ何時間ですか？",
   choices: [
     "約2時間",
-    "約8時間",
+    "約24時間",
     "約16時間",
-    "約24時間"
+    "約8時間"
   ],
   answer: 2,
   explanation: "<strong>RPO（Recovery Point Objective）</strong>は「障害発生時点」と「復旧できる最新のデータ時点」との間の時間差、つまりどれだけのデータ損失を許容できるか（実際には許容せざるを得なかったか）を表す指標です。RPOはバックアップの頻度そのものではなく、「障害発生時刻 − 最後に成功したバックアップの取得時刻」という実測ベースの時系列計算で求める点が重要です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>タイムライン（RPO計算）</div><div class='exp-timeline'><div class='tl-point'><div class='tl-time'>22:00</div><div class='tl-label'>前日バックアップ成功</div></div><div class='tl-point tl-danger'><div class='tl-time'>14:00</div><div class='tl-label'>障害発生（データ消失）</div></div></div></div><br><br>本シナリオでは最後に成功したバックアップが前日22:00、障害発生が当日14:00のため、22:00→翌0:00で2時間、0:00→14:00で14時間、合計すると<strong>16時間</strong>のデータ損失が発生したことになり、これが実際のRPOです。<br><br>「約2時間」は前日22:00からの経過時間の一部（日付が変わるまでの区間）だけを切り出した計算ミス、「約8時間」はどの時刻を基準にしても導出できない誤答で、時系列を正しく追わずに感覚的な値を選んだ場合に陥りやすいパターンです。「約24時間」はバックアップポリシーの実行間隔（1日1回という頻度）とRPOそのものを混同した典型的な誤りで、ポリシーの間隔＝常にRPOの上限になるとは限らない（今回のように障害発生タイミング次第でRPOは0時間〜ほぼ24時間の間で変動する）ことを理解していないと選んでしまいます。<br><br>関連して、<strong>Azure Site Recovery</strong>のようにほぼ継続的にレプリケーションを行う仕組みでは、RPOは数分〜数十分単位まで短縮できます。Azure Backupの1日1回のスケジュールバックアップと比べてRPO要件が厳しいシナリオでは、Backupではなくレプリケーション型のDRソリューションを検討する必要がある、という対比を押さえておくと類題に強くなります。"
@@ -24,12 +24,12 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社はAzure Site Recoveryを使用して、SQL Serverが稼働するオンプレミスVMをAzureへ継続的にレプリケーションしています。ASRはクラッシュ整合性のある復旧ポイントを5分ごとに、アプリケーション整合性のある復旧ポイントを1時間ごとに作成する設定です。リージョン障害が発生し、フェールオーバー後もSQL Server内のトランザクションが破損していない一貫した状態で起動できることを保証する必要があります。",
   question: "一貫性を保証するために使用すべき復旧ポイントの種類と、その場合に想定される最大RPOの組み合わせはどれですか？",
   choices: [
+    "クラッシュ整合性のある復旧ポイント、最大約1時間",
     "クラッシュ整合性のある復旧ポイント、最大約5分",
     "アプリケーション整合性のある復旧ポイント、最大約1時間",
-    "クラッシュ整合性のある復旧ポイント、最大約1時間",
     "アプリケーション整合性のある復旧ポイント、最大約5分"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>クラッシュ整合性</strong>のある復旧ポイントは、ディスク上のデータがある瞬間に電源を強制的に落とした場合と同等の状態、つまりディスクI/Oの整合性のみを保証するものです。メモリ上にあってまだディスクへ書き込まれていないトランザクション（SQL Serverのログバッファなど）は含まれないため、これを使って起動するとアプリケーション（データベース）としては不整合な状態になり得ます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>復旧ポイントの種類比較</div><table class='exp-compare'><tr><th>種類</th><th>作成間隔</th><th>トランザクション整合性</th></tr><tr><td>クラッシュ整合性</td><td>5分ごと</td><td class='ng'>保証なし</td></tr><tr class='hl'><td>アプリケーション整合性</td><td>1時間ごと</td><td class='ok'>保証あり</td></tr></table></div><br><br>これに対し<strong>アプリケーション整合性</strong>のある復旧ポイントは、VSS（Volume Shadow Copy Service）などの仕組みを使ってアプリケーションに対して事前通知を行い、保留中のトランザクションを確定・フラッシュさせた上でスナップショットを取得するため、SQL Serverが認識するトランザクション境界まで含めて一貫した状態を保証できます。設問の設定ではこの種類の復旧ポイントは1時間ごとにしか作成されないため、フェールオーバー時に利用できる最新のポイントは最大で約1時間前のものになり得ます。<br><br>したがって「クラッシュ整合性・5分」はRPOの数値自体は小さいものの整合性の種類が要件（トランザクションの破損なし）を満たさないため不適切、「クラッシュ整合性・1時間」も整合性の種類が誤っています。「アプリケーション整合性・5分」はそもそも1時間ごとにしか作成されない復旧ポイントを5分間隔と誤認した組み合わせであり、実際の構成と矛盾します。<br><br>混同しやすい点として、クラッシュ整合性ポイントはOSやシンプルなファイルサーバーVMでは実用上十分なケースも多く、必ずしも「常にアプリケーション整合性を選ぶべき」というわけではありません。SQL ServerやActive Directoryのようにトランザクションやレプリケーション状態を持つワークロードでは、コスト（作成頻度が低くRPOが伸びる）と引き換えにアプリケーション整合性を優先する、というトレードオフを理解しておくことが重要です。"
 },
 {
@@ -37,12 +37,12 @@ const QUESTIONS_SET2 = [
   scenario: "Northwind Traders社は新しいミッションクリティカルなアプリケーションをAzure VMでホストします。可用性SLAとして99.99%以上を契約上保証する必要があり、また単一のデータセンター全体が停止しても影響を受けない構成が求められています。",
   question: "このSLA要件を満たすために採用すべきVM配置はどれですか？",
   choices: [
-    "単一のVMにPremium SSDを使用する（単体VMのSLA）",
     "可用性セットを構成し、複数の更新ドメイン・障害ドメインにVMを分散する",
     "2台以上のVMを異なる可用性ゾーンにまたがって配置する",
-    "単一の可用性ゾーン内でVMスケールセット（Flexible）を使用する"
+    "単一の可用性ゾーン内でVMスケールセット（Flexible）を使用する",
+    "単一のVMにPremium SSDを使用する（単体VMのSLA）"
   ],
-  answer: 2,
+  answer: 1,
   explanation: "<strong>可用性ゾーン</strong>は同一リージョン内にある、独立した電源・冷却・ネットワークを持つ物理的に分離されたデータセンター（の集合）です。2つ以上の可用性ゾーンにまたがって2台以上のVMを配置する構成には<strong>99.99%のSLA</strong>が適用され、これは1つのゾーン（データセンター）全体が停止しても、他のゾーンのVMが稼働を継続できるという物理的な冗長性に裏付けられています。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>VM配置とSLA比較</div><table class='exp-compare'><tr><th>配置</th><th>冗長化の範囲</th><th>SLA</th></tr><tr><td>単一VM（Premium SSD）</td><td>なし</td><td class='ng'>約99.9%</td></tr><tr><td>可用性セット</td><td>同一DC内</td><td class='ng'>99.95%</td></tr><tr class='hl'><td>可用性ゾーン（2ゾーン以上）</td><td>複数DC間</td><td class='ok'>99.99%</td></tr></table></div><br><br>「単一VM＋Premium SSD」の構成は、Premium SSDを全ディスクに使用した単体VMのSLA（一般に99.9%程度）しか得られず、そもそも物理的な冗長性がないためデータセンター障害には対応できません。<br><br><strong>可用性セット</strong>は同一データセンター内で更新ドメイン（同時メンテナンス対象のグループ）と障害ドメイン（同じラック・電源・ネットワークスイッチを共有する範囲）を分けることでハードウェア障害や計画メンテナンスへの耐性を高める仕組みですが、あくまで同一データセンター内の冗長化であり、SLAは99.95%に留まり、データセンター全体の障害には耐えられません。<br><br>「単一の可用性ゾーン内のVMSS（Flexible）」も、スケールセット自体は可用性を高める機能を持ちますが、ゾーンをまたがない限りはそのゾーン＝データセンターが停止すれば全インスタンスが影響を受けるため99.99%のSLAは提供されません。データセンター規模の障害耐性を問う設問では「ゾーンをまたぐ配置かどうか」が判断の分かれ目になる、という点を覚えておくと迷いません。"
 },
 {
@@ -50,12 +50,12 @@ const QUESTIONS_SET2 = [
   scenario: "Litware社は同一の論理SQLサーバー上に5つのAzure SQL Databaseをホストしています。リージョン障害時にこれら5つのデータベースを一括で、かつ自動的にセカンダリリージョンへフェールオーバーさせたいと考えています。さらに、アプリケーション側の接続文字列を変更せずに済むよう、フェールオーバー後も同じエンドポイント名で接続を継続できることが必須です。",
   question: "この要件を満たすAzure SQL Databaseの機能はどれですか？",
   choices: [
-    "アクティブ geo レプリケーション（データベースごとに個別設定）",
     "自動フェールオーバー グループ",
-    "Hyperscaleの名前付きレプリカ",
-    "ゾーン冗長構成（Business Criticalティア）"
+    "ゾーン冗長構成（Business Criticalティア）",
+    "アクティブ geo レプリケーション（データベースごとに個別設定）",
+    "Hyperscaleの名前付きレプリカ"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>自動フェールオーバー グループ</strong>は、複数のデータベースをひとつのグループとしてまとめて管理し、グループ単位で自動フェールオーバーのポリシー（猶予時間の設定を含む）を適用できる機能です。加えて、フェールオーバーの前後で変化しない<strong>読み取り/書き込みリスナーのエンドポイント名</strong>（例: mygroup.database.windows.net）が提供されるため、アプリケーション側は接続文字列を変更することなくフェールオーバー後の新しいプライマリへ自動的に到達できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>SQL Database DRオプション比較</div><table class='exp-compare'><tr><th>方式</th><th>複数DB一括管理</th><th>自動フェイルオーバー</th><th>エンドポイント不変</th><th>リージョンをまたぐか</th></tr><tr><td>アクティブ geo レプリケーション</td><td class='ng'>不可（DB単位）</td><td class='ng'>手動が基本</td><td class='ng'>不可</td><td class='ok'>またぐ</td></tr><tr class='hl'><td>自動フェールオーバー グループ</td><td class='ok'>可能</td><td class='ok'>可能</td><td class='ok'>不変</td><td class='ok'>またぐ</td></tr><tr><td>名前付きレプリカ（Hyperscale）</td><td class='ng'>不可</td><td class='ng'>非対応</td><td class='ng'>不可</td><td class='ng'>またがない</td></tr><tr><td>ゾーン冗長構成</td><td class='ng'>不可</td><td class='ng'>非対応</td><td class='ng'>不可</td><td class='ng'>またがない</td></tr></table></div><br><br><strong>アクティブ geo レプリケーション</strong>もリージョン間の非同期レプリケーションとフェールオーバー機能自体は提供しますが、これはデータベース単位の設定であり、複数DBをまとめて一括管理・一括フェールオーバーする仕組みがなく、フェールオーバーも手動トリガーが基本のため、「5つを一括・自動で」という要件を満たせません。<br><br><strong>Hyperscaleの名前付きレプリカ</strong>は同一リージョン内での読み取りスケールアウトや、レプリカへの名前付きアクセスを目的とした機能であり、リージョンをまたぐディザスタリカバリ用途のものではありません。<br><br>「ゾーン冗長構成（Business Criticalティア）」は可用性ゾーンを利用してリージョン内の耐障害性を高めるオプションであり、ゾーン障害には有効ですが、リージョン全体の障害からの自動フェールオーバーには対応しません。ゾーン冗長とジオレプリケーション／フェールオーバーグループは「同一リージョン内の耐障害性」と「リージョン間のDR」という別レイヤーの対策である点を混同しないよう注意が必要です。"
 },
 {
@@ -63,12 +63,12 @@ const QUESTIONS_SET2 = [
   scenario: "Adventure Works社はランサムウェア対策の一環として、Azure Recovery Services vaultに保存されたバックアップデータについて、たとえ侵害されたグローバル管理者アカウントであっても、保持期間中は誰もバックアップデータを削除・改ざんできないようにしたいと考えています。単なる誤削除防止の30日間の復元機能だけでは不十分です。",
   question: "この要件を満たすために構成すべき組み合わせはどれですか？",
   choices: [
-    "ソフト削除（既定の30日間の論理削除保持）のみを有効化する",
     "ソフト削除に加えて、vaultに対する不変性（イミュータブル）ポリシーをロックして構成する",
+    "ソフト削除（既定の30日間の論理削除保持）のみを有効化する",
     "vaultにAzure Resource Managerのロック（削除ロック）を設定する",
     "バックアップストレージの冗長性をGRSからZRSに変更する"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>ソフト削除</strong>は、削除操作が行われても一定期間（既定値や上限は環境により異なるが概ね2週間〜半年程度のオーダー）は内部的にデータを保持し、誤削除やちょっとした悪意ある操作からの復旧を可能にする機能です。しかしソフト削除自体は権限があれば無効化・短縮でき、設定変更というかたちで実質的に迂回され得るため、権限を奪取した攻撃者（侵害されたグローバル管理者を含む）に対する防御としては不十分です。<br><br>これに対し<strong>不変性（イミュータブル）vaultポリシー</strong>を「ロック」状態で構成すると、そのポリシー自体を含め、ソフト削除の無効化・保持期間の短縮・バックアップの削除といった破壊的操作がロールや権限に関わらず一切実行できなくなります。ロックは取り消し不可能（一定の猶予期間はあるが恒久的に固定される）であり、これによって初めて「侵害された管理者アカウントでも削除・改ざんできない」という真の意味での耐ランサムウェア性が実現します。<br><br>「ソフト削除のみ」は前述の通り権限があれば無効化できるため不十分です。「Resource Managerの削除ロック（CanNotDelete/ReadOnly）」はvaultというリソース自体をARM経由で削除できなくする機能であり、vault内のバックアップデータの保持ポリシー変更やデータ操作までは制御できないため、目的が異なります。「冗長性をGRSからZRSへ変更」はデータの物理的な複製方式（リージョン間かゾーン間か）を切り替える設定であり、削除や改ざんに対する耐性とは無関係です。<br><br>あわせて、Recovery Services vaultには<strong>多要素認証（MFA）による重要操作の保護</strong>という関連機能もあり、バックアップ削除やソフト削除無効化などの操作にAzure ADの追加認証を要求できます。イミュータブルロックとMFA保護は役割が異なるため、ランサムウェア対策としてはこれらを組み合わせて考えるのが実務上のベストプラクティスです。"
 },
 {
@@ -76,12 +76,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社のアーキテクトは、Azureのリージョンペア（例: 東日本と西日本のような組み合わせ）の仕組みについて社内向けに説明する必要があります。特別な追加構成をしなくても、リージョンペアであること自体がもたらす利点を正確に理解したいと考えています。",
   question: "Azureのリージョンペアが提供する、追加設定なしで得られる特性として正しいものはどれですか？",
   choices: [
-    "ペア間でVMが自動的にレプリケーションされ、障害時に自動フェールオーバーする",
     "大規模障害時にはペアの一方が優先的に復旧対象とされ、また計画的なプラットフォーム更新はペア間で同時ではなく順番に展開される",
-    "リージョンペア内であればストレージアカウントは自動的にgeo冗長（GRS）に切り替わる",
-    "リージョンペアのDNSは自動的に相互フェールオーバーするよう構成される"
+    "ペア間でVMが自動的にレプリケーションされ、障害時に自動フェールオーバーする",
+    "リージョンペアのDNSは自動的に相互フェールオーバーするよう構成される",
+    "リージョンペア内であればストレージアカウントは自動的にgeo冗長（GRS）に切り替わる"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "Azureの<strong>リージョンペア</strong>は、地理的・電力網的にある程度の距離を確保した2つのリージョンをMicrosoftがあらかじめ組み合わせたものです。これにより、広域障害が発生した際にはMicrosoft側の運用として<strong>ペアの一方を優先的に復旧させる方針</strong>が取られること、また<strong>計画的なプラットフォームメンテナンス（ホストOSの更新など）がペアの両リージョンで同時には行われず、時間差をつけて順番に展開される</strong>ことが、ユーザーが何も設定しなくても得られる特性です。<br><br>これに対し「ペア間でVMが自動的にレプリケーションされ、障害時に自動フェールオーバーする」というのは<strong>誤り</strong>です。VMのレプリケーションやフェールオーバーはAzure Site Recoveryなど、利用者が明示的に構成するDRソリューションによって初めて実現されるものであり、リージョンペアという地理的な関係性それ自体が自動でやってくれるわけではありません。<br><br>同様に「ストレージアカウントが自動的にGRSへ切り替わる」というのも誤りで、冗長性オプション（LRS/ZRS/GRS/GZRSなど）は作成時・変更時に利用者が明示的に選択する必要があります。「DNSが自動的に相互フェールオーバーする」も存在しない挙動で、Traffic ManagerやAzure Front Doorなどのグローバルロードバランシング／DNSベースのルーティングサービスを別途構成しない限り、DNSレベルの自動フェールオーバーは行われません。<br><br>この設問のポイントは、「リージョンペアは災害復旧の“土台”となる地理的・運用的な性質に過ぎず、それ自体はDRソリューションではない」ということです。実際にDRを実現するには、Site RecoveryやSQL DatabaseのフェールオーバーグループなどリージョンペアやSecondaryリージョンを活用する具体的なサービスを別途組み合わせる必要があります。"
 },
 {
@@ -91,8 +91,8 @@ const QUESTIONS_SET2 = [
   choices: [
     "Recovery Services vaultへのAzure Backup（MARSエージェント）",
     "Azure Site Recovery",
-    "Azure Backup Server（MABS）による定期バックアップ",
-    "ストレージアカウントのGRSレプリケーション"
+    "ストレージアカウントのGRSレプリケーション",
+    "Azure Backup Server（MABS）による定期バックアップ"
   ],
   answer: 1,
   explanation: "<strong>Azure Site Recovery（ASR）</strong>はディザスタリカバリに特化したサービスで、オンプレミスVMのディスク変更を継続的（ほぼリアルタイム）にAzureへレプリケーションし、障害発生時にはAzure上でそのVMを実際にブート可能な仮想マシンとして起動（フェールオーバー）できます。レプリケーション先ではVMサイズやネットワーク設定をあらかじめマッピングしておけるため、RTO（目標復旧時間）を数分〜数十分のオーダーに抑えることが可能です。加えて、<strong>テストフェールオーバー</strong>機能により、本番のレプリケーションやネットワークに影響を与えない隔離されたテスト用ネットワーク上でフェールオーバーの動作確認を定期的に行えます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Backup系サービス vs Site Recovery</div><table class='exp-compare'><tr><th>サービス</th><th>目的</th><th>RTO</th></tr><tr><td>Azure Backup（MARS）</td><td>データ保護（静的コピー）</td><td class='ng'>長い（要再作成）</td></tr><tr><td>Azure Backup Server（MABS）</td><td>アプリ整合性バックアップ</td><td class='ng'>長い（要復元）</td></tr><tr class='hl'><td>Azure Site Recovery</td><td>サービス継続（起動状態）</td><td class='ok'>数分〜数十分</td></tr></table></div><br><br><strong>Azure Backup（MARSエージェント）</strong>はファイル・フォルダー単位、あるいはVMイメージ全体のバックアップを取得しますが、あくまで「静的なコピーの保存」が目的であり、復旧時にはバックアップからVMを再作成・復元する必要があるため、数分〜数十分でのシステム全体起動というRTO要件には通常対応できません。<br><br><strong>Azure Backup Server（MABS）</strong>もSQL ServerやSharePointなどアプリケーション整合性のあるバックアップ取得に強みがありますが、これも復旧には時間のかかる復元プロセスを伴うバックアップソリューションであり、DR専用のASRとは目的が異なります。<br><br>ストレージアカウントの<strong>GRS</strong>レプリケーションはBlob/Table/QueueなどPaaSのストレージデータをリージョン間で複製する機能に過ぎず、VMやアプリケーション層全体を起動する能力は持ちません。AZ-305では「バックアップ＝データ保護（RPO重視）」「Site Recovery＝サービス継続（RTO重視、実際に稼働状態で起動）」という目的の違いを問う設問が頻出するため、この対比を明確に区別しておくことが重要です。"
@@ -102,12 +102,12 @@ const QUESTIONS_SET2 = [
   scenario: "Woodgrove Bank社はAzure VMをGRS（geo冗長ストレージ）が有効なRecovery Services vaultでバックアップしています。プライマリリージョンで部分的な障害が発生しましたが、Microsoftによる正式なリージョン災害宣言はまだ行われていません。運用チームはAzure Site Recoveryによる本格的なフェールオーバーを行わずに、特定の1台のVMだけをセカンダリリージョンに直接復元したいと考えています。",
   question: "この要件を満たすために、あらかじめ有効化しておく必要があった機能はどれですか？",
   choices: [
-    "クロスリージョン復元（Cross Region Restore）",
     "Azure Site Recoveryのレプリケーションポリシー",
+    "ストレージアカウントのライフサイクル管理ポリシー",
     "vaultの冗長性をLRSに変更する設定",
-    "ストレージアカウントのライフサイクル管理ポリシー"
+    "クロスリージョン復元（Cross Region Restore）"
   ],
-  answer: 0,
+  answer: 3,
   explanation: "<strong>クロスリージョン復元（Cross Region Restore, CRR）</strong>は、GRS／RA-GRS／GZRSなどgeo冗長が有効なRecovery Services vaultにおいて<strong>事前に有効化しておく</strong>ことで、バックアップデータが非同期複製されているセカンダリリージョン側のコピーから、Microsoftによる正式なリージョン障害宣言を待たずに、個別のVMやディスクを直接復元できるようにする機能です。この設問のように「災害宣言前でも自分たちの判断で1台だけ復元したい」というニーズにはCRRがそのまま対応します。<br><br><strong>Azure Site Recoveryのレプリケーションポリシー</strong>は、ASRによる継続的レプリケーション（クラッシュ整合性・アプリケーション整合性ポイントの作成間隔や保持期間）を制御する設定であり、Azure Backupの復元機能とは仕組みも管理画面も異なるため、この要件には関係しません。<br><br>vaultの冗長性を<strong>LRS（ローカル冗長ストレージ）に変更</strong>してしまうと、そもそもバックアップデータがセカンダリリージョンへ複製されなくなるため、セカンダリリージョンからの復元自体が不可能になります。これは要件と正反対の設定です。<br><br>ストレージアカウントの<strong>ライフサイクル管理ポリシー</strong>はBlobデータを階層（Hot/Cool/Archive）間で自動移動させたり、一定期間後に削除したりするためのコスト最適化機能であり、DR用の復元機能とは無関係です。<br><br>なお、CRRは復元単体の機能であり、ASRのようにVMを稼働状態でその場に「起動」するわけではなく、あくまでバックアップデータからリソースを再構築する点は理解しておく必要があります。迅速な業務継続（低RTO）が最優先ならASR、特定リソースだけをリージョン障害宣言前に個別復元したいならCRR、というように使い分けが問われます。"
 },
 {
@@ -115,12 +115,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAzure Site Recoveryを使ってオンプレミスの3層アプリケーション（DBサーバー、アプリケーションサーバー、Webサーバー）をAzureへレプリケーションしています。フェールオーバー時には、依存関係の順序（DB起動完了後にアプリ層、その後Web層）を守って正しい順番でVMを起動する必要があり、この一連の手順を1回の操作で実行できるようにしたいと考えています。",
   question: "この要件を満たすために構成すべきASRの機能はどれですか？",
   choices: [
-    "レプリケーションポリシーの復旧ポイント保持期間を調整する",
     "リカバリプラン（Recovery Plan）を作成し、VMをグループ化して起動順序を定義する",
-    "各VMに個別のAzure Automationランタスクを手動で割り当てる",
-    "ストレージレプリケーションの整合性グループを設定する"
+    "レプリケーションポリシーの復旧ポイント保持期間を調整する",
+    "ストレージレプリケーションの整合性グループを設定する",
+    "各VMに個別のAzure Automationランタスクを手動で割り当てる"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "Azure Site Recoveryの<strong>リカバリプラン（Recovery Plan）</strong>は、複数のVMを複数のグループにまとめ、グループ単位で起動順序（ブートオーダー）を定義できるオーケストレーション機能です。設問のようにDB層が完全に起動してからアプリ層、その後Web層という依存関係がある場合、それぞれを別グループとしてリカバリプランに登録すれば、フェールオーバー操作を1回実行するだけで正しい順序でVMが立ち上がります。さらに各グループの前後にAzure Automationのランブックを組み込むこと（例: DB起動後にDNS更新スクリプトを実行してからアプリ層を起動する等）もでき、複雑な多層システムのフェールオーバーを完全に自動化できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>リカバリプランの起動順序</div><div class='exp-flow'><div class='flow-box hl'>DBサーバー</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>アプリケーションサーバー</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Webサーバー</div></div></div><br><br>「レプリケーションポリシーの復旧ポイント保持期間」は、クラッシュ整合性／アプリケーション整合性ポイントを何日〜何時間分保持するかを制御する設定であり、起動順序の制御には一切関与しません。<br><br>「各VMに個別のAzure Automationタスクを手動で割り当てる」というアプローチは、理論上は近い動きを作れなくはないものの、VM単位でバラバラに管理することになり、依存関係の一貫した保証や1回の操作でのオーケストレーションというリカバリプラン本来の目的を実現する仕組みとしては非効率かつASRの標準機能ではありません。<br><br>「ストレージレプリケーションの整合性グループ」という機能名はASRには存在せず、他の技術（例えばストレージレベルのレプリケーション製品にある類似概念）と混同させることを狙った紛らわしい選択肢です。ASRで起動順序を扱う唯一の標準的な仕組みはリカバリプランである、と覚えておくと迷いません。"
 },
 {
@@ -128,12 +128,12 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社はプライマリのAzure東日本リージョンとセカンダリの西日本リージョンにそれぞれWebアプリケーションのエンドポイントを展開しています。通常時はユーザーごとに最もレイテンシの低いリージョンへトラフィックを振り分けたいのですが、いずれかのリージョンのエンドポイントがヘルスチェックで異常と判定された場合は、自動的に正常な方のリージョンにのみトラフィックを送るようにしたいと考えています。",
   question: "Azure Traffic Managerで採用すべきルーティング方法はどれですか？",
   choices: [
+    "地理的（Geographic）",
     "優先度（Priority）",
     "加重（Weighted）",
-    "パフォーマンス（Performance）",
-    "地理的（Geographic）"
+    "パフォーマンス（Performance）"
   ],
-  answer: 2,
+  answer: 3,
   explanation: "<strong>パフォーマンス ルーティング</strong>は、Traffic Managerが内部に保持しているインターネットレイテンシテーブル（各ネットワーク範囲から各Azureリージョンまでの実測レイテンシに基づくデータ）を参照し、リクエスト元のユーザーから見て最もレイテンシの低いエンドポイントへ振り分ける方式です。Traffic Managerは全ルーティング方式に共通してエンドポイントへのヘルスチェック（プローブ）を行っており、異常と判定されたエンドポイントは自動的にルーティング対象から除外されるため、「通常時はレイテンシ最優先」「異常時は自動的に正常な方のみへ」という2つの要件を同時に満たせます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Traffic Manager ルーティング方式比較</div><table class='exp-compare'><tr><th>方式</th><th>振り分け基準</th><th>主な用途</th></tr><tr><td>優先度（Priority）</td><td>設定した優先順位</td><td>アクティブ/パッシブのフェイルオーバー</td></tr><tr><td>加重（Weighted）</td><td>管理者指定の比率</td><td>段階的ロールアウト・負荷分散</td></tr><tr class='hl'><td>パフォーマンス（Performance）</td><td>実測レイテンシ</td><td>最も近い/速いリージョンへ誘導</td></tr><tr><td>地理的（Geographic）</td><td>送信元の地理的所在地</td><td>コンプライアンス・地域別振り分け</td></tr></table></div><br><br><strong>優先度ルーティング</strong>は常に1つのプライマリエンドポイントへ全トラフィックを送り、そのプライマリが異常時のみ次の優先度のエンドポイントへ切り替えるアクティブ/パッシブ構成向けの方式で、通常時に「レイテンシが低い方へ動的に振り分ける」という挙動にはなりません。<br><br><strong>加重ルーティング</strong>は管理者が指定した比率（重み）に従ってトラフィックを分散するだけで、実際のユーザーとの距離やレイテンシは一切考慮されません。<br><br><strong>地理的ルーティング</strong>はユーザーの送信元IPから判定される地理的所在地（国・地域・州など）に基づいて、あらかじめ地域ごとに固定的に割り当てられたエンドポイントへルーティングする方式であり、コンプライアンス要件（特定地域のユーザーは必ず特定リージョンへ送る等）には適していますが、レイテンシの最適化を目的としたものではありません。<br><br>関連して、グローバルなHTTP(S)トラフィックの分散という点では<strong>Azure Front Door</strong>も比較対象としてよく登場します。Front Doorはレイヤー7（HTTP/HTTPS）のグローバルロードバランサーでWAFやTLS終端、パスベースのルーティングなども備える一方、Traffic ManagerはDNSベースの振り分けでプロトコルを問わず利用できるという違いがあり、要件にWAFやURLパスベースの制御が絡む場合はFront Doorが候補に挙がる点も押さえておくとよいでしょう。"
 },
 {
@@ -141,12 +141,12 @@ const QUESTIONS_SET2 = [
   scenario: "Northwind社はAzure Storageアカウントに重要な画像データを保存しています。同一リージョン内の可用性ゾーン障害からデータを保護することに加え、プライマリリージョン全体に障害が発生した場合でも、Microsoftによる地域フェールオーバーの完了を待たずに、アプリケーションがセカンダリリージョンのエンドポイントから即座にデータを読み取れるようにしたいと考えています。",
   question: "採用すべきストレージアカウントの冗長性オプションはどれですか？",
   choices: [
-    "ローカル冗長ストレージ（LRS）",
+    "読み取りアクセス geo ゾーン冗長ストレージ（RA-GZRS）",
     "ゾーン冗長ストレージ（ZRS）",
     "geo冗長ストレージ（GRS）",
-    "読み取りアクセス geo ゾーン冗長ストレージ（RA-GZRS）"
+    "ローカル冗長ストレージ（LRS）"
   ],
-  answer: 3,
+  answer: 0,
   explanation: "<strong>RA-GZRS（読み取りアクセス geo ゾーン冗長ストレージ）</strong>は、プライマリリージョン内では複数の可用性ゾーンにまたがってデータを同期複製（ZRSと同等の仕組み）しつつ、さらにセカンダリリージョンへも非同期複製を行い、そのセカンダリ側のデータに対して常時「読み取り専用エンドポイント（-secondaryサフィックス付きのエンドポイント）」でアクセスできるようにする冗長性オプションです。これにより、ゾーン障害への耐性とリージョン障害時の即時読み取り可用性の両方を、Microsoftによる地域フェールオーバー（アカウントフェールオーバー）の完了を待たずに実現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>冗長性オプション比較</div><table class='exp-compare'><tr><th>オプション</th><th>ゾーン障害耐性</th><th>フェールオーバー前の即時読取</th></tr><tr><td>LRS</td><td class='ng'>なし</td><td class='ng'>不可</td></tr><tr><td>ZRS</td><td class='ok'>あり</td><td class='ng'>不可</td></tr><tr><td>GRS</td><td class='ng'>なし</td><td class='ng'>不可</td></tr><tr class='hl'><td>RA-GZRS</td><td class='ok'>あり</td><td class='ok'>可能</td></tr></table></div><br><br><strong>LRS</strong>は単一データセンター内（実質的に単一の物理的な障害ドメイン）でのみ複製するため、ゾーン障害にもリージョン障害にも耐えられません。<br><br><strong>ZRS</strong>は複数の可用性ゾーンに複製するためゾーン障害には耐えられますが、セカンダリリージョンにはデータが存在しないため、リージョン全体の障害時には読み取りアクセスができなくなります。<br><br><strong>GRS</strong>はセカンダリリージョンへの複製自体は行いますが、通常運用時にセカンダリのデータへ読み取りアクセスすることはできません（セカンダリのデータにアクセスできるのはMicrosoftまたは利用者によるアカウントフェールオーバー実行後のみ）。この点が「フェールオーバー完了を待たずに読み取りたい」という要件を満たさない理由です。<br><br>整理すると、「セカンダリへ即座に読み取りアクセスしたい」場合は必ず頭に<strong>RA-</strong>（Read-Access）が付くオプション（RA-GRSまたはRA-GZRS）を選ぶ必要があり、そのうえでゾーン障害耐性も必要ならZRS要素を含むRA-GZRSを選ぶ、という2段階の判断がこの種の設問の典型的なポイントです。"
 },
 {
@@ -155,11 +155,11 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たすために使用すべきソリューションはどれですか？",
   choices: [
     "MARSエージェントを使用したAzure Backup",
-    "Azure Site Recovery（VMware to Azureのレプリケーション）",
     "Azure Backup Server（MABS）によるアプリケーション整合性バックアップ",
-    "Azure Data Boxを使用した定期的なオフラインデータ転送"
+    "Azure Data Boxを使用した定期的なオフラインデータ転送",
+    "Azure Site Recovery（VMware to Azureのレプリケーション）"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>Azure Site Recovery</strong>はオンプレミスのVMware vSphere環境上で稼働するVMを対象に、専用のレプリケーションアプライアンス（構成サーバーやプロセスサーバーなど）を介してディスクの変更を継続的にAzureへ複製し、データセンター障害時にはAzure上でそのVMを実際にブート可能な状態で起動できる、ディザスタリカバリ専用のマネージドサービスです。これにより、物理的なセカンダリデータセンターをオンプレミスに自前で構築・維持するコストや運用負荷を避けながら、Azureをセカンダリサイトとして活用できます。<br><br><strong>MARSエージェントを使用したAzure Backup</strong>は、Windowsサーバー上のファイルやフォルダー単位のバックアップに限定される機能で、VM全体（OS込み）の保護や、まして起動可能な状態での復旧には対応していません。設問文の「ファイル・フォルダー単位の保護では不十分」という条件にまさに合致しない選択肢です。<br><br><strong>Azure Backup Server（MABS）</strong>はSQL Server、SharePoint、Exchangeなどアプリケーション整合性のあるバックアップ取得に強みを持つソリューションですが、これも本質はバックアップ（データの静的なコピー保存）であり、復旧時には仮想マシンの再作成や長い復元処理を要するため、迅速な業務継続を目的としたDRソリューションの代替にはなりません。<br><br><strong>Azure Data Box</strong>は大容量データをオフラインの物理デバイスで一括転送するための移行・初期シード用サービスであり、継続的なレプリケーションやリアルタイムに近い災害復旧の仕組みは提供しません。VMware環境のDRという文脈では、「バックアップ系サービス（Backup/MABS）＝データ保護目的」と「Site Recovery＝迅速なサービス継続目的」という区別を常に意識することが、この種の設問を素早く解く鍵になります。"
 },
 
@@ -171,11 +171,11 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たすために、ハブVNetに配置すべきサービスはどれですか？",
   choices: [
     "各スポークのサブネットにネットワークセキュリティグループ（NSG）を設定する",
+    "各VMにアプリケーションセキュリティグループ（ASG）を割り当てる",
     "Azure Firewallを配置し、アプリケーションルールでFQDNフィルタリングを行う",
-    "Azure Application Gatewayを配置し、WAFポリシーでフィルタリングする",
-    "各VMにアプリケーションセキュリティグループ（ASG）を割り当てる"
+    "Azure Application Gatewayを配置し、WAFポリシーでフィルタリングする"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Azure Firewall</strong>は、TLSのSNI（Server Name Indication）やHTTP/S ヘッダーを解析してFQDN（完全修飾ドメイン名）単位でアウトバウンド通信を許可・拒否できる<strong>アプリケーションルール</strong>を備えています。ハブVNetに1台配置し、各スポークからのルートテーブル（UDR）でハブのFirewallプライベートIPを既定ルートのネクストホップに設定することで、全スポーク共通のFQDNフィルタリングポリシーを一元管理できます。ワイルドカード指定（*.contoso-partner.com）にも対応しており、パートナー企業のサブドメイン全体をまとめて許可するような運用にも向いています。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>構成イメージ（ハブ&スポーク + Firewall）</div><div class='exp-flow'><div class='flow-box'>スポークVNet<br>VM</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Azure Firewall<br>(ハブVNet, FQDNルール)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>*.contoso-partner.com<br>のみ許可</div></div></div><br><br><strong>NSG</strong>はIPアドレス・ポート・プロトコルという第3〜4層の情報に基づくフィルタリングが基本であり、宛先のFQDNを解決してルール判定する仕組みは持っていません。宛先が動的にIPアドレスを変えるSaaS/CDN系のFQDNには追従できず、しかも各サブネットに個別設定が必要になるため一元管理にも不向きです。<br><br><strong>Application Gateway</strong>はL7のインバウンド向けロードバランサー兼WAFであり、外部からアプリへの受信トラフィックを対象とするサービスです。VM発のアウトバウンド通信を検査・制御する用途には設計されていません。<br><br><strong>ASG</strong>はVMを役割単位でグループ化しNSGルールを簡潔に書くための補助機能であり、それ自体にFQDNフィルタリング機能はありません。<br><br>なお、Azure Firewallには単体のNAT/フィルタリング機能に留まらず、Standard/Premium SKUで脅威インテリジェンスベースのフィルタリングも利用できるため、混同されやすい<strong>Web Application Firewall（WAF）</strong>とは守備範囲が異なる点（WAFはインバウンドのWebアプリ保護、Azure Firewallはネットワーク全体のアウトバウンド/イン/東西トラフィック制御）を整理して覚えておくと良いです。"
 },
 {
@@ -183,12 +183,12 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社は同一VNet内に、Web層・アプリケーション層・データベース層のVMを役割ごとに複数台ずつ運用しています。VMのIPアドレスは頻繁に増減するため、IPアドレスを直接指定せずに「Web層からアプリ層へはポート8080のみ許可」といったルールを役割単位で管理したいと考えています。",
   question: "この要件を最も効率的に満たす方法はどれですか？",
   choices: [
-    "各VMのIPアドレスをNSGルールに個別追加し、増減のたびに更新する",
-    "サブネットを役割ごとに分割し、サブネット単位のNSGのみで制御する",
+    "Azure Firewallを導入し、すべての内部通信をFirewall経由にする",
     "アプリケーションセキュリティグループ（ASG）を役割ごとに作成し、NSGルールの送信元/宛先にASGを指定する",
-    "Azure Firewallを導入し、すべての内部通信をFirewall経由にする"
+    "各VMのIPアドレスをNSGルールに個別追加し、増減のたびに更新する",
+    "サブネットを役割ごとに分割し、サブネット単位のNSGのみで制御する"
   ],
-  answer: 2,
+  answer: 1,
   explanation: "<strong>アプリケーションセキュリティグループ（ASG）</strong>は、VMのNICを役割（Web、App、DBなど）単位で論理グループ化できる機能です。NSGルールの送信元/宛先としてIPアドレスの代わりにASGを指定すれば「asg-Web から asg-App へポート8080のみ許可」という意図が明確なルールを1本書くだけで済みます。VMが増減してもNICをASGに追加/削除するだけでよく、ルール自体（IPアドレスの列挙）を書き換える必要がないため、動的にスケールする環境の運用コストを大幅に下げられます。同一VNet・同一サブネット内であっても役割単位のマイクロセグメンテーションが可能な点も強みです。<br><br>IPアドレスを個別にルールへ追加する方法は、VMの増減のたびに手動更新が必要で運用ミスやルール肥大化のリスクが高く、スケールする環境には現実的ではありません。<br><br>サブネット分割だけでは、同一サブネット内に複数の役割が混在するケースや、サブネットをまたいだ細かいVM単位の制御には対応できず、根本的な解決になりません（サブネット設計変更というコストも発生します）。<br><br>Azure Firewallは主にインターネット向けやハブスポーク間（VNet間）の一元的なトラフィック制御に使うサービスで、同一VNet内の全通信を経由させると余分なホップとレイテンシ、コストが発生するため、東西トラフィックの細かいマイクロセグメンテーションにはNSG+ASGの組み合わせの方が適しています。"
 },
 {
@@ -196,10 +196,10 @@ const QUESTIONS_SET2 = [
   scenario: "Northwind Traders社はオンプレミスで運用していた独自ドメイン「northwindtraders.com」のDNSゾーンをAzureに移行することになりました。移行後もインターネット上のクライアントが従来通り名前解決できるようにする必要があります。",
   question: "移行作業として正しい手順はどれですか？",
   choices: [
-    "Azure Private DNS ゾーンを作成し、VNetにリンクする",
+    "オンプレミスのDNSサーバーとAzure DNS間でゾーン転送（AXFR）を常時有効化する",
     "Azure DNS でパブリックゾーンを作成してレコードを移行し、ドメインレジストラー側のネームサーバー（NS）レコードをAzure DNSが割り当てたネームサーバーに更新する",
-    "Azure DNS Private Resolver を作成し、条件付きフォワーダーを設定する",
-    "オンプレミスのDNSサーバーとAzure DNS間でゾーン転送（AXFR）を常時有効化する"
+    "Azure Private DNS ゾーンを作成し、VNetにリンクする",
+    "Azure DNS Private Resolver を作成し、条件付きフォワーダーを設定する"
   ],
   answer: 1,
   explanation: "<strong>Azure DNS のパブリックゾーン</strong>を作成すると、Azureが自動的に4つの権威ネームサーバー（NSレコード）を割り当てます。既存のレコード（A、AAAA、CNAME、MX、TXTなど）をこの新しいゾーンにインポート・再作成した上で、ドメインを購入・管理しているレジストラー側の管理画面で「委任」設定を変更し、northwindtraders.comの権威ネームサーバーをAzure DNSが割り当てたものに書き換えます。これにより、世界中のリゾルバーがこのドメインの問い合わせをAzure DNSに転送するようになり、インターネット上のクライアントからの名前解決が引き続き機能します。<br><br><strong>Private DNS ゾーン</strong>はAzure VNet内部専用の名前解決であり、インターネット上の権威DNSとして機能しないため、パブリックドメインのホスティングには使えません。<br><br><strong>DNS Private Resolver</strong>はオンプレミスとAzure間のハイブリッド環境での相互DNS解決（条件付きフォワーディング）に使うサービスで、パブリックドメインの権威DNSホスティングとは目的が異なります。<br><br>Azure DNSは伝統的なゾーン転送（AXFR/IXFR）による同期の仕組みを持たないため、レコードはポータル・CLI・PowerShell・移行ツールなどを使って個別にインポート/作成する必要があります。移行時にTTLを一時的に短くしてから切り替えると、万一のロールバックや浸透待ちのリスクを下げられる点も実務上のポイントです。"
@@ -209,9 +209,9 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はVNet内に複数のVMを展開しており、社内アプリケーションから「vm-app01」のようなVM名でお互いを名前解決できるようにしたいと考えています。VMの追加・削除時に手動でDNSレコードを管理する手間は避けたいです。",
   question: "この要件を満たすために構成すべきものはどれですか？",
   choices: [
-    "Azure DNS パブリックゾーンを作成し、各VM作成時に手動でAレコードを追加する",
-    "VNetにリンクされたAzure Private DNS ゾーンで自動登録（オートレジストレーション）を有効にする",
     "各VMのhostsファイルを手動で編集し、他VMのIPアドレスを記載する",
+    "VNetにリンクされたAzure Private DNS ゾーンで自動登録（オートレジストレーション）を有効にする",
+    "Azure DNS パブリックゾーンを作成し、各VM作成時に手動でAレコードを追加する",
     "Azure DNS Private Resolverの転送ルールセットを作成する"
   ],
   answer: 1,
@@ -222,12 +222,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAzure Storageアカウント上のBlobコンテナーに、VNet内のVMからプライベートエンドポイント経由でアクセスするよう構成しました。しかし、VM上のアプリケーションが依然としてストレージアカウントのパブリックIPアドレスに名前解決されてしまい、プライベートIP経由での通信になりません。",
   question: "この問題を解決するために必要な追加構成はどれですか？",
   choices: [
-    "ストレージアカウントのファイアウォールで全ネットワークからのアクセスを許可する",
-    "サービスエンドポイントをストレージアカウント用に追加で構成する",
     "\"privatelink.blob.core.windows.net\" のプライベートDNSゾーンを作成し、VNetにリンクした上でプライベートエンドポイントに関連付ける",
-    "パブリックDNSゾーンにストレージアカウントのAレコードを手動で追加する"
+    "ストレージアカウントのファイアウォールで全ネットワークからのアクセスを許可する",
+    "パブリックDNSゾーンにストレージアカウントのAレコードを手動で追加する",
+    "サービスエンドポイントをストレージアカウント用に追加で構成する"
   ],
-  answer: 2,
+  answer: 0,
   explanation: "プライベートエンドポイントを作成しただけでは、ストレージアカウントのFQDN（例: account.blob.core.windows.net）の名前解決経路は自動的には変わりません。<strong>\"privatelink.blob.core.windows.net\"</strong>という名前のプライベートDNSゾーンを作成し、名前解決を必要とするVNetにリンクした上で、プライベートエンドポイントの「DNS統合」設定でこのゾーンにDNSレコードを自動登録させることで、初めてストレージアカウントのFQDNがプライベートエンドポイントのプライベートIPに解決されるようになります。実運用ではプライベートエンドポイント作成時にこのDNSゾーン作成・リンク・レコード登録を一括で行う統合オプションを使うのが一般的です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>プライベートエンドポイントの名前解決フロー</div><div class='exp-flow'><div class='flow-box'>クライアントの名前解決<br>(account.blob.core.windows.net)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>プライベートDNSゾーン<br>(privatelink.blob.core.windows.net)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>プライベートIPアドレス</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Azureサービスへ直接接続</div></div></div><br><br>ファイアウォールを全許可にすると、プライベートエンドポイントで実現しようとしていた「パブリックネットワークからの遮断」という目的自体が失われ、セキュリティ上本末転倒です。<br><br><strong>サービスエンドポイント</strong>はVNetのサブネットからPaaSサービスへの経路を最適化しつつストレージ側は引き続きパブリックIPを保持する別の仕組みで、プライベートエンドポイントとは競合し得る異なる機能であり、この問題の解決にはなりません。<br><br>パブリックDNSゾーンへの手動追加は、パブリックIPへの名前解決を助長するだけで、プライベートIPへの誘導にはつながりません。"
 },
 {
@@ -236,11 +236,11 @@ const QUESTIONS_SET2 = [
   question: "この状況について正しい説明はどれですか？",
   choices: [
     "VNetピアリングは推移的であるため、Spoke AとSpoke Bはハブ経由で自動的に通信できる",
-    "VNetピアリングは非推移的であるため、Spoke AとSpoke Bを直接通信させるには両者間に個別のピアリングを追加するか、Virtual WANのようなハブ型サービスに移行する必要がある",
     "ExpressRouteを追加契約すれば自動的にスポーク間通信が有効になる",
+    "VNetピアリングは非推移的であるため、Spoke AとSpoke Bを直接通信させるには両者間に個別のピアリングを追加するか、Virtual WANのようなハブ型サービスに移行する必要がある",
     "Azure DNS Private Resolverを構成すればスポーク間のルーティングが有効になる"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>VNetピアリングは非推移的（non-transitive）</strong>という性質を持ちます。Spoke AとハブがピアリングされVNet間ルートが交換されていても、Spoke BとハブのピアリングとはVNet間ルートの共有先が別であり、Spoke AとSpoke Bの間には自動的に経路は生成されません。「A-ハブ-B」という経路をAzureのネットワークファブリックが自動転送してくれるわけではない点が、伝統的なオンプレミスのルーターとの大きな違いです。直接通信させたい場合は、①Spoke AとSpoke Bの間に個別のVNetピアリングを追加する、②ハブに配置したNVAやAzure FirewallでUDRを使い明示的にルーティングする、③Azure Virtual WANのようにハブでの推移的ルーティングをネイティブにサポートするサービスへアーキテクチャを移行する、のいずれかが必要です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>VNetピアリングの非推移性</div><div class='exp-flow'><div class='flow-box'>Spoke A</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>ハブVNet</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Spoke B</div></div><div class='exp-flow'><div class='flow-box hl-red'>Spoke A &rarr; Spoke B は既定では直接通信不可</div></div></div><br><br>「ExpressRouteを追加契約すれば自動的に」という選択肢は誤りです。ExpressRouteはオンプレミスとAzure間の専用線接続を提供するサービスであり、Azure内部のスポーク間通信の推移性には一切関与しません。<br><br>DNS Private Resolverは名前解決のためのサービスであり、名前が引ければ通信できるわけではなく、経路（ルーティング）の問題は別次元で解決する必要があります。DNSが解決できてもルートがなければパケットは届きません。"
 },
 {
@@ -248,12 +248,12 @@ const QUESTIONS_SET2 = [
   scenario: "Litware社は複数リージョンに展開した多数のVNetを持ち、リージョンをまたいだスポーク間の推移的なルーティングを、追加のNVAやカスタムルート管理なしで実現したいと考えています。将来的にVNet数がさらに増加する見込みです。",
   question: "この要件に最も適したネットワークアーキテクチャはどれですか？",
   choices: [
-    "各VNet間をフルメッシュでVNetピアリングする",
-    "Azure Virtual WANを導入し、各VNetをVirtual WANハブに接続する",
     "各リージョンにVPN Gatewayを配置し、サイト間VPNで相互接続する",
-    "各VNetにAzure Firewallを個別に配置し、UDRで相互接続する"
+    "各VNetにAzure Firewallを個別に配置し、UDRで相互接続する",
+    "Azure Virtual WANを導入し、各VNetをVirtual WANハブに接続する",
+    "各VNet間をフルメッシュでVNetピアリングする"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Azure Virtual WAN</strong>は、各VNetをリージョンごとの仮想ハブに接続するだけで、ハブ内のスポーク間、さらに複数リージョンのハブ同士（ハブ間）についても、Microsoftのグローバルバックボーンを経由した<strong>推移的なルーティング</strong>を自動的にプロビジョニング・管理してくれるマネージドサービスです。カスタムルートやNVAを自前で構築・維持する必要がなく、VNet数が増加してもハブへの接続を追加するだけでネットワーク全体のトポロジーが破綻しません。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>接続方式の比較</div><table class='exp-compare'><tr><th>方式</th><th>推移的ルーティング</th><th>VNet増加時の管理</th></tr><tr class='hl'><td>Virtual WAN</td><td class='ok'>自動</td><td class='ok'>ハブ接続のみ</td></tr><tr><td>フルメッシュピアリング</td><td class='ng'>非対応（個別設定要）</td><td class='ng'>n(n-1)/2で急増</td></tr></table></div><br><br><strong>フルメッシュのVNetピアリング</strong>は、VNet数がn個の場合に必要なピアリング数がn(n-1)/2本という組み合わせ的な増加をたどり、追加・変更のたびに関連するすべてのピアリング設定を見直す必要があるため、VNet数が増える将来を見据えると管理コストが破綻します。<br><br>サイト間VPNはインターネット回線を利用した拠点間接続方式であり、Azure内部のVNet間接続としては帯域保証やレイテンシの面で非効率です。<br><br>各VNetに個別にAzure Firewallを配置しUDRで手動接続する方法は、ハブ間ルーティングの自動化がなく運用負荷が非常に高いため、「追加のNVAやカスタムルート管理なし」という要件そのものに反します。"
 },
 {
@@ -276,8 +276,8 @@ const QUESTIONS_SET2 = [
   choices: [
     "予約インスタンス（Reserved Instances）で3年間コミットする",
     "Azure Spot 仮想マシンを使用する",
-    "オンデマンドの通常VMをVM Scale Setで常時稼働させる",
-    "Azure Dedicated Hostを購入する"
+    "Azure Dedicated Hostを購入する",
+    "オンデマンドの通常VMをVM Scale Setで常時稼働させる"
   ],
   answer: 1,
   explanation: "<strong>Azure Spot 仮想マシン</strong>は、Azureデータセンターの余剰キャパシティをオンデマンド価格から大幅に割り引いた価格で利用できるオプションです。ただし、Azure側で他の優先度の高い需要（オンデマンド/予約）が発生した場合や単純に容量が逼迫した場合には、短い予告時間の後に強制的に退避（エビクション）される可能性があります。今回のジョブは処理単位が細かく分割可能で中断・再実行が可能な設計であるため、このエビクションの特性がワークロードの信頼性上の問題にならず、割引価格によるコスト削減効果をそのまま享受できます。<br><br><strong>予約インスタンス</strong>は1年または3年の長期コミットにより割引を受ける代わりに、常時（あるいは高い確率で）稼働することが前提のワークロード向けの購入方式であり、夜間だけ動く断続的なバッチジョブでは稼働しない時間帯も課金が発生してしまい、コスト効率が悪くなります。<br><br>オンデマンドVMを常時稼働させる方法は、そもそも夜間しか使わないジョブに対して無駄な稼働時間を含み、割引も適用されないためSpot VMより高コストになります。<br><br>Dedicated Hostは物理サーバー単位を専有する高コストなオプションで、ライセンス上の理由（コアあたり課金の回避など）や強いテナント分離要件がある場合に使うものであり、コスト最適化そのものが目的の断続的バッチ処理には不向きです。"
@@ -287,10 +287,10 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社は、24時間365日稼働し続けるSQL Server VMを3年間運用する計画です。すでにSQL ServerのソフトウェアアシュアランスライセンスをEnterprise Agreementで保有しています。コストを最大限削減したいと考えています。",
   question: "適用すべきコスト最適化の組み合わせはどれですか？",
   choices: [
-    "Azure Spot VMのみを使用する",
+    "Azure Hybrid Benefitのみを使用し、予約インスタンスは使用しない",
     "3年間の予約インスタンス（Reserved Instances）とAzure Hybrid Benefitを組み合わせて使用する",
-    "オンデマンド課金のみを使用し、割引は適用しない",
-    "Azure Hybrid Benefitのみを使用し、予約インスタンスは使用しない"
+    "Azure Spot VMのみを使用する",
+    "オンデマンド課金のみを使用し、割引は適用しない"
   ],
   answer: 1,
   explanation: "常時稼働が確定している3年間の予測可能なワークロードには、コンピューティング料金（VMインスタンス代）に対して<strong>予約インスタンス（Reserved Instances）</strong>で長期コミットの前払い割引を適用するのが最も効果的です。さらに、すでに保有しているソフトウェアアシュアランス付きのSQL Serverライセンスを<strong>Azure Hybrid Benefit</strong>で適用することで、Azure上でSQL Serverを実行する際のライセンス費用（通常はVM料金に組み込まれるSQL Serverの従量課金分）を削減できます。予約インスタンスはコンピューティングリソースの割引、Azure Hybrid Benefitはソフトウェアライセンスの割引と、それぞれ異なるコスト要素に効くため<strong>併用が可能</strong>であり、両方を組み合わせることで最大限のコスト削減が実現します。<br><br>Spot VMは需給に応じて強制退避されるリスクがあり、24時間365日の可用性が求められる本番SQL Serverワークロードには不適切です。<br><br>オンデマンドのみでは割引が一切適用されず、3年間のコストが最大になります。<br><br>Azure Hybrid Benefitのみを適用し予約インスタンスを使わない場合、ライセンス費用は削減できてもコンピューティング側の前払い割引を取りこぼすことになり、最大限の削減にはなりません。"
@@ -300,12 +300,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社のWebアプリケーションはVM Scale Set上で稼働しています。トラフィック量そのものではなく、バックエンドのメッセージキュー（Azure Storage Queue）に滞留しているメッセージ数に応じてインスタンス数を増減させたいと考えています。",
   question: "この要件を満たす自動スケールの構成方法はどれですか？",
   choices: [
+    "手動でインスタンス数を都度調整する",
     "CPU使用率のみを基準とした標準の自動スケールルールを設定する",
-    "Application Insightsまたはカスタムメトリックを使用し、キューのメッセージ数に基づく自動スケールルールを設定する",
     "スケジュールベースの自動スケールのみを設定し、固定時間帯にインスタンスを増減させる",
-    "手動でインスタンス数を都度調整する"
+    "Application Insightsまたはカスタムメトリックを使用し、キューのメッセージ数に基づく自動スケールルールを設定する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "VM Scale Setの自動スケール（Azure Monitor autoscale）は、CPU使用率やメモリ使用率といった組み込みメトリックだけでなく、<strong>Storage Queueのメッセージ数を測定するメトリック</strong>など、ワークロードの実際の需要をより正確に表す指標を基準にスケールルールを構成できます。キュー滞留数という業務上の負荷指標に応じて増減させたい場合は、このカスタムメトリックベースのルールを組むのが適切なアプローチです。<br><br>CPU使用率のみのルールでは、キューに大量のメッセージが溜まっていても、まだ処理中のインスタンスのCPU負荷が低ければスケールアウトのトリガーがかからず、逆に処理は軽いがCPUを食う一時的な処理でスケールアウトしてしまうなど、実際の待ち行列状況と乖離した挙動になり得ます。<br><br>スケジュールベースのスケーリングは、時間帯によって固定的にインスタンス数を変える用途には向きますが、その日ごとに変動するキューの滞留状況というリアルタイムかつ動的な指標には反応できません。<br><br>手動調整は自動化されておらず、担当者の監視・対応が必要になるため運用負荷が高く、リアルタイム性・即応性の面でも自動スケールに劣ります。"
 },
 {
@@ -313,12 +313,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAKSクラスターを新規構築します。各Podに対してVNet内のIPアドレスを直接割り当て、VNet内の他のリソース（VMなど）やオンプレミスからPodへ直接通信できるようにする必要があります。一方で、VNetのIPアドレス消費量が増えることは許容しています。",
   question: "この要件に適したAKSのネットワークモードはどれですか？",
   choices: [
-    "kubenet",
-    "Azure CNI（Container Networking Interface）",
+    "AKSのネットワークモードはどちらを選んでも同じ挙動になる",
     "Kubenetとkube-proxyのIPVSモードの組み合わせ",
-    "AKSのネットワークモードはどちらを選んでも同じ挙動になる"
+    "kubenet",
+    "Azure CNI（Container Networking Interface）"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>Azure CNI</strong>を使用すると、クラスター内の各Podに対してノードが所属するVNetのサブネットからIPアドレスが直接割り当てられます。この結果、PodはVNet内の他のAzureリソース（VMなど）やExpressRoute/VPN経由のオンプレミスネットワークから、追加のNATやルーティング設定なしに直接到達可能になります。ただし、この方式ではPodの想定最大数に応じたIPアドレスを事前にサブネットで計画・確保する必要があり、クラスタースケール時にIPアドレス消費量が大きくなる点がトレードオフです（設問ではこれを許容しているため適合します）。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>AKSネットワークモード比較</div><table class='exp-compare'><tr><th>モード</th><th>PodへのIP</th><th>VNet外から直接到達</th><th>IP消費量</th></tr><tr class='hl'><td>Azure CNI</td><td>VNetのIP</td><td class='ok'>可能</td><td class='ng'>多い</td></tr><tr><td>kubenet</td><td>ノード内部の別空間</td><td class='ng'>不可（要UDR等）</td><td class='ok'>少ない</td></tr></table></div><br><br><strong>kubenet</strong>では、ノードのみがVNetのIPアドレスを持ち、各Podにはノード内部で管理される別のプライベートアドレス空間（Kubernetesのクラスターネットワーク）が割り当てられ、Pod外への通信はノードでNAT変換されます。VNet内リソースやオンプレミスからPodへ直接到達するには、UDRの追加設定などの複雑な回避策が必要になり、今回の「Podへの直接到達性」という要件には素直には適合しません。<br><br>kube-proxyのモード（iptablesかIPVSか）は、クラスター内のService（負荷分散）の実装方式に関するレイヤーの違いであり、PodにVNet IPを直接割り当てるかどうかというネットワークプラグインの選択（CNI vs kubenet）とは別次元の設定であるため、この要件には直接関係しません。"
 },
 {
@@ -326,10 +326,10 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は、複数の可用性ゾーンにまたがるバックエンドVMプールに対して負荷分散を行う内部ロードバランサーを構築する必要があります。ゾーン冗長構成とHA ポートのサポートも必要です。",
   question: "使用すべきAzure Load BalancerのSKUはどれですか？",
   choices: [
-    "Basic SKU",
+    "Gateway Load Balancer専用SKU",
     "Standard SKU",
-    "SKUの選択はゾーン冗長性に影響しないため、どちらでも良い",
-    "Gateway Load Balancer専用SKU"
+    "Basic SKU",
+    "SKUの選択はゾーン冗長性に影響しないため、どちらでも良い"
   ],
   answer: 1,
   explanation: "<strong>Standard SKU</strong>のLoad Balancerは、複数の可用性ゾーンにまたがってバックエンドプールを配置できる<strong>ゾーン冗長</strong>のフロントエンド構成、特定ゾーンに固定する<strong>ゾーン単位</strong>のフロントエンド構成、および全ポート（TCP/UDP）を一括で負荷分散する<strong>HA ポート</strong>ルールをサポートします。ゾーンをまたぐバックエンドプールへの高可用性な負荷分散という要件を満たすには、Standard SKUを選択する必要があります。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Load Balancer SKU比較</div><table class='exp-compare'><tr><th>項目</th><th>Basic SKU</th><th>Standard SKU</th></tr><tr><td>SLA</td><td class='ng'>なし</td><td class='ok'>99.99%</td></tr><tr class='hl'><td>ゾーン冗長</td><td class='ng'>非対応</td><td class='ok'>対応</td></tr><tr><td>NSGの要否</td><td>任意</td><td class='ng'>実質必須（既定で暗黙拒否）</td></tr><tr><td>HAポート</td><td class='ng'>非対応</td><td class='ok'>対応</td></tr></table></div><br><br><strong>Basic SKU</strong>は可用性ゾーンの概念自体をサポートしておらず、SLAの保証もなく、HA ポートやセキュアなデフォルト（Standardはデフォルトで明示的に許可しない限りインバウンドを閉じる）といった機能も持たないため、今回の要件を満たせません。また現在Basic SKUは新規作成が制限される方向にあり、Standardへの統一が進んでいます。<br><br>SKUの違いはゾーン冗長性・SLA・診断機能・セキュリティモデルなど多岐にわたって大きく影響するため「どちらでも良い」は誤りです。<br><br><strong>Gateway Load Balancer</strong>は、トラフィックをサードパーティ製の仮想アプライアンス（NVA）にトランスペアレントに挿入・チェイニングするための専用のロードバランサー種別であり、一般的な内部負荷分散の要件には該当しません。混同しやすいポイントとして、内部向けの負荷分散にはLoad Balancerで十分ですが、L7の高度なルーティングやWAF機能まで必要ならApplication Gatewayの検討も選択肢に入る点は覚えておくとよいでしょう。"
@@ -339,12 +339,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は新しいバックエンドAPIをAzureにデプロイしようとしています。要件は次のとおりです：(1) 実行環境のOSパッチ適用やミドルウェア管理はAzure側に任せたい、(2) リクエストが来ていない時間帯はコストを発生させたくない、(3) 突発的なトラフィック急増に対して秒単位で自動スケールしてほしい、(4) Kubernetesの知識を持つ運用担当者はいない。",
   question: "この要件に最も適したコンピューティングサービスはどれですか？",
   choices: [
-    "Azure Kubernetes Service（AKS）",
     "Azure Container Apps（消費コンプランで最小レプリカ数0）",
+    "Azure Kubernetes Service（AKS）",
     "Azure仮想マシン（VMSS、常時2台以上稼働）",
     "App Service（Premium v3プラン、常時起動）"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>Azure Container Apps</strong>はKubernetesをベースにしたマネージドサーバーレスコンテナ実行環境で、内部的にAKSやKEDAを使用しつつも、ユーザーはKubernetesのクラスター管理・ノード管理・Kubernetes APIの知識を必要としません。<strong>消費（Consumption）プラン</strong>で最小レプリカ数を0に設定すれば、リクエストがない時間帯はインスタンス数がゼロになりコストが発生せず、リクエスト受信をトリガーに数秒でスケールアウトできるため、4つの要件をすべて満たします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>コンピューティング選定の判断軸</div><div class='exp-decision'><div class='dec-row'><span class='dec-cond'>フルのK8s制御・複雑なオーケストレーションが必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>AKS</span></div><div class='dec-row dec-yes'><span class='dec-cond'>K8s知識不要・ゼロスケール・イベント駆動？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>Container Apps</span></div><div class='dec-row'><span class='dec-cond'>OSレベルの完全な制御が必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>VM / VMSS</span></div><div class='dec-row'><span class='dec-cond'>Webアプリで常時稼働・ゼロスケール不要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>App Service</span></div></div></div><br><br><strong>AKS</strong>はフルのKubernetes制御が可能で高い柔軟性を持ちますが、クラスターのアップグレード・ノードプール管理・Kubernetes特有の運用知識が必要であり、「Kubernetesの知識を持つ運用担当者はいない」という制約に反します。<strong>VMSSでの常時稼働構成</strong>はOSパッチ適用が自己責任になる上、常時2台以上稼働させるためリクエストがない時間帯もコストが発生し続け、要件(1)(2)に反します。<strong>App Service（常時起動のPremium v3）</strong>はOS管理は不要になるものの、既定ではインスタンスが常時起動し続けるため、リクエストがない時間帯のコストをゼロにはできません（App Serviceにも自動スケールはありますが、真のゼロスケールにはFunctionsの消費プランかContainer Appsが適しています）。"
 },
 {
@@ -354,10 +354,10 @@ const QUESTIONS_SET2 = [
   choices: [
     "可用性セット（Availability Set）",
     "可用性ゾーン（Availability Zones）",
-    "近接配置グループ（Proximity Placement Group）",
-    "Azure Dedicated Host"
+    "Azure Dedicated Host",
+    "近接配置グループ（Proximity Placement Group）"
   ],
-  answer: 2,
+  answer: 3,
   explanation: "<strong>近接配置グループ（Proximity Placement Group, PPG）</strong>は、グループに属するVMをAzureのデータセンター内でできるだけ物理的に近いラックに配置するようスケジューラに指示するための論理グループです。VM間の物理的な距離が縮まることでネットワークホップ数やケーブル長に起因するレイテンシが最小化され、金融取引システムのような超低遅延を求めるワークロードや、密結合なHPC（高性能計算）クラスターなどで活用されます。<br><br>可用性セット（Availability Set）は、同一データセンター内でVMを異なる障害ドメイン・更新ドメインに分散配置し、単一障害点を避けることで可用性を高める仕組みであり、目的が「分散」であるため、むしろ物理的な近さとは相反する方向に作用することがあります。<br><br>可用性ゾーンは、データセンターそのものを物理的に分離することで大規模障害への耐性を高める仕組みであり、ゾーンをまたぐ配置は距離が離れる分レイテンシが増加する方向に働くため、レイテンシ最小化とは目的が逆です。<br><br>Dedicated Hostは物理サーバーを専有してテナント分離やライセンス要件に対応するための仕組みであり、それ自体はVM間の物理的近接性を直接保証するものではありません（近接性を求める場合はPPGと併用することもあります）。"
 },
 {
@@ -365,12 +365,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は東日本リージョンと西日本リージョンの両方にWebアプリケーションをデプロイしています。単一リージョン内での複数インスタンス間の負荷分散に加えて、リージョン障害時に他方のリージョンへ自動的にトラフィックを振り向ける仕組みが必要です。さらに、WAF（Webアプリケーションファイアウォール）による保護と、静的コンテンツのグローバルなキャッシュ配信も同時に実現したいと考えています。",
   question: "この要件を最も少ないコンポーネント数で満たせる構成はどれですか？",
   choices: [
-    "Azure Load Balancer（Standard SKU、複数リージョンにインスタンスを配置）",
-    "Azure Front Door（WAFポリシー + キャッシュ機能を含む）",
     "Azure Traffic Managerのみ（DNSベースのリージョン間フェイルオーバー）",
-    "各リージョンにApplication Gatewayを配置し、DNSラウンドロビンで振り分ける"
+    "各リージョンにApplication Gatewayを配置し、DNSラウンドロビンで振り分ける",
+    "Azure Front Door（WAFポリシー + キャッシュ機能を含む）",
+    "Azure Load Balancer（Standard SKU、複数リージョンにインスタンスを配置）"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Azure Front Door</strong>はグローバルなレイヤー7（HTTP/S）ロードバランサーで、複数リージョンへのトラフィック分散とヘルスプローブに基づく自動フェイルオーバー、<strong>WAFポリシー</strong>によるWebアプリケーション保護、静的コンテンツの<strong>CDNキャッシュ配信</strong>までを単一のサービスでまとめて提供します。Anycastネットワークにより世界中のエッジPoPで最寄りの正常なリージョンへ振り分けるため、リージョン障害時も自動的に健全な方へトラフィックが切り替わります。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ロードバランサー系サービスの使い分け</div><table class='exp-compare'><tr><th>サービス</th><th>レイヤー</th><th>スコープ</th><th>WAF</th><th>CDN</th></tr><tr><td>Load Balancer</td><td>L4</td><td>リージョン内</td><td class='ng'>×</td><td class='ng'>×</td></tr><tr><td>Application Gateway</td><td>L7</td><td>リージョン内</td><td class='ok'>○</td><td class='ng'>×</td></tr><tr class='hl'><td>Front Door</td><td>L7</td><td>グローバル</td><td class='ok'>○</td><td class='ok'>○</td></tr><tr><td>Traffic Manager</td><td>DNS</td><td>グローバル</td><td class='ng'>×</td><td class='ng'>×</td></tr></table></div><br><br><strong>Load Balancer</strong>はリージョン内のL4負荷分散に限定され、リージョンをまたぐグローバル分散やWAF・CDN機能は持ちません。<strong>Traffic Managerのみ</strong>はDNSベースでリージョン間フェイルオーバーは実現できますが、WAFやキャッシュ機能を持たないため、それらを実現するには追加のコンポーネント（各リージョンのApplication Gateway＋CDN等）が別途必要になり、「最も少ないコンポーネント数」という条件に反します。<strong>各リージョンにApplication Gateway＋DNSラウンドロビン</strong>もWAFは実現できますが、CDNキャッシュ機能がなく、DNSラウンドロビンはヘルスチェックに基づく自動フェイルオーバーを行わないため、障害時に不健全なリージョンへもトラフィックが送られ続けるリスクがあります。"
 },
 {
@@ -378,10 +378,10 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は、オンプレミスのデータセンターとAzure VNet内のVM間で、特定のポートの通信が意図せず失敗する問題を継続的に監視したいと考えています。単発の診断ではなく、時間の経過とともに接続性の推移や断続的な障害を継続的に記録・可視化する必要があります。",
   question: "この要件に最も適したNetwork Watcherの機能はどれですか？",
   choices: [
-    "IPフロー検証（IP Flow Verify）",
+    "NSG診断（NSG Diagnostics）",
     "接続モニター（Connection Monitor）",
-    "次ホップ（Next Hop）",
-    "NSG診断（NSG Diagnostics）"
+    "IPフロー検証（IP Flow Verify）",
+    "次ホップ（Next Hop）"
   ],
   answer: 1,
   explanation: "<strong>接続モニター（Connection Monitor）</strong>は、指定したソース（VM、オンプレミスエージェントなど）から宛先（VM、FQDN、URLなど）へのエンドツーエンドの接続性を定期的かつ継続的にテストし、レイテンシ、パケットロス、接続の成功/失敗の履歴を時系列のグラフやトポロジー図として可視化・記録する機能です。「断続的な障害」や「時間経過に伴う推移」を捉えたいという要件には、この継続監視の仕組みが最も合致します。<br><br><strong>IPフロー検証</strong>は、ある時点でNSGのルールに基づいて特定の通信が許可されるか拒否されるかを即座に判定する、いわばスナップショット的な単発診断ツールであり、継続的な監視・記録には使えません。<br><br><strong>次ホップ</strong>は、あるVMから特定の宛先へのパケットがどのルート（ネクストホップの種類）で転送されるかを確認するためのツールで、ルーティングの誤設定を特定するのに有用ですが、これも単発の診断であり接続性の推移を追跡する機能ではありません。<br><br>「NSG診断」という単体の継続監視機能はNetwork Watcherの機能名としては存在せず、この選択肢は紛らわしいダミーです。"
@@ -392,9 +392,9 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たす構成はどれですか？",
   choices: [
     "VNetフローログを有効化し、Traffic Analyticsと連携させる",
-    "Azure Monitor アクティビティログのみを確認する",
     "IPフロー検証を定期的に手動実行する",
-    "Azure Advisorのセキュリティ推奨事項を確認する"
+    "Azure Advisorのセキュリティ推奨事項を確認する",
+    "Azure Monitor アクティビティログのみを確認する"
   ],
   answer: 0,
   explanation: "<strong>VNetフローログ</strong>を有効化すると、仮想ネットワーク内を流れる（許可/拒否された）トラフィックについて、送信元/宛先IP・ポート・プロトコル・許可か拒否かといった情報がフローごとにログとして記録されます。これを<strong>Traffic Analytics</strong>と連携させると、Log Analyticsワークスペースに集約されたフローログを解析し、トラフィックのホットスポット、地理的な通信先の分布、異常に多いトラフィックパターン、マルウェアとの通信の可能性がある宛先などを、グラフィカルなダッシュボードで継続的に可視化・分析できます。過去の傾向確認とセキュリティ分析の両方が要件となる本シナリオに最も合致します。<br><br>なお、従来提供されていた<strong>NSGフローログ</strong>は新規作成が停止されており、Microsoftは同等機能をより柔軟に扱える<strong>VNetフローログ</strong>への移行を推奨しています。試験対策としては、今後はNSGフローログではなくVNetフローログが正解の選択肢として問われる点を押さえておくとよいでしょう。<br><br><strong>アクティビティログ</strong>は「誰がいつどのAzureリソースに対してどんな管理操作（作成・変更・削除など）を行ったか」を記録する監査ログであり、ネットワークを実際に流れるパケット/フローの情報そのものは含まれません。<br><br><strong>IPフロー検証</strong>は特定時点での単発診断ツールであり、継続的なトラフィックの傾向分析やダッシュボード化はできません。<br><br><strong>Azure Advisor</strong>はコスト・信頼性・パフォーマンス・セキュリティなどの観点からのベストプラクティス推奨事項を提示するアドバイザリー機能であり、実際のトラフィックログを収集・可視化する機能ではありません。"
@@ -404,12 +404,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は金融業界の規制により、インターネットへのすべてのアウトバウンド通信に対して侵入検知・侵入防止（IDPS）機能とTLSインスペクション（復号化して内容を検査する機能）を適用する必要があります。",
   question: "この要件を満たすAzureサービス/SKUはどれですか？",
   choices: [
-    "Azure Firewall Standard",
     "Azure Firewall Premium",
-    "Network Security Group（NSG）",
-    "Azure Web Application Firewall（WAF）単体"
+    "Azure Web Application Firewall（WAF）単体",
+    "Azure Firewall Standard",
+    "Network Security Group（NSG）"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>Azure Firewall Premium</strong>は、Standard SKUが持つFQDNフィルタリングや脅威インテリジェンスベースのフィルタリングに加えて、暗号化されたHTTPS通信を一度復号して内容を検査し再暗号化する<strong>TLSインスペクション</strong>、およびシグネチャベースで既知の攻撃パターンを検知・遮断する高度な<strong>IDPS（侵入検知・侵入防止システム）</strong>をアラートモード/拒否モードで提供します。これらは金融業界などコンプライアンス要件が厳しい業種で求められる水準の検査機能であり、Premium SKU限定の機能です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Azure Firewall SKU比較</div><table class='exp-compare'><tr><th>機能</th><th>Standard</th><th>Premium</th></tr><tr><td>FQDNフィルタリング</td><td class='ok'>対応</td><td class='ok'>対応</td></tr><tr class='hl'><td>TLSインスペクション</td><td class='ng'>非対応</td><td class='ok'>対応</td></tr><tr class='hl'><td>IDPS（侵入検知/防止）</td><td class='ng'>非対応</td><td class='ok'>対応</td></tr></table></div><br><br><strong>Azure Firewall Standard</strong>はFQDNフィルタリングや脅威インテリジェンスベースのアラート/拒否機能は備えていますが、暗号化トラフィックの復号を伴うTLSインスペクションや、シグネチャベースのIDPS機能は一切持っていません（Standardが持つのは既知の悪性IP/ドメインに対する脅威インテリジェンスベースのアラート・拒否機能のみで、IDPSとは別の仕組みです。IDPSはPremium SKU専用の機能です）。<br><br>NSGはIP/ポート/プロトコルベースの基本的な許可・拒否フィルタリングのみで、パケットの中身を検査するIDPSやTLSインスペクションの機能はありません。<br><br>WAF単体はWebアプリケーションへのインバウンドHTTP(S)通信を保護するためのL7セキュリティ機能であり、社内から発信されるすべてのアウトバウンド通信全般に対するIDPS/TLSインスペクションという要件はカバーしません。"
 },
 {
@@ -417,10 +417,10 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAzure DNSでパブリックゾーン「contoso.com」を運用しています。同社のルートドメイン（apexドメイン、@レコード）を、リージョンフェイルオーバー対応のTraffic Managerプロファイルに向けたいのですが、DNSの仕様上apexレコードにはCNAMEを設定できません。",
   question: "この要件を満たすために使用すべきAzure DNSの機能はどれですか？",
   choices: [
-    "TXTレコードを使用してTraffic Managerのプロファイル名を記載する",
+    "apexドメインでは代替手段が存在しないため、サブドメインのみで運用する",
     "エイリアスレコード（Alias record）を使用し、apexレコードをTraffic Managerプロファイルに向ける",
-    "MXレコードを使用してTraffic Managerに転送する",
-    "apexドメインでは代替手段が存在しないため、サブドメインのみで運用する"
+    "TXTレコードを使用してTraffic Managerのプロファイル名を記載する",
+    "MXレコードを使用してTraffic Managerに転送する"
   ],
   answer: 1,
   explanation: "DNSの標準仕様（RFC）では、ゾーンのapex（ルート、@）にCNAMEレコードを置くことはできません（同じ名前に他のレコード種別、例えばSOAやNSと共存できないため）。Azure DNSの<strong>エイリアスレコード（Alias record）</strong>は、A/AAAA/CNAMEレコードの実体をAzureリソース（Traffic Managerプロファイル、Azure Front Door、パブリックIPアドレスなど）に直接紐付けられる特別な仕組みで、apexレコード（Aレコードとしてエイリアス化）に対しても設定でき、ターゲットのAzureリソースのIPアドレスが変化した場合でもAzure DNS側が自動的に追従してくれます。これにより、apex制約を回避しつつTraffic Managerプロファイルへの動的な参照を実現できます。<br><br>TXTレコードはSPFレコードなど任意のテキスト情報を格納するためのものであり、DNSクライアントの名前解決やトラフィックの転送先を指定する用途には使われません。<br><br>MXレコードはメール配送先のメールサーバーを指定するための専用レコードであり、Webトラフィックのルーティングには使えません。<br><br>「apexドメインには代替手段がない」という選択肢は誤りで、Azure DNSのエイリアスレコードはまさにこの制約を解決するために提供されている機能です。"
@@ -430,12 +430,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は2つの異なるオンプレミスのデータセンター（東京と大阪）を、それぞれ別のExpressRoute回線でAzureに接続しています。追加のWAN回線やVPNを新設せずに、この2つのデータセンター間をMicrosoftのバックボーンネットワーク経由で直接接続したいと考えています。",
   question: "この要件を満たすExpressRouteの機能はどれですか？",
   choices: [
-    "ExpressRoute Global Reach",
-    "ExpressRoute FastPath",
     "ExpressRoute Direct",
-    "ExpressRouteのMicrosoftピアリング"
+    "ExpressRouteのMicrosoftピアリング",
+    "ExpressRoute Global Reach",
+    "ExpressRoute FastPath"
   ],
-  answer: 0,
+  answer: 2,
   explanation: "<strong>ExpressRoute Global Reach</strong>は、異なる場所にある2つ以上のExpressRoute回線同士を、Microsoftのグローバルネットワークバックボーンを介して相互接続するための機能です。東京拠点のExpressRoute回線と大阪拠点のExpressRoute回線をGlobal Reachでリンクすることで、Azureを経由地としながらも、追加のWAN専用線や拠点間VPNを新設することなく、東京-大阪間のオンプレミスデータセンター同士の通信を実現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ExpressRoute Global Reachの接続イメージ</div><div class='exp-flow'><div class='flow-box'>東京DC</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>ExpressRoute回線1</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Microsoftバックボーン<br>(Global Reach)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>ExpressRoute回線2</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>大阪DC</div></div></div><br><br><strong>FastPath</strong>は、ExpressRoute経由でVNet内リソースへ到達する通信について、VNetゲートウェイ（データパス上のボトルネックになり得る）をバイパスして直接バックエンドに到達させることでレイテンシとスループットを改善する機能であり、拠点間接続そのものを実現する機能ではありません。<br><br><strong>ExpressRoute Direct</strong>は、10Gbpsまたは100Gbpsのポート単位でMicrosoftのエッジルーターに物理的に直接接続する、大容量向けのプロビジョニング方式（複数のExpressRoute回線をこの物理接続上に作成できる）であり、拠点間接続機能そのものではありません。<br><br>Microsoftピアリングは前述の通りAzure/Microsoft 365のPaaSサービスのパブリックエンドポイントへの接続に使う経路であり、オンプレミス拠点同士の直接接続という今回の要件には該当しません。"
 },
 {
@@ -443,10 +443,10 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はオンプレミスのVMware環境で稼働する300台のサーバーをAzureに移行する計画を立てています。移行に先立ち、各サーバーの実際のCPU/メモリ使用率の実績データに基づいて、Azureでの適切なVMサイズとおおよその月額コストを見積もりたいと考えています。また、オンプレミスのサーバーがAzureへの移行に対応しているかどうか（互換性）も事前に確認したいとしています。",
   question: "この要件を満たすために使用すべきツールはどれですか？",
   choices: [
-    "Azure Total Cost of Ownership（TCO）計算ツール",
-    "Azure Migrate（検出とアセスメント機能）",
     "Azure Advisorのコスト推奨事項",
-    "Azure Pricing calculator（手動でVMスペックを入力）"
+    "Azure Migrate（検出とアセスメント機能）",
+    "Azure Pricing calculator（手動でVMスペックを入力）",
+    "Azure Total Cost of Ownership（TCO）計算ツール"
   ],
   answer: 1,
   explanation: "<strong>Azure Migrate</strong>の検出・アセスメント機能は、オンプレミスのVMware/Hyper-V環境やAWS/GCP上のサーバーを対象に、稼働中のサーバーを自動的に検出（Discovery）した上で、一定期間の実際のCPU・メモリ・ディスクI/O使用率のパフォーマンス実績データを収集します。このデータに基づいて、過剰・過小のいずれでもない適切なAzure VMサイズを推奨し（サイジング）、月額コストの見積もりを算出するとともに、OS/アプリケーションのAzureとの互換性（移行準備状況）も評価します。移行計画の初期段階で行うアセスメント作業として、AZ-305で問われる典型的な移行設計プロセスです。<br><br><strong>TCO計算ツール</strong>は、オンプレミスの総保有コスト（ハードウェア・電力・人件費など）とAzureのコストを比較し、移行によるコスト削減効果を試算するための財務比較ツールであり、個々のサーバーの実績データに基づくVMサイジングは行いません。<strong>Azure Advisor</strong>は既にAzure上で稼働しているリソースに対するベストプラクティス推奨を提示する機能であり、移行前のオンプレミスサーバーは評価対象にできません。<strong>Pricing calculator</strong>はユーザーが手動で選択したVMスペック・サービスの料金を計算するだけのツールで、実際のオンプレミスサーバーの使用率データを収集・分析してサイジングを推奨する機能は持ちません。"
@@ -456,12 +456,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は、同一のVM Scale Set内でCPU最適化VMサイズとメモリ最適化VMサイズを混在させ、さらにオンデマンドVMとSpot VMを組み合わせて運用したいと考えています。従来型のVM Scale Setの構成モデルではこれを実現できませんでした。",
   question: "この要件を満たすために選択すべきVM Scale Setのオーケストレーションモードはどれですか？",
   choices: [
+    "Azure Batchプールモード",
     "Uniform（均一）オーケストレーションモード",
     "Flexible（柔軟）オーケストレーションモード",
-    "Azure Batchプールモード",
     "Dedicated Hostグループモード"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "VM Scale Setの<strong>Flexible（柔軟）オーケストレーションモード</strong>では、スケールセットは個々のVMを（Azure VMと同様に）独立したリソースとして管理し、同一スケールセット内に異なるVMサイズ（CPU最適化とメモリ最適化の混在など）を配置したり、購入オプションが異なるVM（オンデマンドとSpotの混在）を組み合わせたりすることが可能です。また可用性ゾーンへのVM単位での分散指定など、より細かい制御ができる点も特徴です。<br><br><strong>Uniform（均一）オーケストレーションモード</strong>は、単一のVMプロファイル（同一サイズ・同一構成）のVMを均一に大量デプロイし、スケールセット自体がVMのライフサイクルを一括管理することに最適化された従来からのモデルであり、VMサイズや購入オプションの混在はサポートされません。<br><br>「Azure Batchプールモード」というVM Scale Setのオーケストレーションモードは存在しません（Azure Batchは別のバッチ処理向けサービスです）。<br><br>Dedicated Hostグループは物理ホストを専有するための機能であり、VM Scale Setのオーケストレーションモードとは別次元の概念で、サイズ混在や購入オプションの組み合わせを実現するものではありません。"
 },
 {
@@ -470,11 +470,11 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たすために使用すべきAKSの機能はどれですか？",
   choices: [
     "Network Security Group（NSG）をAKSノードのサブネットに適用する",
-    "Kubernetes Network Policy（Azure NetworkポリシーまたはCalico）を使用してPod間通信を制御する",
     "Azure Firewallをクラスター内部通信のフィルタリングに使用する",
-    "Azure Bastionを使用してPod間のアクセスを制御する"
+    "Azure Bastionを使用してPod間のアクセスを制御する",
+    "Kubernetes Network Policy（Azure NetworkポリシーまたはCalico）を使用してPod間通信を制御する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "AKSでは、クラスター作成時にネットワークポリシーエンジンとして<strong>Azure NetworkポリシーまたはCalico</strong>のいずれかを有効化することで、Kubernetesの<strong>NetworkPolicy</strong>リソースをマニフェスト（YAML）として宣言的に定義できます。ラベルセレクターを使って「app: frontend というラベルのPodからは app: backend というラベルのPodへの通信のみを許可し、それ以外（データベースPodなど）への通信は拒否する」といったPod単位・名前空間単位の細かいマイクロセグメンテーションが可能で、GitOpsのようなワークフローにも組み込みやすい宣言的な管理と相性が良い点が特徴です。<br><br>NSGはノードが配置されるサブネットやNICレベルでの制御であり、同一ノード上で複数稼働するPod同士の通信までは制御できず、Kubernetesのラベルベースの抽象化とも整合しません。<br><br>Azure FirewallはVNetの境界（東西・南北トラフィックのうちVNet/サブネット間や外部との境界）を守るためのサービスであり、クラスター内部の同一ネットワーク内で行われるPod間通信の細かい制御には通常使用しません。<br><br>Azure Bastionは管理者がVMへ安全にRDP/SSH接続するためのマネージド踏み台サービスであり、Pod間の東西トラフィック制御とは全く異なる目的の機能です。"
 },
 {
@@ -482,12 +482,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はStandard SKUのAzure Load Balancer配下に、多数のVMからインターネットへの大量のアウトバウンド接続（外部APIコールなど）を行うアプリケーションを構築しています。運用開始後、断続的にアウトバウンド接続が失敗する現象が発生しています。",
   question: "この問題の最も可能性の高い原因と対処法はどれですか？",
   choices: [
-    "NSGのルール不足が原因であるため、アウトバウンドを全許可するルールを追加する",
-    "SNATポートの枯渇が原因である可能性が高く、明示的なアウトバウンドルールを構成し、割り当てるフロントエンドIP数や割り当てポート数を増やす",
+    "Load BalancerのSKUをBasicにダウングレードすることで解決する",
     "DNS解決の失敗が原因であるため、Private DNSゾーンを追加する",
-    "Load BalancerのSKUをBasicにダウングレードすることで解決する"
+    "NSGのルール不足が原因であるため、アウトバウンドを全許可するルールを追加する",
+    "SNATポートの枯渇が原因である可能性が高く、明示的なアウトバウンドルールを構成し、割り当てるフロントエンドIP数や割り当てポート数を増やす"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "パブリックロードバランサー配下のVMがインターネットへアウトバウンド接続する際、Azureは送信元NAT（<strong>SNAT</strong>）によってプライベートIPをパブリックIPとポートの組み合わせに変換します。1つのフロントエンドIPあたりバックエンドインスタンス数に応じて割り当てられるSNATポート数には上限があり、同時に大量の外部宛先へ接続するVMが多いと、この割り当てポートを使い切って<strong>SNATポート枯渇</strong>が発生し、新規の送信接続が断続的に失敗する典型的な症状が出ます。対策としては、Load Balancerに<strong>明示的なアウトバウンドルール</strong>を構成し、割り当てるフロントエンドIPの数を増やす、または1インスタンスあたりの割り当てポート数を増やすことでSNATポートの枯渇を緩和できます。恒久対策としてはNAT Gatewayの導入でSNATポートプールを大幅に拡張する方法も有効です。<br><br>NSGルール不足が原因であれば通信は継続的に「拒否」されるはずで、今回のような断続的な失敗パターンとは症状の性質が異なります。<br><br>DNS解決の失敗は名前解決自体ができないケースで、これも断続的な接続失敗というより特定のタイミングで一貫して失敗する傾向が強く、症状が異なります。<br><br>Basic SKUへのダウングレードは、SNATの制御オプション（明示的なアウトバウンドルールなど）がむしろ限定的になり、機能退行を招くため問題解決にはつながりません。"
 },
 {
@@ -496,8 +496,8 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たすために導入すべきAzureサービスはどれですか？",
   choices: [
     "Azure Route Server",
-    "Azure Firewall Manager",
     "Azure Traffic Manager",
+    "Azure Firewall Manager",
     "Azure Front Door"
   ],
   answer: 0,
@@ -508,12 +508,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は、スポークVNet内のすべてのVMからのアウトバウンドインターネット通信を、ハブVNetに配置したサードパーティ製ファイアウォールアプライアンス（NVA）を必ず経由させるよう強制したいと考えています。",
   question: "この要件を実現するために、スポークのサブネットに構成すべきものはどれですか？",
   choices: [
-    "NSGでインターネット向けの既定のアウトバウンドルールを削除する",
-    "ルートテーブル（UDR）を作成し、0.0.0.0/0 の宛先に対するネクストホップをNVAのプライベートIPアドレスに設定してサブネットに関連付ける",
     "サービスエンドポイントをサブネットに追加する",
-    "プライベートエンドポイントをサブネットに追加する"
+    "プライベートエンドポイントをサブネットに追加する",
+    "ルートテーブル（UDR）を作成し、0.0.0.0/0 の宛先に対するネクストホップをNVAのプライベートIPアドレスに設定してサブネットに関連付ける",
+    "NSGでインターネット向けの既定のアウトバウンドルールを削除する"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>ルートテーブル（UDR: User Defined Route）</strong>を作成し、宛先<strong>0.0.0.0/0</strong>（すべてのインターネット向けを含む既定経路）に対するネクストホップの種類を「仮想アプライアンス」に設定してNVAのプライベートIPアドレスを指定し、これをスポークのサブネットに関連付けることで、そのサブネット内のVMが発信するすべてのインターネット向けトラフィックが、Azureの既定のインターネット経路よりも優先してNVA経由でルーティングされるようになります。これはハブスポーク構成でファイアウォール強制（フォースドトンネリング）を実現する標準的なパターンです。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>強制トンネリングの経路</div><div class='exp-flow'><div class='flow-box'>スポークVM</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>UDR: 0.0.0.0/0<br>&rarr; NVA</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>インターネット</div></div></div><br><br>NSGの既定アウトバウンドルールを削除しても、それは単に「暗黙の許可ルール」の扱いを変えるだけで、トラフィックが実際にどの経路（ネクストホップ）を通るかというルーティングの決定には影響しないため、NVA経由への強制にはなりません。<br><br>サービスエンドポイントは、特定のAzure PaaSサービス（Storage、SQL Databaseなど）へのトラフィックをAzureバックボーン上の最適な経路に乗せるための機能であり、NVA経由の強制ルーティングとは異なる目的です。<br><br>プライベートエンドポイントも同様にPaaSサービスへのプライベート接続を実現するための機能であり、インターネット向けアウトバウンドトラフィック全体を特定のNVA経由に強制する仕組みではありません。"
 },
 {
@@ -521,12 +521,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は新規に作成するAzureパブリックIPアドレスについて、可用性ゾーンに対応したゾーン冗長構成にする必要があります。作成時にどのSKUを選択すべきか、チームメンバーから質問がありました。",
   question: "可用性ゾーンのゾーン冗長構成をサポートするパブリックIPのSKUはどれですか？",
   choices: [
-    "Basic SKU",
-    "Standard SKU",
     "SKUに関わらずすべてのパブリックIPがゾーン冗長に対応している",
-    "Premium SKUというパブリックIP専用SKUを選択する"
+    "Premium SKUというパブリックIP専用SKUを選択する",
+    "Basic SKU",
+    "Standard SKU"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "Azureパブリック IPアドレスの<strong>Standard SKU</strong>は可用性ゾーンに対応しており、作成時に特定の1ゾーンへ固定する「ゾーン単位（zonal）」パブリックIP、または複数ゾーンにまたがって冗長化された「ゾーン冗長（zone-redundant）」パブリックIP（ゾーンを明示的に指定しない場合の既定の挙動）のいずれかとして構成できます。ゾーン冗長パブリックIPは、そのIPを支える基盤がリージョン内の複数ゾーンにまたがって存在するため、いずれか1つのゾーンで障害が発生してもアドレスとしての可用性が維持されます。<br><br><strong>Basic SKU</strong>のパブリックIPは可用性ゾーンの概念自体をサポートしておらず、また現在Basic SKUのパブリックIPは新規作成が段階的に廃止される方向にあります。<br><br>「SKUに関わらずすべて対応」という選択肢は誤りで、ゾーン関連の機能サポートはSKUによって明確に差があります。<br><br>「Premium SKU」というAzureパブリックIPアドレス専用のSKU名称は存在しないため、この選択肢はダミーです（LoadBalancerやApplication GatewayなどにはPremiumやWAF_v2といった別軸のSKU/Tierが存在しますが、パブリックIP自体のSKUはBasicとStandardの2種類です）。"
 },
 {
@@ -534,10 +534,10 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAzure Virtual WANを使用して複数リージョンに複数のセキュアハブ（Azure Firewallを組み込んだハブ）を展開しています。すべてのハブに対して同一のファイアウォールポリシー（許可されたFQDN、脅威インテリジェンス設定など）を一元的に適用・更新したいと考えています。",
   question: "この要件を満たすために使用すべきAzureサービスはどれですか？",
   choices: [
-    "各ハブのAzure Firewallインスタンスに個別にポリシーを設定する",
-    "Azure Firewall Managerを使用して、Firewallポリシーを一元管理し複数ハブに関連付ける",
     "Azure Policyの組み込み「許可されている場所」ポリシーを使用する",
-    "Azure Monitorのブックを使用してポリシーを可視化する"
+    "Azure Firewall Managerを使用して、Firewallポリシーを一元管理し複数ハブに関連付ける",
+    "Azure Monitorのブックを使用してポリシーを可視化する",
+    "各ハブのAzure Firewallインスタンスに個別にポリシーを設定する"
   ],
   answer: 1,
   explanation: "<strong>Azure Firewall Manager</strong>は、複数のAzure Firewallインスタンス（VNet配置型・Virtual WANセキュアハブ型のいずれも）に対して、1つの<strong>Firewallポリシー</strong>リソースを作成し、それを複数のファイアウォール/複数のハブに関連付けて一元的に適用・更新できるサービスです。さらに、ベースポリシーを継承した子ポリシー（ポリシーの階層化）を使えば、グローバル共通ルールをベースに、リージョンやチームごとの追加ルールを重ねるといった柔軟な運用も可能です。FQDNフィルタリングや脅威インテリジェンス設定を一箇所で更新すれば、関連付けられたすべてのハブに反映されるため、一貫性を保ちながら効率的に運用できます。<br><br>各ハブに個別にポリシーを設定する方法は、ハブの数が増えるほど設定の乖離やヒューマンエラーのリスクが高まり、更新のたびにすべてのハブへ同じ変更を反映する必要があるため運用負荷が高くスケールしません。<br><br>Azure Policyの「許可されている場所」ポリシーは、リソースをデプロイできるAzureリージョンを制限するガバナンス機能であり、ファイアウォールの通信ルール（FQDN許可や脅威インテリジェンス）とは全く異なる目的の機能です。<br><br>Azure Monitorのブックはログやメトリックをカスタムダッシュボードとして可視化するためのツールであり、ポリシーの一元適用・配布機能ではありません。"
@@ -547,12 +547,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はオンプレミスのDNSサーバーとAzure VNet内のPrivate DNSゾーンとの間で、双方向の名前解決（オンプレミスからAzureのプライベートリソース名を解決し、AzureからオンプレミスのADドメイン名を解決する）を、追加のVM上にDNSフォワーダーを構築せずに実現したいと考えています。",
   question: "この要件を満たすために使用すべきマネージドサービスはどれですか？",
   choices: [
+    "Azure Bastion",
     "Azure DNS パブリックゾーン",
     "Azure DNS Private Resolver",
-    "Azure Private DNSゾーンのみ（追加サービスなし）",
-    "Azure Bastion"
+    "Azure Private DNSゾーンのみ（追加サービスなし）"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Azure DNS Private Resolver</strong>は、VNet内にデプロイするフルマネージドのDNSリゾルバーサービスで、オンプレミス側からのDNSクエリを受け付ける<strong>インバウンドエンドポイント</strong>と、Azure側からオンプレミスのDNSサーバーへクエリを条件付きで転送する<strong>アウトバウンドエンドポイント</strong>（DNS転送ルールセットで対象ドメインを指定）の両方を1つのリソースで構成できます。これにより、従来はカスタムDNSサーバーをVM上に自前で構築・冗長化・パッチ管理していた双方向のハイブリッドDNS解決を、追加のVM管理なしにマネージドサービスとして実現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>DNS Private Resolver（双方向）</div><div class='exp-flow'><div class='flow-box'>オンプレミスDNS</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>インバウンドエンドポイント</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Azure Private DNSゾーン</div></div><div class='exp-flow'><div class='flow-box'>Azure VNet</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>アウトバウンドエンドポイント</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>オンプレミスAD DNS</div></div></div><br><br>パブリックゾーンはインターネット向けの名前解決を目的としており、社内限定のプライベートなハイブリッド名前解決には使用しません。<br><br>Private DNSゾーン単体は、そのゾーンにリンクされたVNet内部での名前解決には有効ですが、オンプレミス側からのクエリを受け付けたり、Azure側からオンプレミスのドメインへクエリを転送したりする双方向連携の機能自体は持っておらず、別途リゾルバー機能が必要です。<br><br>Azure BastionはVMへの安全なRDP/SSHリモート接続を提供するサービスであり、DNS解決の仕組みとは全く無関係です。"
 },
 
@@ -565,8 +565,8 @@ const QUESTIONS_SET2 = [
   choices: [
     "Azure Service Bus キューを作成し、各チームに専用のキューを割り当てる",
     "Azure Event Grid カスタムトピックを作成し、各サブスクライバーがイベントタイプでフィルタしたイベントサブスクリプションを作成する",
-    "Azure Event Hubs の名前空間を作成し、各チームに専用のコンシューマーグループを割り当てる",
-    "Azure Queue Storage に複数のキューを作成し、発行側が全キューに同一メッセージを書き込む"
+    "Azure Queue Storage に複数のキューを作成し、発行側が全キューに同一メッセージを書き込む",
+    "Azure Event Hubs の名前空間を作成し、各チームに専用のコンシューマーグループを割り当てる"
   ],
   answer: 1,
   explanation: "<strong>Azure Event Grid</strong>は、単発の「出来事（ディスクリートイベント）」をpub/subモデルでリアルタイムに配信するために設計されたイベントルーティングサービスです。発行側は<strong>カスタムトピック</strong>にイベントを送るだけでよく、購読者を意識する必要がありません。各購読者は<strong>イベントサブスクリプション</strong>を作成し、イベントタイプ・件名（subject）・データ内容によるフィルタ条件を指定して、自分が関心のあるイベントだけを受け取れます。新しいチームがサブスクライバーとして参加する場合も、発行側のコードは一切変更せずイベントサブスクリプションを追加するだけで済み、真の疎結合が実現します。配信に失敗した場合はデッドレターや再試行ポリシーも構成できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>構成イメージ（pub/sub）</div><div class='exp-flow'><div class='flow-box'>発行側<br>（在庫/出荷/返品）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Event Grid<br>カスタムトピック</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Functions /<br>Logic Apps / Webhook</div></div></div><br><br><strong>Service Bus キュー</strong>はポイントツーポイント（1対1）の確実なメッセージングを目的とした仕組みで、1つのメッセージは1つの受信者にしか届きません。複数チームに同じイベントを配信したい場合、発行側が宛先キューを把握して個別に書き込む必要が生じ、購読者が増えるたびに発行側の実装変更が発生するため疎結合の要件に反します（複数購読者への配信を行いたい場合はService Bus内では「トピック/サブスクリプション」機能を使うのが適切ですが、今回の選択肢はキューであるため不適合です）。<br><br><strong>Event Hubs</strong>は毎秒数百万件規模のテレメトリやログ、IoTデータなどの高スループットなストリーミング取り込みに最適化されたサービスで、コンシューマーグループはパーティション単位でのオフセット管理を行う仕組みであり、ビジネスイベントごとの種類別ルーティングやフィルタリングには向いていません。<strong>Queue Storage</strong>への複製書き込みは、発行側があらかじめすべての購読者（キュー）を列挙してメッセージを複製する必要があり、購読者の追加・削除のたびに発行側コードの修正が必須となるため、要件の「発行側コード変更を最小限に」に反します。"
@@ -576,12 +576,12 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社の会計チームは、複数のSaaSコネクタ（Salesforce、SAP、SharePoint、Outlook）を組み合わせた承認ワークフローを構築する必要があります。開発チームには限られたリソースしかなく、コードを書かずにビジュアルデザイナーでワークフローを構築・保守したいと考えています。ワークフローには条件分岐、リトライ、承認者への通知が含まれます。",
   question: "この要件を満たすために最も適切なAzureサービスはどれですか？",
   choices: [
+    "Azure Durable Functions のファンアウト/ファンイン パターンを実装する",
     "Azure Functions（Consumptionプラン）でC#コードとして実装する",
     "Azure Logic Apps を使用し、組み込みコネクタでワークフローを構成する",
-    "Azure Durable Functions のファンアウト/ファンイン パターンを実装する",
     "Azure Batch でジョブスケジュールを構成する"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Azure Logic Apps</strong>は、Salesforce、SAP、SharePoint、Outlookなど数百種類の<strong>組み込み/管理対象コネクタ</strong>を提供し、ビジュアルデザイナー（またはコードビュー）上で条件分岐（Condition）、スイッチ、リトライポリシー、承認ステップなどをドラッグ&ドロップ的に構成できるローコード/ノーコードの統合・ワークフローサービスです。各アクションの実行履歴がポータル上で追跡でき、開発リソースが限られたチームでも保守しやすいのが特徴です。SaaS間連携が中心のシナリオではLogic Appsが第一候補になります。<br><br><strong>Azure Functions</strong>はコードファーストの軽量なイベント駆動コンピューティングサービスで、SaaS連携用の組み込みコネクタは持たず、Salesforce・SAPなど各サービスとの通信ロジック（認証、APIコール、エラーハンドリング）をすべて自前で実装する必要があり、開発負荷が大幅に増えます。<br><br><strong>Durable Functions</strong>はFunctionsの拡張機能で、複雑なオーケストレーションをコードで表現するのに強力ですが、これもコードファーストであり、ビジュアルデザイナーによるノーコード開発という要件には合致しません。<br><br><strong>Azure Batch</strong>は大規模な並列コンピューティングジョブ（レンダリング、シミュレーションなど）のスケジューリング・実行基盤であり、SaaS連携や承認ワークフローの構築を目的としたサービスではありません。なお、同じiPaaS的な位置づけでもPower Automateはより現場のビジネスユーザー向けのライトウェイトな自動化ツールであり、Logic AppsはIT部門が管理する統合基盤としてARMテンプレートやCI/CDとの親和性が高い点で使い分けられます。"
 },
 {
@@ -589,12 +589,12 @@ const QUESTIONS_SET2 = [
   scenario: "写真共有アプリを開発するTailwind Traders社は、ユーザーがアップロードした1枚の画像に対して、サムネイル生成・不適切コンテンツ検出・メタデータ抽出という3つの独立した処理を並列実行し、すべてが完了した後に結果を集約してデータベースに書き込む処理を実装したいと考えています。各処理の完了を待って次のステップに進む必要があります。",
   question: "この処理フローを実装するために最も適したパターンとサービスはどれですか？",
   choices: [
+    "Logic Apps の並列分岐（Parallel branch）でHTTPアクションを3つ呼び出し、そのまま終了する",
     "Azure Event Grid で3つの独立したイベントサブスクリプションを作成し、それぞれが個別にデータベースを更新する",
     "Durable Functions のファンアウト/ファンイン パターンを使用し、オーケストレーター関数が3つのアクティビティ関数を並列実行して結果を集約する",
-    "Logic Apps の並列分岐（Parallel branch）でHTTPアクションを3つ呼び出し、そのまま終了する",
     "Service Bus トピックで3つのサブスクリプションを作成し、各サブスクライバーが独立してメッセージを処理する"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Durable Functions のファンアウト/ファンイン パターン</strong>では、オーケストレーター関数が複数のアクティビティ関数（サムネイル生成・コンテンツ検出・メタデータ抽出）を並列に起動し、「すべてのタスクが完了するのを待ち合わせる」という制御をコードで簡潔に記述したうえで、完了後に結果をまとめて次の処理（DB書き込み）に進めます。オーケストレーターの実行状態はイベントソーシングによってストレージに永続化されるため、待機中や再試行中でもコンピューティングリソースを無駄に消費せず、耐障害性の高い「全完了待ち」の同期ポイントをコードで簡潔に表現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ファンアウト/ファンイン</div><div class='exp-flow'><div class='flow-box hl'>オーケストレーター</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>サムネイル生成<br>+ コンテンツ検出<br>+ メタデータ抽出</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>結果集約 &<br>DB書き込み</div></div></div><br><br><strong>Event Grid</strong>で3つの独立したサブスクリプションを作ると、各処理は互いに完全に独立して動作するため、「3つすべてが完了した時点」という同期ポイントを検知する仕組みが存在せず、これを実現するには自前でカウンターやステータステーブルなどの集約ロジックを追加実装する必要があり複雑になります。<br><br><strong>Logic Apps の並列分岐</strong>自体は複数アクションの並列実行をサポートしますが、選択肢にある「そのまま終了する」という設計では各分岐の完了を待って集約する仕組みが欠けており要件を満たしません（Logic Appsでも分岐の合流自体は可能ですが、複雑な集約ロジックはDurable Functionsの方がコードで柔軟に制御できます）。<br><br><strong>Service Bus トピックのサブスクライバー</strong>も互いに独立して非同期にメッセージを処理するため、全処理完了を待つ仕組みを自前で構築する必要があり、ファンアウト/ファンインパターンほど直接的ではありません。"
 },
 {
@@ -602,12 +602,12 @@ const QUESTIONS_SET2 = [
   scenario: "経費精算システムを運用するNorthwind社は、従業員が経費申請を送信した後、マネージャーの承認を得るまで処理を一時停止し、承認または却下のイベントを受け取った時点で処理を再開する必要があります。承認待ちの期間は数時間から数日に及ぶことがあり、その間コンピューティングリソースの課金を最小限に抑えたいと考えています。",
   question: "この要件を満たす実装方法はどれですか？",
   choices: [
+    "Azure Automation Runbook をWebhookでトリガーし、承認まで待機ループを実行する",
     "Azure Functions のタイマートリガーで1分ごとに承認状態をポーリングする",
     "Durable Functions の外部イベント待機（Wait for external events）パターンを使用し、承認イベントの受信までオーケストレーターを休止させる",
-    "Logic Apps の再帰ループでHTTP GETを繰り返し呼び出し、承認ステータスを確認する",
-    "Azure Automation Runbook をWebhookでトリガーし、承認まで待機ループを実行する"
+    "Logic Apps の再帰ループでHTTP GETを繰り返し呼び出し、承認ステータスを確認する"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "<strong>Durable Functions の外部イベント待機パターン（Human interactionパターン）</strong>では、オーケストレーター関数が「外部からの承認イベントを待つ」という状態をコード上で表現すると、その時点の実行状態がAzure Storageに永続化され、オーケストレーターの実行自体が一時停止（チェックポイント）します。この間はコンピューティングリソースをまったく消費しません。後から承認イベントが送られてくると、永続化された状態から実行が再開されます。数時間〜数日という長い待機時間でも、消費型（Consumption）プランであれば実質的な課金は発生しないため、コスト最小化の要件に最適です。<br><br><strong>タイマートリガーによる定期ポーリング</strong>は、待機している間も1分ごとに関数の実行が発生し、その都度実行回数・実行時間に応じた課金とAPI呼び出しコストが積み上がるため非効率です。<br><br><strong>Logic Apps の再帰ポーリングループ</strong>も同様に、繰り返しのHTTP呼び出しのたびにアクション実行としてカウントされ、長時間の待機にはコストと複雑さが増します（Logic AppsにもWebhookアクションで似た待機を実現する方法はありますが、選択肢にある「再帰ループでのポーリング」は非効率な設計です）。<br><br><strong>Automation Runbook</strong>で待機ループを回す方法は、Runbookのジョブが実行され続けている間ずっと課金対象となるため、長時間の休止を前提とした承認待ちには不適切です。"
 },
 {
@@ -615,12 +615,12 @@ const QUESTIONS_SET2 = [
   scenario: "App Serviceでホストされているeコマースサイトは、平日の営業時間（9時〜18時）はアクセスが多く、夜間や週末は閑散期になります。また、毎月末には決算処理のため一時的にCPU使用率が急上昇します。運用チームは、時間帯に応じた基本のインスタンス数を確保しつつ、予期しない負荷スパイクにも自動的に対応できるスケーリング設定を求めています。",
   question: "この要件を満たすApp Serviceのオートスケール設定として最も適切なものはどれですか？",
   choices: [
-    "固定インスタンス数でSKUを最上位プランに変更し、常に最大性能を確保する",
     "スケジュールベースのプロファイル（平日日中は最小/最大インスタンス数を高く設定）を作成し、各プロファイル内にCPU使用率に基づくスケールルールを組み合わせる",
+    "Virtual Machine Scale Sets に移行し、カスタムスクリプト拡張でスケーリングを制御する",
     "Azure Monitor アラートのみを設定し、閾値超過時に運用担当者が手動でインスタンス数を変更する",
-    "Virtual Machine Scale Sets に移行し、カスタムスクリプト拡張でスケーリングを制御する"
+    "固定インスタンス数でSKUを最上位プランに変更し、常に最大性能を確保する"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "App Serviceの<strong>オートスケール（Azure Monitor autoscale）</strong>は、曜日・時間帯を指定する<strong>繰り返しスケジュールのプロファイル</strong>を複数定義でき、それぞれのプロファイルごとに最小・最大・既定のインスタンス数を設定できます。さらに各プロファイルの中に、CPU使用率などのメトリクスに基づく<strong>スケールルール</strong>（例：CPU平均70%超過でインスタンス+1、20%未満で-1）を組み合わせることが可能です。これにより「平日日中は基本キャパシティを高めに保ちつつ、月末の予期しないCPUスパイクにはメトリクスベースのルールで追加スケールアウトする」という二段構えの要件を、単一のオートスケール設定内で実現できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>スケジュールプロファイルとメトリクスルールの組み合わせ</div><div class='exp-flow'><div class='flow-box hl'>平日日中プロファイル<br>(基本インスタンス数を高めに設定)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>プロファイル内でCPU使用率ルール適用</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>閾値超過で追加スケールアウト</div></div></div><br><br><strong>固定インスタンス数で最上位プランに変更</strong>する方法は、閑散期にも最大キャパシティ分の料金が発生し続けるため、コスト効率が悪く「時間帯に応じた基本インスタンス数」という要件の趣旨（メリハリのあるリソース配分）にも反します。<br><br><strong>アラートのみを設定して手動対応</strong>する方法は、自動化されておらず対応の遅延によりスパイク時にパフォーマンス低下や機会損失が生じるリスクがあります。<br><br><strong>VMSSへの移行</strong>は、App ServiceというPaaSが提供するランタイム管理・パッチ適用・デプロイスロットなどの利点を手放し、インフラ管理の責任範囲がIaaS寄りに増える大きなアーキテクチャ変更であり、既存のスケジュール+メトリクスの組み合わせで十分満たせる要件に対しては過剰な変更です。"
 },
 {
@@ -628,12 +628,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社の注文処理システムでは、同一注文に属する複数のメッセージ（注文確定→在庫引当→出荷指示）を必ず送信順に、かつ同じコンシューマーインスタンスで処理する必要があります。また、処理に繰り返し失敗するメッセージは自動的に隔離し、後から原因調査できるようにしたいと考えています。",
   question: "この要件を満たすために使用すべきAzureサービスと機能の組み合わせはどれですか？",
   choices: [
-    "Azure Event Hubsのパーティションキー機能のみを使用する",
     "Azure Service Busのメッセージセッション（FIFO順序保証）とDead-Letter Queue（DLQ）を使用する",
-    "Azure Storage Queueに順序を保証するオプションを追加して使用する",
-    "Event Gridのイベント配信保証機能のみを使用する"
+    "Azure Event Hubsのパーティションキー機能のみを使用する",
+    "Event Gridのイベント配信保証機能のみを使用する",
+    "Azure Storage Queueに順序を保証するオプションを追加して使用する"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>Azure Service Bus</strong>は<strong>メッセージセッション</strong>機能を使うと、同じセッションID（この場合は注文IDなど）を持つメッセージ群を1つの論理的な順序付きシーケンスとして扱い、同一のコンシューマーが送信順どおりに処理することを保証できます。さらに、指定回数処理に失敗したメッセージは自動的に<strong>Dead-Letter Queue（DLQ）</strong>という専用の副キューへ隔離されるため、正常なメッセージ処理を止めることなく、後から失敗メッセージだけを個別に調査・再処理できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>メッセージング3サービスの使い分け</div><table class='exp-compare'><tr><th>サービス</th><th>順序保証</th><th>DLQ</th><th>主な用途</th></tr><tr class='hl'><td>Service Bus</td><td class='ok'>○ (セッション)</td><td class='ok'>○</td><td>信頼性の高いエンタープライズメッセージング</td></tr><tr><td>Event Hubs</td><td>パーティション内のみ</td><td class='ng'>×</td><td>大量イベントのストリーム取り込み</td></tr><tr><td>Event Grid</td><td class='ng'>×</td><td>△ (デッドレター設定は可能)</td><td>イベント駆動のpub/sub通知</td></tr></table></div><br><br><strong>Event Hubs</strong>のパーティションキーは同一パーティション内での順序をおおむね保てますが、これは大量データの高スループットなストリーム取り込みに最適化された機能であり、DLQのような個別メッセージの失敗管理機構は持ちません。<strong>Storage Queue</strong>はシンプルで安価なキューサービスですが、そもそもFIFO順序保証やセッション、DLQといった高度なメッセージング機能を持たず、要件を満たせません。<strong>Event Grid</strong>はイベントの発生を購読者へ配信するpub/subの仕組みであり、順序保証やセッションという概念を持たないため、注文処理のような厳密な順序性が求められるワークフローには不向きです。"
 },
 {
@@ -641,12 +641,12 @@ const QUESTIONS_SET2 = [
   scenario: "Litware社はAzure Container Apps上でメッセージ処理マイクロサービスを稼働させています。このサービスはAzure Service Bus キューのメッセージ数に応じて0台から最大20台までスケールする必要があり、メッセージが存在しない間はコストを発生させたくありません。またコンテナのスケーリングロジックをアプリケーションコードに組み込まず、宣言的に設定したいと考えています。",
   question: "この要件を満たすためにAzure Container Appsで使用すべき機能はどれですか？",
   choices: [
+    "Azure Automation でタイマーベースのスケールスクリプトを実行する",
     "HTTPトラフィックに基づくスケールルールのみを使用する",
-    "KEDA ベースのカスタムスケーラーで Service Bus キューの長さに基づくスケールルールを構成し、最小レプリカ数を0に設定する",
     "Dapr のパブリッシュ/サブスクライブ ビルディングブロックのみを使用してスケーリングを実装する",
-    "Azure Automation でタイマーベースのスケールスクリプトを実行する"
+    "KEDA ベースのカスタムスケーラーで Service Bus キューの長さに基づくスケールルールを構成し、最小レプリカ数を0に設定する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "Azure Container Appsは内部的に<strong>KEDA（Kubernetes Event-Driven Autoscaling）</strong>を組み込みで利用しており、HTTPだけでなくService Bus、Storage Queue、Event Hubsなど多数のイベントソースに対応した<strong>スケーラー</strong>を、コンテナアプリの構成（YAMLやARM/Bicepのscaleセクション）で<strong>宣言的</strong>に定義できます。Service Bus キューの長さに基づくスケールルールを設定し、<strong>最小レプリカ数を0</strong>に指定すれば、メッセージが存在しない間はレプリカがゼロになり課金対象外となり、メッセージが到着すると自動的にスケールアウトします。アプリケーションコード側にポーリングやスケーリングロジックを一切書く必要がありません。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>KEDAスケーリング（0→20）</div><div class='exp-flow'><div class='flow-box'>Service Bus<br>キュー</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>KEDAスケーラー<br>（宣言的ルール）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Container Apps<br>0〜20レプリカ</div></div></div><br><br><strong>HTTPトラフィックベースのスケール</strong>は、リクエストの受信数を基準とする仕組みであり、Service Busキューのメッセージ滞留というHTTP以外のイベントソースを直接の基準にはできません。<br><br><strong>Dapr のpub/subビルディングブロック</strong>はサービス間のメッセージング呼び出しを抽象化するランタイム機能であり、それ自体はレプリカ数のスケーリングを制御するものではありません（Container AppsではDaprとKEDAは別々の役割を持つ独立した機能です）。<br><br><strong>Azure Automation のタイマースクリプト</strong>は定期実行に基づく独自のポーリングとAPI呼び出しが必要になり、KEDAのようなイベント発生に即応するスケーリングやゼロスケールへの対応を実現するには不向きで、宣言的設定という要件にも合致しません。"
 },
 {
@@ -654,12 +654,12 @@ const QUESTIONS_SET2 = [
   scenario: "オンラインゲームのランキングサービスを運営するContoso社は、Azure SQL Databaseに保存されているプレイヤーのスコアデータへの読み取りアクセスが非常に多く、ピーク時にはデータベースの読み取り負荷がボトルネックになっています。同じスコアデータへの問い合わせが繰り返し発生しており、データの更新頻度はそれほど高くありません。データベースへの負荷を軽減しつつ、アプリケーションコード側でキャッシュの整合性を制御したいと考えています。",
   question: "この要件を満たすために採用すべきキャッシュパターンとサービスはどれですか？",
   choices: [
-    "Azure CDN でSQL Databaseへのクエリ結果をキャッシュする",
     "Azure Cache for Redis を使用し、cache-aside（Lazy loading）パターンでアプリケーションがキャッシュミス時にDBから読み込みキャッシュに書き込む",
     "Azure SQL Database の読み取りレプリカのみを追加し、キャッシュ層は導入しない",
-    "Azure Front Door のキャッシュルールでAPIレスポンスを常にキャッシュする"
+    "Azure Front Door のキャッシュルールでAPIレスポンスを常にキャッシュする",
+    "Azure CDN でSQL Databaseへのクエリ結果をキャッシュする"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>Azure Cache for Redis</strong>を使った<strong>cache-asideパターン（Lazy loadingパターン）</strong>は、アプリケーションがまずRedisにデータがあるか確認し、あればそれを返却（キャッシュヒット）、なければデータベースから読み込んでからRedisに書き込んで返却する（キャッシュミス）という制御をアプリケーションコード自身が行う方式です。TTL（有効期限）の設定や、データ更新時の明示的なキャッシュ無効化（invalidation）もアプリケーション側で細かく制御できるため、読み取りが多く更新頻度が低いスコアデータのキャッシュに適しており、インメモリのRedisはミリ秒未満のレイテンシで応答できるためDB負荷の大幅な軽減にもつながります。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Cache-asideパターン</div><div class='exp-flow'><div class='flow-box'>アプリ</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Redis<br>（ヒット時は即応答）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>SQL Database<br>（ミス時のみ読込）</div></div></div><br><br><strong>Azure CDN</strong>は静的ファイルやHTTPレスポンスをエッジロケーションでキャッシュする配信最適化サービスであり、データベースへのSQLクエリ結果を直接キャッシュする機能は持ちません。<br><br><strong>読み取りレプリカのみの追加</strong>はDB層自体をスケールアウトする手段であり、インメモリキャッシュほどの劇的なレイテンシ削減効果は得られず、追加のコンピューティングコストもかかる点でキャッシュ層導入より非効率です。<br><br><strong>Front Doorのキャッシュルール</strong>はHTTPレスポンス全体をエッジでキャッシュするグローバル配信機能であり、アプリケーションコードが個々のクエリ単位で整合性を制御するcache-asideパターンとは仕組みが異なります。"
 },
 {
@@ -667,12 +667,12 @@ const QUESTIONS_SET2 = [
   scenario: "Fabrikam社のWebアプリはApp Serviceの複数インスタンスにデプロイされ、負荷分散されています。ユーザーがログインするとセッション情報（ショッピングカートの中身など）がメモリ内に保持されますが、オートスケールによってインスタンス数が変動すると、リクエストが別のインスタンスにルーティングされた際にセッション情報が失われる問題が発生しています。ARRアフィニティ（Cookieベースのセッション固定）は使いたくありません。",
   question: "この問題を解決するために最も適切なアプローチはどれですか？",
   choices: [
-    "ARRアフィニティを有効化し、Cookieでセッションを固定する",
-    "Azure Cache for Redis をセッションストアとして使用し、セッション状態をインスタンス外部に外部化する",
     "すべてのインスタンスを1台に固定してスケールアウトを禁止する",
-    "Azure Traffic Manager でユーザーごとに同一インスタンスへ常にルーティングする"
+    "ARRアフィニティを有効化し、Cookieでセッションを固定する",
+    "Azure Traffic Manager でユーザーごとに同一インスタンスへ常にルーティングする",
+    "Azure Cache for Redis をセッションストアとして使用し、セッション状態をインスタンス外部に外部化する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>Azure Cache for Redis</strong>を<strong>セッションストア</strong>として利用し、セッション状態をアプリケーションインスタンスのメモリ内から外部の共有ストアへ<strong>外部化（externalize）</strong>することで、どのインスタンスがリクエストを処理してもRedisから同一のセッションデータを取得できるようになります。この設計は「アプリケーションをステートレスに保つ」というクラウドネイティブ設計の基本原則にも合致し、オートスケールでインスタンス数が増減してもセッションが失われず、特定インスタンスへのルーティング固定も不要になるため、負荷分散の効果を損なわずに問題を解決できます。ASP.NET向けにはRedis用の分散セッション状態プロバイダーが提供されています。<br><br><strong>ARRアフィニティ</strong>は要件で明示的に使用しないことが求められており、そもそも特定インスタンスにセッションを固定する仕組みのためスケールインでそのインスタンスが削除されるとセッションが失われるリスクが残り、負荷分散の均一性も損なわれます。<br><br><strong>インスタンスを1台に固定</strong>する方法はスケーラビリティ自体を放棄することになり、可用性やパフォーマンス要件（オートスケールによる負荷対応）を満たせなくなります。<br><br><strong>Traffic Manager</strong>はDNSベースのグローバル（リージョン間）ルーティングサービスであり、同一App Service内の個々のインスタンスレベルでのセッション固定を制御する機能は持ちません。"
 },
 {
@@ -680,10 +680,10 @@ const QUESTIONS_SET2 = [
   scenario: "グローバルに展開するメディア企業のTailwind Traders社は、静的な画像・動画・JavaScriptファイルを世界中のユーザーに低レイテンシで配信したいと考えています。オリジンはAzure Storage アカウント内のBlobコンテナーです。コンテンツの一部は数分単位で頻繁に更新されるため、更新後は速やかにエッジのキャッシュを無効化できる必要があります。",
   question: "この要件を満たすための構成はどれですか？",
   choices: [
-    "Azure Traffic Manager をオリジンの前段に配置し、パフォーマンスルーティングを使用する",
-    "Azure CDN プロファイルを作成し、Blobコンテナーをオリジンに設定してキャッシュルールを構成し、更新時にはCDNエンドポイントのパージを実行する",
     "Azure Application Gateway をBlobコンテナーの前段に配置し、WAFポリシーでキャッシュを構成する",
-    "Azure Load Balancer の標準SKUをBlobストレージの前段に配置する"
+    "Azure CDN プロファイルを作成し、Blobコンテナーをオリジンに設定してキャッシュルールを構成し、更新時にはCDNエンドポイントのパージを実行する",
+    "Azure Load Balancer の標準SKUをBlobストレージの前段に配置する",
+    "Azure Traffic Manager をオリジンの前段に配置し、パフォーマンスルーティングを使用する"
   ],
   answer: 1,
   explanation: "<strong>Azure CDN</strong>は世界中に分散配置されたPoP（エッジノード）で静的コンテンツをキャッシュし、ユーザーの地理的に最も近いエッジサーバーから応答することで低レイテンシな配信を実現するサービスです。Blob Storageコンテナーをオリジンとして設定でき、キャッシュ動作ルール（キャッシュ有効期限、クエリ文字列の扱いなど）を細かく制御できるほか、コンテンツを更新した際には<strong>パージ（Purge）</strong>操作で特定パスまたはワイルドカードのエッジキャッシュを即座に無効化し、次回リクエスト時に最新のオリジンコンテンツを取得・再キャッシュさせることができます。数分単位の更新頻度でもパージにより速やかに反映可能です。<br><br><strong>Traffic Manager</strong>はDNSベースのグローバル負荷分散/ルーティングサービスであり、リクエストをリージョン単位のエンドポイントへ振り分けるだけでエッジキャッシュの仕組みは持たないため、CDNほどのレイテンシ削減効果は得られません。<br><br><strong>Application Gateway</strong>は特定リージョン内で動作するレイヤー7ロードバランサー/WAFであり、グローバルなエッジ配信・キャッシュの仕組みではありません。<br><br><strong>Azure Load Balancer</strong>はレイヤー4（TCP/UDP）の負荷分散サービスで、HTTPコンテンツの内容を理解したキャッシュ機能自体を持ちません。なお、類似の配信最適化サービスとしてAzure Front Doorがありますが、Front DoorはグローバルなL7ロードバランシング・WAF・キャッシュを統合したモダンなサービスであり、純粋な静的コンテンツ配信の低コストな定番選択としては伝統的にAzure CDNが用いられます。"
@@ -693,12 +693,12 @@ const QUESTIONS_SET2 = [
   scenario: "大手保険会社のContoso社は、20年前に構築されたモノリシックな基幹契約管理システムを段階的にクラウドネイティブなマイクロサービスへ移行する計画を進めています。一度にすべてを置き換えるのはリスクが高すぎるため、まず新規機能から新しいマイクロサービスとして実装し、既存機能は徐々に置き換えていきたいと考えています。移行期間中は新旧システムが共存し、リクエストを適切にルーティングする必要があります。",
   question: "この移行アプローチを表すパターンはどれですか？",
   choices: [
-    "サイドカー パターン",
-    "サーキットブレーカー パターン",
+    "CQRS パターン",
     "ストラングラーフィグ（Strangler Fig）パターン",
-    "CQRS パターン"
+    "サイドカー パターン",
+    "サーキットブレーカー パターン"
   ],
-  answer: 2,
+  answer: 1,
   explanation: "<strong>ストラングラーフィグ（Strangler Fig）パターン</strong>は、名前の由来である「絞め殺しの木（イチジクの一種が宿主の木に巻き付き、やがて取って代わる）」のように、レガシーなモノリシックシステムをビッグバン方式で一度に置き換えるのではなく、機能単位で段階的に新しいサービスへ置き換えていく移行手法です。移行期間中は<strong>ファサード（ルーティング層）</strong>を前段に配置し、置き換え済みの機能へのリクエストは新サービスへ、未移行の機能へのリクエストは引き続き旧モノリスへ振り分けます。これにより移行のリスクを機能単位に分散でき、いつでも一時停止・ロールバックが可能で、最終的にすべての機能が新サービスに置き換わった時点で旧システムを安全に廃止できます。まさに本シナリオの段階的移行要件に合致します。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ストラングラーフィグ移行</div><div class='exp-flow'><div class='flow-box'>クライアント</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>ファサード<br>（ルーティング層）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>新サービス /<br>旧モノリス（並存）</div></div></div><br><br><strong>サイドカー パターン</strong>は、メインアプリケーションコンテナに付随する形でロギング・監視・プロキシなどの補助機能を別コンテナとしてデプロイするパターンで、単一サービスの機能拡張手法であり、システム全体の段階的な置き換え戦略を表すものではありません。<br><br><strong>サーキットブレーカー パターン</strong>は、障害が発生している呼び出し先への接続を一時的に遮断し、障害の連鎖的拡大（カスケード障害）を防ぐ耐障害性パターンであり、移行戦略とは目的が異なります。<br><br><strong>CQRS（コマンドクエリ責務分離）パターン</strong>は、データの書き込み（コマンド）と読み取り（クエリ）のモデル・経路を分離する設計パターンであり、レガシーシステムを段階的に置き換える移行戦略とは別の概念です。"
 },
 {
@@ -706,10 +706,10 @@ const QUESTIONS_SET2 = [
   scenario: "Northwind社は新しい注文管理マイクロサービスを構築していますが、そのサービスは古いメインフレームの在庫管理システムとデータをやり取りする必要があります。メインフレームのデータモデルは新しいマイクロサービスの設計思想と大きく異なり、独自の固定長フォーマットや古いコード体系を使用しています。アーキテクトは、新しいマイクロサービスのドメインモデルをメインフレームの古い設計に汚染されないようにしたいと考えています。",
   question: "この要件を満たすために導入すべき設計パターンはどれですか？",
   choices: [
-    "サーキットブレーカー パターン",
-    "アンチコラプション レイヤー（Anti-Corruption Layer）パターン",
     "ゲートウェイ集約 パターン",
-    "バルクヘッド パターン"
+    "アンチコラプション レイヤー（Anti-Corruption Layer）パターン",
+    "バルクヘッド パターン",
+    "サーキットブレーカー パターン"
   ],
   answer: 1,
   explanation: "<strong>アンチコラプション レイヤー（腐敗防止層、ACL）パターン</strong>は、新システムと外部・レガシーシステムの境界に変換・翻訳を専門に行うファサード層を設けることで、レガシー側の古いデータモデルや設計上の制約（固定長フォーマット、古いコード体系など）が新システムの<strong>ドメインモデル</strong>にそのまま漏れ出し「汚染」されるのを防ぐパターンです。このレイヤーがメインフレームの固定長データを新しいマイクロサービスのドメインオブジェクトに変換（マッピング）する責務を一手に引き受けるため、新サービス側は自身の設計思想に沿った純粋なドメインモデルを保てます。ドメイン駆動設計（DDD）の文脈で頻出する概念でもあります。<br><br><strong>サーキットブレーカー パターン</strong>は障害時に呼び出しを遮断し連鎖障害を防ぐ耐障害性パターンであり、データモデルの変換・分離を目的としたものではありません。<br><br><strong>ゲートウェイ集約 パターン</strong>は、クライアントが複数のバックエンドサービスを個別に呼び出す代わりに、1つのゲートウェイが複数の呼び出しを集約して単一のレスポンスとして返すことでクライアントとの往復回数を減らすパターンであり、レガシー統合時のドメインモデル保護とは異なる目的のパターンです。<br><br><strong>バルクヘッド パターン</strong>は、船の隔壁のように、リソース（スレッドプールや接続プールなど）を分離されたプール単位に区切ることで、一部の障害がシステム全体に波及するのを防ぐ耐障害性パターンであり、本シナリオのデータモデル変換の要件とは異なります。"
@@ -719,12 +719,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社はAzure API Managementでパートナー企業向けに公開しているAPIについて、無料プランのパートナーが1分間に呼び出せる回数を60回までに制限し、それを超えたリクエストにはHTTP 429エラーを返したいと考えています。バックエンドAPIのコードは変更したくありません。",
   question: "この要件を満たすために構成すべきAPI Managementのポリシーはどれですか？",
   choices: [
-    "cache-lookup および cache-store ポリシー",
-    "rate-limit-by-key ポリシー（サブスクリプションキーごとに呼び出し回数を制限）",
+    "cors ポリシーでクロスオリジンリクエストを制御する",
     "set-backend-service ポリシーでバックエンドURLを書き換える",
-    "cors ポリシーでクロスオリジンリクエストを制御する"
+    "rate-limit-by-key ポリシー（サブスクリプションキーごとに呼び出し回数を制限）",
+    "cache-lookup および cache-store ポリシー"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "API Managementの<strong>rate-limit-by-key ポリシー</strong>は、サブスクリプションキー、クライアントIPアドレス、あるいは任意のカスタムキー式を単位として、指定した時間枠（例：1分間）内の呼び出し回数の上限を設定できるポリシーです。上限を超えたリクエストには自動的にHTTP <strong>429 Too Many Requests</strong>が返され、Retry-Afterヘッダーで再試行までの待ち時間も通知できます。パートナーごとのサブスクリプションキーに紐づけて設定すれば、無料プランのパートナーだけに個別の制限をかけることも可能です。このポリシーはAPIMのゲートウェイ層（プロキシ層）で完結するため、バックエンドAPIのコードは一切変更する必要がありません（似た名前の rate-limit ポリシーはサブスクリプション単位で固定的に制限するのに対し、rate-limit-by-key はキー式で柔軟に制限対象を指定できる点が特徴です）。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>rate-limit と rate-limit-by-key の違い</div><table class='exp-compare'><tr><th>ポリシー</th><th>制限単位</th><th>柔軟性</th></tr><tr><td>rate-limit</td><td>サブスクリプション単位固定</td><td class='ng'>低い</td></tr><tr class='hl'><td>rate-limit-by-key</td><td>任意のキー式（サブスクリプション/IP等）</td><td class='ok'>高い（柔軟に分割可能）</td></tr></table></div><br><br><strong>cache-lookup / cache-store ポリシー</strong>は、レスポンスをAPIM内部またはRedisにキャッシュし、同一リクエストへの応答を高速化・バックエンド負荷軽減するためのポリシーであり、呼び出し回数の制限とは無関係です。<br><br><strong>set-backend-service ポリシー</strong>は、リクエストの転送先バックエンドURLを動的に書き換えるためのポリシーで、ルーティング制御に使うものであり、レート制限機能は持ちません。<br><br><strong>cors ポリシー</strong>は、ブラウザからのクロスオリジン（異なるオリジン間）リクエストの許可・制御（Access-Control-Allow-Originなどのヘッダー管理）を行うためのポリシーであり、呼び出し頻度そのものを制限する機能ではありません。"
 },
 {
@@ -733,11 +733,11 @@ const QUESTIONS_SET2 = [
   question: "この要件を満たすために使用すべきAPI Managementの機能はどれですか？",
   choices: [
     "APIMの製品（Product）とサブスクリプションの階層構造",
+    "Azure Monitor と連携したAPIM診断ログ",
     "xml-to-json および json-to-xml 変換ポリシー",
-    "APIMのマルチリージョンデプロイ機能",
-    "Azure Monitor と連携したAPIM診断ログ"
+    "APIMのマルチリージョンデプロイ機能"
   ],
-  answer: 1,
+  answer: 2,
   explanation: "API Managementの<strong>json-to-xml ポリシー</strong>と<strong>xml-to-json ポリシー</strong>（メッセージ変換ポリシー）を、それぞれinboundセクション（クライアントからのJSONリクエストをXML/SOAPへ変換してバックエンドに転送）とoutboundセクション（バックエンドから返ったXMLレスポンスをJSONへ変換してクライアントに返却）に設定することで、ゲートウェイ層だけでペイロード形式の変換を完結させられます。加えてSOAP特有のエンベロープ処理には<strong>soap-to-rest</strong>のようなポリシーやSOAPパススルーAPIのインポート機能も併用されることがあります。この仕組みにより、レガシーなSOAP/XMLバックエンドのコードを一切変更せずに、モダンなJSON APIとしてクライアントに公開できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>SOAPバックエンドとのJSON変換フロー</div><div class='exp-flow'><div class='flow-box'>クライアント<br>(JSONリクエスト)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>json-to-xml変換</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>SOAPバックエンド</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>xml-to-json変換</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>クライアントへJSON</div></div></div><br><br><strong>製品（Product）とサブスクリプションの階層構造</strong>は、APIをグループ化してアクセス権限・利用規約・キー発行単位を管理するための仕組みであり、ペイロードの形式変換とは無関係です。<br><br><strong>マルチリージョンデプロイ機能</strong>は、APIMゲートウェイを複数リージョンに展開して可用性やレイテンシを改善するための機能であり、フォーマット変換の要件には関与しません。<br><br><strong>診断ログ（Azure Monitor連携）</strong>はリクエスト/レスポンスの監視・トラブルシューティングのための可観測性機能であり、実際にペイロードの内容を変換する処理は行いません。"
 },
 {
@@ -745,12 +745,12 @@ const QUESTIONS_SET2 = [
   scenario: "Litware社の画像処理APIは、大きな画像ファイルの解析に数分かかる場合があります。クライアントはWebブラウザで、HTTP接続を長時間開いたまま待機させたくありません。クライアントにはリクエスト受付を即座に通知し、処理状況を後から確認できるようにし、完了したら結果を取得できる設計にしたいと考えています。",
   question: "この要件を満たすために採用すべきアーキテクチャパターンはどれですか？",
   choices: [
+    "スロットリング（レート制限）パターンのみを実装する",
     "サーキットブレーカー パターン",
-    "非同期リクエスト・リプライ（Asynchronous Request-Reply）パターン、HTTP 202 Acceptedとステータス確認用URLを返却する",
     "ゲートウェイ ルーティング パターン",
-    "スロットリング（レート制限）パターンのみを実装する"
+    "非同期リクエスト・リプライ（Asynchronous Request-Reply）パターン、HTTP 202 Acceptedとステータス確認用URLを返却する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>非同期リクエスト・リプライ パターン</strong>は、時間のかかる処理に対してクライアントからのリクエストを受け付けた時点で即座に<strong>HTTP 202 Accepted</strong>を返し、レスポンスの<strong>Locationヘッダー</strong>などにステータス確認用のポーリングURLを含めて返却する設計です。クライアントはそのURLを一定間隔でポーリングし、処理が完了すればHTTP 200と結果本体（あるいは結果へのリンク）を受け取ります。これにより、クライアントは長時間HTTP接続を張ったままタイムアウトのリスクを抱えて待機する必要がなくなります。バックエンドの実処理はキュー（Storage QueueやService Bus）にジョブを投入し、Functions・Container Apps・Logic Appsなどのワーカーが非同期に処理する構成が一般的です（Durable Functionsを使う場合はこのパターンを組み込みでサポートする「非同期HTTP APIパターン」もあります）。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>非同期リクエスト・リプライ</div><div class='exp-timeline'><div class='tl-point'><div class='tl-time'>t0</div><div class='tl-label'>リクエスト送信</div></div><div class='tl-point'><div class='tl-time'>t0+数ms</div><div class='tl-label'>202 Accepted<br>+ ステータスURL</div></div><div class='tl-point'><div class='tl-time'>ポーリング中</div><div class='tl-label'>処理継続</div></div><div class='tl-point'><div class='tl-time'>完了時</div><div class='tl-label'>200 + 結果</div></div></div></div><br><br><strong>サーキットブレーカー パターン</strong>は依存先サービスの障害から呼び出し元を保護するための耐障害性パターンであり、長時間処理に対するクライアント体験（UX）改善という本シナリオの目的とは異なります。<br><br><strong>ゲートウェイ ルーティング パターン</strong>は複数のバックエンドサービスへのリクエストを単一のエントリポイントに集約してルーティングするパターンで、非同期実行そのものの設計パターンではありません。<br><br><strong>スロットリング（レート制限）のみ</strong>は、リクエストの流入量そのものを制御する仕組みであり、個々のリクエストに対する長時間処理の応答方式（即時受付+後から結果取得）という課題を直接解決するものではありません。"
 },
 {
@@ -759,11 +759,11 @@ const QUESTIONS_SET2 = [
   question: "この設計思想を表すマイクロサービス間連携のスタイルはどれですか？",
   choices: [
     "オーケストレーション（Orchestration） — 中央のオーケストレーターがすべてのサービス呼び出し順序を制御する",
-    "コレオグラフィ（Choreography） — 各サービスがイベントを発行/購読し、中央制御なしに自律的に連携する",
     "同期的なポイントツーポイントREST呼び出しチェーン",
-    "共有データベースを介したサービス間のデータ共有"
+    "共有データベースを介したサービス間のデータ共有",
+    "コレオグラフィ（Choreography） — 各サービスがイベントを発行/購読し、中央制御なしに自律的に連携する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>コレオグラフィ（Choreography）</strong>は、各マイクロサービスが自律的にイベントを発行し、他のサービスがそれを購読して自分の責務に応じて反応するという、中央の指揮者を持たない分散的な連携スタイルです（振付師なしに各ダンサーが決められた動きを自律的に演じる「振り付け」に由来する名称）。今回のように注文サービスが「注文作成」イベントを発行し、在庫・請求・配送の各サービスがEvent GridやService Busのようなイベント基盤を介してそれぞれ独立に購読・処理するアーキテクチャがこれに該当します。新しいサービス（例：ポイント付与サービス）を追加する際も、既存サービスは一切変更せず、新サービスが同じイベントを購読するだけで済むため、疎結合と拡張性を最大化できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>コレオグラフィ vs オーケストレーション</div><table class='exp-compare'><tr><th>スタイル</th><th>制御の所在</th><th>サービス追加時の変更</th></tr><tr class='hl'><td>コレオグラフィ</td><td>各サービスが自律的に反応</td><td class='ok'>既存サービス変更なし</td></tr><tr><td>オーケストレーション</td><td>中央オーケストレーターが一元管理</td><td class='ng'>中央フロー定義の変更が必要</td></tr></table></div><br><br><strong>オーケストレーション</strong>は、中央のオーケストレーター（例：Durable Functionsのオーケストレーター関数やLogic Appsのワークフロー）がすべてのステップの実行順序・呼び出し・エラーハンドリングを一元的に管理する集中制御型のスタイルです。全体のフローが追跡しやすい利点はありますが、「中央の制御役なしに自律的に処理を進める」という本シナリオの要件とは正反対の方式です。<br><br><strong>同期的なポイントツーポイントREST呼び出しチェーン</strong>は、あるサービスが次のサービスを直接呼び出す形でサービス間が密結合になりやすく、呼び出し先の障害や遅延が呼び出し元に直接影響し連鎖しやすいため、疎結合設計の要件に反します。<br><br><strong>共有データベースを介したデータ共有</strong>は、複数サービスが同じデータストアのスキーマに依存することになり、一方のサービスのスキーマ変更が他方に影響するなど、マイクロサービスの独立したデプロイ・進化を妨げるアンチパターンとされています。"
 },
 {
@@ -771,12 +771,12 @@ const QUESTIONS_SET2 = [
   scenario: "オンラインオークションアプリを運営するTailwind Traders社は、入札状況をすべての参加ユーザーのブラウザにリアルタイムで反映させたいと考えています。数千人が同時に同じオークションページを閲覧しており、サーバーからクライアントへ低遅延でプッシュ通知を配信する必要があります。WebSocket接続の管理やスケーリングの実装・運用負荷を自社でできるだけ持ちたくありません。",
   question: "この要件を満たすために使用すべきAzureサービスはどれですか？",
   choices: [
-    "Azure Event Hubs でクライアントに直接ストリーミング配信する",
-    "Azure SignalR Service を使用し、サーバーレスまたは既定モードでリアルタイム双方向通信を実装する",
+    "Azure Front Door のリアルタイムルーティング機能を使用する",
     "Azure Queue Storage をポーリングするクライアント側JavaScriptを実装する",
-    "Azure Front Door のリアルタイムルーティング機能を使用する"
+    "Azure Event Hubs でクライアントに直接ストリーミング配信する",
+    "Azure SignalR Service を使用し、サーバーレスまたは既定モードでリアルタイム双方向通信を実装する"
   ],
-  answer: 1,
+  answer: 3,
   explanation: "<strong>Azure SignalR Service</strong>は、WebSocket（利用不可の場合はServer-Sent EventsやLong Pollingへの自動フォールバックを含む）を使ったリアルタイム双方向通信の<strong>接続確立・管理・水平スケーリングをフルマネージド</strong>で提供するサービスです。数千〜数万規模の同時接続をAzure側のインフラで処理できるため、自社でWebSocketサーバーのスケールアウトや接続状態管理を実装・運用する必要がありません。<strong>既定（クラシック）モード</strong>ではASP.NET Core SignalRアプリのバックプレーンとして動作し、<strong>サーバーレスモード</strong>ではAzure Functionsと組み合わせて常駐サーバーなしにリアルタイム配信を実装できます。オークションの入札状況のような多数同時接続への低遅延プッシュ配信に最適です。<br><br><strong>Event Hubs</strong>はサーバー側（バックエンドの複数コンシューマー間）での大量データ取り込み・ストリーミング処理に最適化されたサービスであり、Webブラウザクライアントへ直接WebSocketで接続してプッシュ配信する仕組みは提供していません。<br><br><strong>Queue Storage のクライアントポーリング</strong>は実装自体は可能ですが、ポーリング間隔に依存した遅延が生じ真のリアルタイム性を欠くうえ、数千クライアントが同時にポーリングを行うとストレージ側への負荷とコストが増大し非効率です。<br><br><strong>Azure Front Door</strong>はグローバルなHTTP/HTTPSロードバランシングとCDN・WAF機能を提供するエッジサービスであり、サーバーからクライアントへのリアルタイムプッシュ配信機能そのものは持ちません。なお類似サービスとしてAzure Web PubSub Serviceもあり、こちらは汎用的なWebSocketメッセージング向け、SignalR Serviceは.NETのSignalRプログラミングモデルに最適化されている点で使い分けられます。"
 },
 {
@@ -784,12 +784,12 @@ const QUESTIONS_SET2 = [
   scenario: "Contoso社は、Azure Event Gridを使ってパートナー企業のシステムにイベントを配信する仕組みを構築しています。パートナー企業側は業界標準に準拠したイベントフォーマットを求めており、特定ベンダーに依存しない相互運用可能なイベントスキーマを使用したいと要望しています。将来的に他のクラウドベンダーのイベントルーティングシステムとも連携できるようにしたいと考えています。",
   question: "Event Gridのイベントサブスクリプションでどのイベントスキーマを選択すべきですか？",
   choices: [
-    "Event Grid スキーマ（Azure独自のデフォルトスキーマ）のみを使用する",
     "CloudEvents v1.0 スキーマを使用するようイベントサブスクリプションを構成する",
+    "Event Grid スキーマ（Azure独自のデフォルトスキーマ）のみを使用する",
     "カスタムWebhookペイロードを独自定義してスキーマ変換を自前実装する",
     "Service Bus のメッセージスキーマに変換してから配信する"
   ],
-  answer: 1,
+  answer: 0,
   explanation: "<strong>CloudEvents</strong>は、CNCF（Cloud Native Computing Foundation）が策定した、イベントの記述方法を標準化するベンダー中立の業界仕様です。Azure Event Gridはトピックおよびイベントサブスクリプションの入出力スキーマとして<strong>CloudEvents v1.0スキーマ</strong>をネイティブにサポートしており、これを選択することでAWSやGoogle CloudなどCloudEventsに対応した他クラウドベンダーのイベント基盤や、CloudEvents対応の任意のパートナーシステムとも共通フォーマットで相互運用できます。イベントの発行元・スキーマを共通言語化することで、将来的なマルチクラウド連携やパートナー統合のハードルを下げられます。<br><br><strong>Event Grid スキーマ（Azure独自のデフォルトスキーマ）</strong>は、Azureに最適化された独自形式であり、Azureエコシステム内で完結する用途では便利ですが、他ベンダーとの相互運用性という要件には適合しません。<br><br><strong>独自Webhookペイロードの自前実装</strong>は、変換ロジックの開発・保守コストが発生するうえ、業界標準ではないため受け取り側のパートナーごとに個別対応が必要になり、標準準拠という要件を満たさず車輪の再発明になります。<br><br><strong>Service Bus のメッセージスキーマへの変換</strong>は、Service BusはEvent Gridとは異なるメッセージングサービスであり、そのメッセージ形式は業界標準のイベントスキーマではないため、パートナーとの相互運用性の要件には合致しません。"
 },
 
