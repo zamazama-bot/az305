@@ -1,16 +1,24 @@
 // AZ-305 Quiz Engine
 // QUESTIONS      は data/questions.js  (第1回: 60問)
 // QUESTIONS_SET2 は data/questions2.js (第2回: 60問)
+// QUESTIONS_SET3 は data/questions3.js (本番模試A: 60問)
+// QUESTIONS_SET4 は data/questions4.js (本番模試B: 60問)
 
 (function () {
   'use strict';
 
   var LABELS = ['A', 'B', 'C', 'D'];
 
+  // データファイルの読み込みに失敗しても、他のセットは使えるようにガードする。
+  // （const 宣言はグローバルオブジェクトに載らないため typeof で判定する）
+  function safeSet(v) { return (v && v.length) ? v : null; }
+
   var SETS = [
-    { id: 1, label: '第1回',  questions: QUESTIONS,      desc: 'ID・ガバナンス・監視／データストレージ 中心' },
-    { id: 2, label: '第2回',  questions: QUESTIONS_SET2, desc: '事業継続性／インフラ／アプリアーキテクチャ 中心' }
-  ];
+    { id: 1, label: '分野別 第1回', questions: safeSet(typeof QUESTIONS      !== 'undefined' ? QUESTIONS      : null), desc: 'ID・ガバナンス・監視／データストレージ 中心' },
+    { id: 2, label: '分野別 第2回', questions: safeSet(typeof QUESTIONS_SET2 !== 'undefined' ? QUESTIONS_SET2 : null), desc: '事業継続性／インフラ／アプリアーキテクチャ 中心' },
+    { id: 3, label: '本番模試 A',   questions: safeSet(typeof QUESTIONS_SET3 !== 'undefined' ? QUESTIONS_SET3 : null), desc: '本番同様のドメイン配分＋ケーススタディ形式', exam: true },
+    { id: 4, label: '本番模試 B',   questions: safeSet(typeof QUESTIONS_SET4 !== 'undefined' ? QUESTIONS_SET4 : null), desc: '本番同様のドメイン配分＋ケーススタディ形式', exam: true }
+  ].filter(function (s) { return s.questions !== null; });
 
   // answers[i] = 選択した選択肢インデックス。未回答は undefined。
   var state = {
@@ -184,6 +192,14 @@
       '  <span class="q-number">問題 ' + (state.current + 1) + ' / ' + total + '</span>' +
       '  <span class="q-domain">' + (q.domain || '') + '</span>' +
       '</div>' +
+
+      // ── ケーススタディ（本番模試のみ・折りたたみ）
+      (q.caseStudy
+        ? '<details class="q-case" open>' +
+          '  <summary class="q-case-summary">&#128203; ' + q.caseStudy.title + '（クリックで開閉）</summary>' +
+          '  <div class="q-case-body">' + q.caseStudy.body + '</div>' +
+          '</details>'
+        : '') +
 
       // ── シナリオ
       (q.scenario
