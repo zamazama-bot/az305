@@ -11,10 +11,10 @@ const QUESTIONS = [
   scenario: "Contoso社では、運用チームのメンバーが仮想マシンの起動・停止・サイズ変更を行えるようにしたいですが、誤って仮想マシンやそのディスクを削除できないようにする必要があります。組み込みロールにはこの要件に正確に一致するものがありません。",
   question: "この要件を満たすために作成すべきものはどれですか？",
   choices: [
-    "所有者ロールを割り当てた上でAzure Policyの拒否割り当てを追加する",
-    "Actionsで仮想マシン関連操作を許可し、NotActionsで削除操作を除外したAzureカスタムロール",
-    "共同作成者ロールを割り当て、リソースロックの「削除」ロックをサブスクリプションに設定する",
-    "Conditional Accessポリシーで削除操作を行うセッションをブロックする"
+    "所有者ロールとAzure Policyの拒否割り当てを組み合わせる",
+    "NotActionsで削除操作を除外したAzureカスタムロールを作成する",
+    "共同作成者ロールとリソースロックの削除ロックを組み合わせる",
+    "Conditional Accessで削除操作のセッションをブロックする"
   ],
   answer: 1,
   explanation: "Azure RBACの<strong>カスタムロール</strong>はJSON形式のロール定義で構成され、<strong>Actions</strong>に許可する管理操作（例：Microsoft.Compute/virtualMachines/start/action、restart/action、write）を列挙し、<strong>NotActions</strong>にActionsから差し引きたい操作（Microsoft.Compute/virtualMachines/deleteやdisks/deleteなど）を指定します。実効的な権限は「Actionsに含まれるがNotActionsには含まれない」操作の集合として計算されるため、組み込みロールにない粒度の権限セットを柔軟に定義できます。カスタムロールはAssignableScopes（管理グループ・サブスクリプション・リソースグループ）を指定して所有者だけが作成・更新でき、複数サブスクリプションへ再利用可能です。<br><br>「共同作成者＋リソースロック」は一見有効に見えますが、リソースロックはロールや個人を区別せず<strong>スコープ全体</strong>のあらゆるプリンシパルに一律適用されるため、正当な理由で削除が必要な別チーム（インフラ再構築担当など）の操作まで止めてしまい、要件の「特定チームだけ削除を制限する」という意図に合いません。「所有者＋拒否割り当て（Deny Assignment）」は概念としては近いものの、拒否割り当てはユーザーが直接作成するAPIやポータルUIを持たず、Azure Blueprintsのロックアーティファクトなど限定的な仕組みでのみシステムが生成するものであり、通常の運用でユーザーが自由に作成できるものではありません。Conditional Accessはサインイン時にMFAやデバイス準拠などの条件を評価する仕組みであり、ARM上の個々のAPI操作（削除など）を選択的に禁止する機能は持ちません。<br><br>なお、RBACの「拒否（Deny）」の考え方とAzure Policyの<strong>Deny効果</strong>は混同されやすいですが、RBACには本来「明示的な拒否」ロールという概念は存在せず（拒否割り当ては特殊なシステム機能）、通常の権限制限はNotActionsによる除外かAzure Policyでの操作制御によって行います。",
@@ -37,10 +37,10 @@ const QUESTIONS = [
   scenario: "Northwind社のセキュリティチームは、Global Administratorロールを常時保有するユーザーをなくしたいと考えています。管理者がそのロールを一時的に必要とする場合、業務理由を入力し、別の承認者が承認して初めて有効化され、有効化は8時間で自動的に失効するようにしたいです。",
   question: "この要件を実現するために構成すべき機能はどれですか？",
   choices: [
-    "Conditional Accessポリシーでロールベースのアクセス制御を条件に追加する",
-    "Microsoft Entra Privileged Identity Management（PIM）でのロールの適格（Eligible）割り当てと承認必須のアクティブ化設定",
-    "Entraアクセスレビューを四半期ごとにスケジュールする",
-    "Azure Policyを使用してGlobal Administratorロールの割り当てを禁止する"
+    "Conditional Accessでロールベースの条件付きアクセスポリシーを構成する",
+    "PIMでロールを適格（Eligible）割り当てにし、承認必須のアクティブ化を構成する",
+    "Entraアクセスレビューを四半期ごとに実施するようスケジュールする",
+    "Azure PolicyでGlobal Administratorロールの割り当てを禁止する"
   ],
   answer: 1,
   explanation: "<strong>PIM（Privileged Identity Management）</strong>では、ロールの割り当て種別を「アクティブ（Active）」ではなく「<strong>適格（Eligible）</strong>」に設定できます。適格割り当てを持つユーザーは、通常時は当該ロールの権限を持たず、必要なタイミングで<strong>アクティブ化（Activation）</strong>を要求して初めて権限が有効になります。アクティブ化設定では、業務理由の入力必須化、多要素認証の要求、指定した承認者による承認必須化、最大アクティブ化期間（例：8時間）を細かく構成でき、期限が来ると自動的に権限が失効し「適格」の状態に戻ります。これにより常時有効な特権（Standing Access）を排除し、攻撃対象領域を最小化する「Just-In-Timeアクセス」を実現します。PIMはMicrosoft Entra ID <strong>P2</strong>（またはEntra ID Governance）ライセンスが必要な機能です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>PIMアクティブ化のタイムライン</div><div class='exp-timeline'><div class='tl-point'><div class='tl-time'>平常時</div><div class='tl-label'>適格(Eligible)のみ・権限なし</div></div><div class='tl-point'><div class='tl-time'>要求</div><div class='tl-label'>理由入力+承認者の承認</div></div><div class='tl-point tl-danger'><div class='tl-time'>0〜8h</div><div class='tl-label'>アクティブ化・権限有効</div></div><div class='tl-point'><div class='tl-time'>8h後</div><div class='tl-label'>自動失効→適格に戻る</div></div></div></div><br><br>Conditional Accessはサインイン時にMFAやデバイス準拠、場所などの条件を評価してアクセスを許可・拒否する仕組みであり、ロール自体を時限的に付与したり承認フローを挟んだりする機能は持ちません。アクセスレビューは既に付与されている権限を定期的に棚卸しし、不要な権限を検出・削除するための仕組みであり、事前承認を伴うリアルタイムのアクティブ化ワークフローとは目的が異なります。Azure Policyはリソース構成（VMのSKUやタグなど）を統治する仕組みであり、Entra IDのディレクトリロールの割り当てそのものを制御対象にはできません。",
@@ -50,10 +50,10 @@ const QUESTIONS = [
   scenario: "Contoso社は、10種類のAzureリソースロールを頻繁に切り替えて使用するプロジェクトチームを持っています。個々のユーザーに対して毎回PIMでロールを有効化させるのではなく、チーム全体をあるセキュリティグループのメンバーとして時限的にアクティブ化させ、そのグループにロールを事前に割り当てておく運用にしたいと考えています。",
   question: "この要件を最も効率的に実現する機能はどれですか？",
   choices: [
-    "Conditional Accessでグループベースの条件付きアクセスポリシーを作成する",
-    "動的グループを作成し、ユーザー属性に基づいて自動的にメンバーを追加する",
-    "各ユーザーに個別にPIMでロールの適格割り当てを設定する",
-    "PIM for Groups（特権アクセスグループ）を使用し、グループメンバーシップを適格（Eligible）にする"
+    "Conditional Accessでグループベースの条件付きアクセスを構成する",
+    "動的グループでユーザー属性に基づきメンバーを自動追加する",
+    "各ユーザーに個別にPIMでロールを適格割り当てする",
+    "PIM for Groupsでグループメンバーシップを適格（Eligible）にする"
   ],
   answer: 3,
   explanation: "<strong>PIM for Groups（特権アクセスグループ）</strong>を使うと、Microsoft 365グループやセキュリティグループそのものをPIMの管理対象にできます。あらかじめそのグループにAzureロール（複数可）やEntraロールを割り当てておき、ユーザーはグループの「メンバー」または「所有者」という役割を<strong>適格（Eligible）</strong>として持ちます。ユーザーが一度グループメンバーシップをアクティブ化するだけで、そのグループに割り当てられた全てのロール（この場合は10種類）の権限を同時に取得できるため、ロールを1つずつ個別にアクティブ化する手間や承認の往復を大幅に削減できます。<br><br>各ユーザーに個別に10個のロールの適格割り当てを設定すると、ユーザーはロールの数だけアクティブ化操作と承認待ちを繰り返す必要があり、運用負荷も監査対象も増大します。動的グループはユーザーの属性（部署名やジョブタイトルなど）に基づいてメンバーシップを自動的に更新する仕組みであり、時限的なアクティブ化や承認フローとは無関係な機能です。Conditional Accessはサインイン時の認証条件を制御するものであり、ロールの付与や時限管理そのものには関与しません。",
@@ -63,10 +63,10 @@ const QUESTIONS = [
   scenario: "Contoso社のセキュリティ監査で、複数の従業員がSMTP AUTHやIMAPなどのレガシープロトコルを使用してメールクライアントからサインインしていることが判明しました。これらのプロトコルは多要素認証をサポートしないため、パスワードスプレー攻撃の標的になっています。",
   question: "レガシー認証を使用したサインインを組織全体でブロックするために構成すべきものはどれですか？",
   choices: [
-    "Microsoft Entra IDのパスワードポリシーでパスワードの複雑さ要件を強化する",
-    "Azure Policyを使用してメールクライアントの種類を制限する",
-    "クライアントアプリの条件を「レガシー認証クライアント」に設定したConditional Accessポリシーでアクセスをブロックする",
-    "Microsoft Defender for Cloud Appsで異常なサインインをアラートのみ発報するよう設定する"
+    "Entra IDのパスワードポリシーで複雑さ要件を強化する",
+    "Azure Policyでメールクライアントの種類を制限する",
+    "Conditional Accessでレガシー認証クライアントをブロックする",
+    "Defender for Cloud Appsで異常なサインインをアラートのみ発報する"
   ],
   answer: 2,
   explanation: "<strong>Conditional Access</strong>ポリシーの割り当て条件にある「クライアントアプリ」で、「モダン認証をサポートするクライアント」ではなく<strong>レガシー認証クライアント</strong>（Exchange ActiveSyncやその他のクライアント＝SMTP AUTH、IMAP4、POP3、旧Outlookなど）を対象とし、アクセス制御を「ブロック」に設定することで、MFAのチャレンジ自体が発生し得ないレガシープロトコル経由のサインインを組織全体で遮断できます。レガシー認証はMFAを要求できない仕組みであるため、そもそも侵害耐性が低く、Microsoftも早期の無効化を強く推奨しています（Basic認証自体もExchange Onlineでは既定で廃止が進められています）。<br><br>パスワードの複雑さ要件を強化しても、パスワードスプレー攻撃で使われる漏洩済み・推測されやすい認証情報のリスト攻撃には限定的な効果しかなく、レガシー認証というプロトコル自体を無効化するものではありません。Defender for Cloud Appsのアラート設定は異常なアクティビティを検知して通知するだけの受動的な対応であり、実際の不正サインインの試行そのものを能動的に遮断する機能ではありません。Azure Policyはリソースのデプロイ・構成を統治するAzureサブスクリプション向けの機能であり、Entra IDへのサインイン時の認証プロトコル制御には使用できません。",
@@ -76,10 +76,10 @@ const QUESTIONS = [
   scenario: "Contoso社はMicrosoft Entra ID P2を導入しています。あるユーザーが数分前に東京からサインインしていたにもかかわらず、地理的に到達不可能な短時間で別の国からもサインインしている（あり得ない移動）、または匿名化プロキシ（Tor出口ノードなど）経由でのサインインが検出された場合に、そのサインインをリアルタイムでブロックまたは追加のMFAを要求したいと考えています。",
   question: "この要件を満たすために設定すべきものはどれですか？",
   choices: [
-    "Identity Protectionのサインインリスクポリシー（Conditional Access）で、リスクレベルに応じてアクセスをブロックまたはMFAを要求する",
-    "Microsoft Sentinelの分析ルールでリスクの高いサインインに関するインシデントを作成する",
-    "Conditional Accessの名前付きの場所を使用して疑わしいIPアドレスからのアクセスをブロックする",
-    "Identity Protectionのユーザーリスクポリシーでパスワードの変更を必須にする"
+    "サインインリスクポリシーでリスクレベルに応じブロックまたはMFAを要求する",
+    "Sentinelの分析ルールでリスクの高いサインインのインシデントを作成する",
+    "Conditional Accessの名前付きの場所で疑わしいIPからのアクセスをブロックする",
+    "Identity Protectionのユーザーリスクポリシーでパスワード変更を必須にする"
   ],
   answer: 0,
   explanation: "「あり得ない移動（Atypical travel）」や「匿名IPアドレス（Anonymous IP address）」は、Identity Protectionにおいてサインインの発生時にリアルタイムまたはほぼリアルタイムで評価される<strong>サインインリスク</strong>の代表的な検出シグナルです。Identity Protectionが提供する<strong>サインインリスクベースのConditional Accessポリシー</strong>を構成すると、Microsoftの機械学習・脅威インテリジェンスに基づいて算出されたリスクレベル（低・中・高）に応じて、そのセッションだけをブロックしたり追加のMFAを要求したりできます。この機能はMicrosoft Entra ID <strong>P2</strong>ライセンスで利用可能です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>サインインリスク vs ユーザーリスク</div><div class='exp-decision'><div class='dec-row dec-yes'><span class='dec-cond'>今まさに発生中のサインインをリアルタイムで止めたい？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>サインインリスクポリシー</span></div><div class='dec-row'><span class='dec-cond'>資格情報漏洩などアカウント自体の恒久的な是正が必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>ユーザーリスクポリシー</span></div></div></div><br><br>ユーザーリスクポリシーは、個々のサインインではなく<strong>アカウントそのもの</strong>が侵害されている可能性を評価する仕組みで、代表例は「漏洩認証情報（Leaked Credentials）」の一致です。これは過去に流出した認証情報データベースとの突合によるオフライン検出であり、検出結果がレポートに反映されるまで最大48時間程度かかることがあるため、「その場のサインイン試行を即座に止める」というリアルタイム性の高い要件には直接対応できません。今回のような「今まさに発生しているサインインをリアルタイムで止めたい」という要件には、オフライン検出であるユーザーリスクではなく、サインインリスクポリシーの方が適合します。名前付きの場所によるIPブロックは静的なホワイトリスト／ブラックリスト方式であり、あり得ない移動や匿名IPのような動的なリスク評価の仕組みは持ちません。Sentinelの分析ルールはログを収集した後にインシデントとして可視化・記録する検知後の対応であり、サインインの試行自体をその場でブロックすることはできません。",
@@ -90,8 +90,8 @@ const QUESTIONS = [
   question: "この要件に最も適した機能はどれですか？",
   choices: [
     "Conditional Accessでデバイスの準拠状態を条件にする",
-    "Microsoft Entra IDのセルフサービスパスワードリセット（SSPR）を有効化する",
-    "Identity Protectionのユーザーリスクポリシーで、リスクレベルが「高」の場合にパスワード変更を必須とするConditional Accessポリシー",
+    "Entra IDのSSPR（セルフサービスパスワードリセット）を有効化する",
+    "ユーザーリスクポリシーで「高」リスク時にパスワード変更を必須にする",
     "Identity Protectionのサインインリスクポリシーでアクセスをブロックする"
   ],
   answer: 2,
@@ -102,10 +102,10 @@ const QUESTIONS = [
   scenario: "Contoso社は、Global Administratorおよびその他の特権ロールを持つ管理者に対して、パスワードやSMS/音声通話によるMFAではなく、フィッシング攻撃に強い認証方法（FIDO2セキュリティキーやWindows Hello for Businessなど）のみを使用したサインインを義務付けたいと考えています。",
   question: "この要件を満たすためにConditional Accessで構成すべき制御はどれですか？",
   choices: [
-    "アプリの強制制御（App Enforced Restrictions）を有効にする",
-    "多要素認証を要求する付与制御のみを設定する",
-    "デバイスを準拠済みとしてマークすることを要求する付与制御を設定する",
-    "認証強度（Authentication Strength）としてフィッシング耐性のあるMFAを要求する付与制御を設定する"
+    "アプリ強制制御（App Enforced Restrictions）を有効にする",
+    "多要素認証（MFA）を要求する付与制御を設定する",
+    "デバイス準拠を要求する付与制御を設定する",
+    "認証強度でフィッシング耐性のあるMFAを要求する"
   ],
   answer: 3,
   explanation: "Conditional Accessの<strong>認証強度（Authentication Strength）</strong>は、単に「MFAを満たしているか」ではなく「どの認証方式の組み合わせで満たしたか」まで細かく指定できる付与制御です。Microsoft提供の組み込み強度の1つである「<strong>フィッシング耐性のある多要素認証</strong>」を選択すると、FIDO2セキュリティキー、Windows Hello for Business、証明書ベース認証（スマートカードなど）といった、中間者攻撃・偽サイトによる資格情報窃取に強い方式のみが許可され、SMSやパスワード＋通知承認のような可傍受・フィッシング可能な方式は自動的に排除されます。特権ロール保有者に対する保護強化として、Microsoftのセキュリティベースラインでも推奨される構成です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>認証方式のフィッシング耐性</div><table class='exp-compare'><tr><th>区分</th><th>認証方式</th></tr><tr class='hl'><td class='ok'>フィッシング耐性あり</td><td>FIDO2セキュリティキー / Windows Hello for Business / 証明書ベース認証</td></tr><tr><td class='ng'>フィッシング耐性なし</td><td>SMS / 音声通話 / Microsoft Authenticatorプッシュ通知</td></tr></table></div><br><br>単純に「多要素認証を要求する」制御を設定するだけでは、SMSコードや音声通話、Microsoft Authenticatorの単純承認プッシュ通知なども条件を満たしてしまうため、フィッシング耐性という要件を満たしません。デバイス準拠の要求は、端末がIntuneなどで管理・準拠状態にあるかというデバイスの信頼性を評価するものであり、サインイン時に使う認証方式自体を制限するものではありません。アプリの強制制御（App Enforced Restrictions）はExchange OnlineやSharePoint Online側でネイティブに提供されるセッション制限機能（例：非準拠デバイスでのダウンロード制限）であり、認証強度の指定とは異なる仕組みです。",
@@ -115,10 +115,10 @@ const QUESTIONS = [
   scenario: "Contoso社は取引先企業のユーザーをゲストとして招待し、自社のSharePoint OnlineサイトにB2Bコラボレーションでアクセスさせています。法務部門は、ゲストユーザーが初回アクセス時に会社の利用規約に同意しない限り、リソースにアクセスできないようにすることを求めています。",
   question: "この要件を満たすために使用すべき機能はどれですか？",
   choices: [
-    "Conditional Accessでゲストユーザーからのアクセスを完全にブロックする",
-    "Conditional Accessの許可制御として「利用規約（Terms of Use）」への同意を要求するポリシー",
+    "Conditional Accessでゲストからのアクセスを完全にブロックする",
+    "Conditional Accessで利用規約（Terms of Use）への同意を要求する",
     "SharePoint Onlineの共有設定でゲストアクセスを無効化する",
-    "Entra IDの外部コラボレーション設定でゲストユーザーの招待を制限する"
+    "Entra IDの外部コラボレーション設定でゲストの招待を制限する"
   ],
   answer: 1,
   explanation: "Microsoft Entra IDの<strong>利用規約（Terms of Use）</strong>はPDF形式の規約文書をアップロードし、Conditional Accessの許可制御の1つとして組み込める機能です。対象ユーザー（ゲストを含む）がポリシーの条件に一致するリソースへアクセスしようとすると、規約の内容を表示し明示的な同意操作を求めてからアクセスを許可します。誰がいつどのバージョンの規約に同意したかのレポートも取得でき、法務・コンプライアンス上の証跡として活用できます。バージョン管理や再同意の要求（規約更新時など）にも対応しています。<br><br>外部コラボレーション設定は「誰がゲストを招待できるか」「どのドメインからの招待を許可するか」といった招待プロセス自体の権限管理であり、同意取得のワークフローとは別の機能です。SharePoint Onlineの共有設定でゲストアクセス自体を無効化してしまうと、そもそも要件である「ゲストがコラボレーションできる」という前提が崩れてしまいます。Conditional Accessでゲストを完全にブロックするのも同様に、目的である外部コラボレーションを不可能にしてしまうため本末転倒です。",
@@ -141,9 +141,9 @@ const QUESTIONS = [
   scenario: "Contoso社は管理グループ「Corp」の配下に複数のサブスクリプションを持っています。管理グループ「Corp」でユーザーAに「閲覧者」ロールを割り当てたところ、Aは配下のすべてのサブスクリプション・リソースグループ・個々のリソースに対しても閲覧者権限を持つようになりました。一方、あるリソースグループでユーザーBに「共同作成者」ロールを割り当てても、その親であるサブスクリプションや管理グループでの権限にはBは含まれませんでした。",
   question: "この動作を正しく説明しているものはどれですか？",
   choices: [
-    "RBACのロール割り当ては上位スコープから下位スコープへ自動的に継承されるが、下位スコープでの割り当ては上位スコープには影響しない",
-    "管理グループでのロール割り当ては、明示的に「継承を有効化」しない限り配下のリソースには適用されない",
-    "RBACのロール割り当てはスコープ間で継承されず、各スコープで個別に設定する必要がある",
+    "RBACは上位スコープから下位へ自動継承され、逆方向には影響しない",
+    "管理グループでの割り当ては「継承を有効化」しない限り適用されない",
+    "RBACの割り当てはスコープ間で継承されず、個別に設定が必要",
     "RBACのロール割り当ては下位スコープから上位スコープへも自動的に反映される"
   ],
   answer: 0,
@@ -154,10 +154,10 @@ const QUESTIONS = [
   scenario: "Contoso社は機密性の高いシークレットを保存するKey Vaultをインターネットからの直接アクセスから保護したいと考えていますが、同じVNet内にないAzure Backupなど一部のMicrosoft管理サービスからは引き続きアクセスできるようにする必要があります。",
   question: "この要件を満たすためにKey Vaultのネットワーク設定で有効にすべきオプションはどれですか？",
   choices: [
-    "全てのネットワークからのアクセスを許可する設定のままにする",
-    "NSGでKey VaultのFQDNへのアウトバウンドを許可する",
-    "パブリックアクセスを選択したネットワークからのみ許可に設定し、「信頼されたMicrosoftサービスがこのファイアウォールをバイパスすることを許可する」を有効にする",
-    "パブリックアクセスを完全に無効にし、プライベートエンドポイントのみを構成する"
+    "すべてのネットワークからのアクセスを許可のままにする",
+    "NSGでKey VaultのFQDN宛てアウトバウンドを許可する",
+    "選択したネットワークのみ許可＋信頼済みサービスのバイパスを有効化する",
+    "パブリックアクセスを無効にしプライベートエンドポイントのみ構成する"
   ],
   answer: 2,
   explanation: "Key Vaultのファイアウォール設定で「選択したネットワークからのみ許可」を選択すると既定では指定したVNet／IP範囲以外からのアクセスは拒否されますが、これだけではAzure Backupのような、要求元が同一VNet内にないMicrosoft管理サービスからのアクセスも同時にブロックされてしまいます。そこで<strong>「信頼されたMicrosoftサービスにこのファイアウォールをバイパスすることを許可する」</strong>オプションを併せて有効にすることで、Microsoftが管理する信頼済みサービス一覧に含まれる特定のサービス（Azure Backup、Azure Resource Manager経由のテンプレートデプロイなど）からのアクセスだけを、VNet外からでも例外的に許可できます。一般の不正アクセスは遮断しつつ必要な連携は維持できる、要件に最も直接合致する構成です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Key Vaultファイアウォールの構成</div><div class='exp-flow'><div class='flow-box hl-red'>インターネット</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Key Vault<br>(選択したネットワークのみ許可)</div></div><div class='exp-flow'><div class='flow-box hl-green'>Azure Backup等<br>(信頼済みサービス)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Key Vault<br>(バイパスで許可)</div></div></div><br><br>プライベートエンドポイントのみに限定する構成は接続経路をプライベートIPに閉じる点で高いセキュリティを実現しますが、信頼されたサービスのバイパスという明示的な許可の仕組みとは異なる話であり、要件で名指しされている「バイパスの許可」には対応していません。全ネットワークからのアクセス許可はセキュリティ要件（インターネットからの直接アクセス防止）に明確に反します。NSGはVNet内のサブネット・NIC単位のトラフィック制御機能であり、Key Vault自体が持つサービスレベルのファイアウォール設定を代替するものではありません。",
@@ -167,10 +167,10 @@ const QUESTIONS = [
   scenario: "Contoso社の内部監査で、退職した従業員が誤ってKey Vault内の重要な暗号化キーを削除していたことが判明しました。幸い、そのキーはリテンション期間内に復元できましたが、今後は悪意のあるユーザーがKey Vault自体やその中のオブジェクトを完全に消去できないよう、恒久的な保護を義務付けることになりました。",
   question: "この要件を満たすために有効化すべき設定はどれですか？",
   choices: [
-    "バックアップとしてKey VaultのシークレットをStorageアカウントに定期エクスポートする",
-    "論理的な削除（Soft Delete、既定で有効）に加えて、パージ保護（Purge Protection）を有効にする",
-    "Key Vaultへのアクセスを読み取り専用のRBACロールのみに制限する",
-    "Key Vaultにリソースロック「読み取り専用」を設定する"
+    "Key Vaultのシークレットを定期的にStorageアカウントへエクスポートする",
+    "論理的な削除に加えパージ保護（Purge Protection）を有効にする",
+    "Key Vaultへのアクセスを読み取り専用RBACロールのみに制限する",
+    "Key Vault自体にリソースロック「読み取り専用」を設定する"
   ],
   answer: 1,
   explanation: "Key Vaultの<strong>論理的な削除（Soft Delete）</strong>は、削除操作が行われてもオブジェクト（キー・シークレット・証明書やVault自体）を一定の保持期間中は「削除済み」状態として保持し、期間内であれば復元可能にする機能で、現在は新規Vaultで既定で有効です。しかし十分な権限（Purge権限）を持つユーザーは、保持期間中であっても意図的に<strong>パージ（完全削除）</strong>操作を実行でき、その場合は復元不可能になります。これを技術的に禁止するのが<strong>パージ保護（Purge Protection）</strong>で、これを有効にすると保持期間が満了するまでは、たとえ所有者権限を持つ管理者であってもパージ操作自体を実行できなくなります。金融・医療系などのコンプライアンス基準では、この2つの機能の併用がしばしば必須要件になります。なお、パージ保護は一度有効にすると無効化できない不可逆な設定です。<br><br>リソースロック「読み取り専用」はKey Vaultリソース自体の構成（プロパティ）変更を防ぐものであり、内部に格納されたキーやシークレットといったオブジェクト単位の削除・パージ操作までは制御しません。読み取り専用RBACロールへの権限制限は運用上の権限管理策としては有効ですが、悪意を持った高権限アカウント（乗っ取られた管理者アカウントなど）による削除を技術的に阻止する保証にはなりません。手動でのStorageアカウントへのエクスポートは事後的なバックアップ手段であり、削除やパージそのものを未然に防ぐ恒久的な保護策ではありません。",
@@ -180,10 +180,10 @@ const QUESTIONS = [
   scenario: "Contoso社は、複数のAzure Functionsアプリと複数のAzure Automationランブックから、共通のストレージアカウントとSQL Databaseに対して同一の権限セットでアクセスする必要があります。管理者は、リソースが再デプロイされてもID情報が変わらず、かつ一元的に権限を管理できる方法を求めています。",
   question: "この要件を最も効率的に満たす方法はどれですか？",
   choices: [
-    "各リソースにシステム割り当てマネージドIDを有効化し、個別にRBACロールを割り当てる",
-    "1つのユーザー割り当てマネージドIDを作成し、全てのFunctionsアプリとAutomationアカウントに割り当てる",
-    "Key Vaultにアクセスポリシーを設定し、全リソースの匿名アクセスを許可する",
-    "全てのリソースに共通のサービスプリンシパルとクライアントシークレットを発行し、アプリ設定で共有する"
+    "各リソースにシステム割り当てマネージドIDを有効化し個別にロールを割り当てる",
+    "1つのユーザー割り当てマネージドIDを作成し、全リソースに割り当てる",
+    "Key Vaultのアクセスポリシーで全リソースの匿名アクセスを許可する",
+    "全リソース共通のサービスプリンシパルとクライアントシークレットをアプリ設定で共有する"
   ],
   answer: 1,
   explanation: "<strong>ユーザー割り当てマネージドID</strong>は、特定のAzureリソースのライフサイクルに紐づかない、それ自体が独立したAzureリソースとして作成されるIDです。1つのユーザー割り当てマネージドIDを作成してストレージアカウントとSQL Databaseに対して必要なRBACロール（Storage Blob Data Contributorなど）を1回だけ割り当てておき、そのIDを複数のFunctionsアプリとAutomationアカウントに紐づけるだけで、全てのリソースが同一の権限セットを共有できます。ロールの追加・変更もID側で1箇所行えば全リソースに反映されるため一元管理性が高く、また元となるリソース（Functionsアプリ等）が削除・再作成されてもID自体は影響を受けず、資格情報の管理（発行・ローテーション・失効）もAzureのプラットフォームが自動で行うためシークレット漏洩のリスクがありません。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ユーザー割り当てマネージドIDの共有</div><div class='exp-flow'><div class='flow-box'>Functions/Automation<br>(複数リソース)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>ユーザー割り当て<br>マネージドID(1個)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Storage / SQL Database</div></div></div><br><br>システム割り当てマネージドIDは、有効化したリソースそのものとライフサイクルが1対1で連動する（リソース削除時にIDも自動削除される）ため、リソースごとに個別のRBACロール割り当てが必要になり、要件の「一元管理」「再デプロイでもID情報が変わらない」に反します。クライアントシークレットを使うサービスプリンシパルの共有は、シークレットの保管・ローテーション運用が必要になり、漏洩リスクや管理負荷の観点でマネージドIDが利用可能な場面では推奨されないアンチパターンです。匿名アクセスの許可はセキュリティ上論外であり、認可の要件自体を満たしません。",
@@ -193,10 +193,10 @@ const QUESTIONS = [
   scenario: "Contoso社の開発チームは、GitHub Actionsのワークフローからシークレットを一切保存せずにAzureへデプロイできるようにしたいと考えています。パイプラインの資格情報をローテーションする運用負荷や、シークレット漏洩のリスクを完全になくすことが目標です。",
   question: "この要件を満たすために構成すべき機能はどれですか？",
   choices: [
-    "サービスプリンシパルを作成し、クライアントシークレットをGitHub Secretsに保存する",
-    "Azure Key Vaultにサービスプリンシパルの資格情報を保存し、ワークフローから都度取得する",
-    "マネージドID（またはアプリ登録）にワークロードIDフェデレーション（フェデレーション資格情報）を構成し、GitHub ActionsのOIDCトークンを信頼する",
-    "GitHub Actionsのランナーにユーザー割り当てマネージドIDを直接インストールする"
+    "サービスプリンシパルを作成しクライアントシークレットをGitHub Secretsに保存する",
+    "Key Vaultにサービスプリンシパル資格情報を保存しワークフローから取得する",
+    "アプリ登録にワークロードIDフェデレーションを構成しOIDCトークンを信頼する",
+    "GitHub Actionsランナーにユーザー割り当てマネージドIDを直接インストールする"
   ],
   answer: 2,
   explanation: "<strong>ワークロードIDフェデレーション</strong>は、Microsoft Entra IDのアプリ登録（サービスプリンシパル）またはユーザー割り当てマネージドIDに対して「フェデレーション資格情報（Federated Credential）」を構成し、GitHub Actionsが発行する短命な<strong>OIDCトークン</strong>を信頼関係の対象として登録する仕組みです。ワークフロー実行時、GitHub Actions側は発行者（issuer）・サブジェクト（リポジトリ/ブランチ/環境などで絞り込み可能）が一致するOIDCトークンを提示するだけで、Microsoft Entra IDがそれを検証してAzure用の短期アクセストークンを発行します。この間、クライアントシークレットや証明書のような長期間有効な機密情報を一切保存・受け渡しする必要がなく、シークレット漏洩リスクとローテーション運用負荷の両方を根本的に解消できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ワークロードIDフェデレーションの流れ</div><div class='exp-flow'><div class='flow-box'>GitHub Actions</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>OIDCトークン発行</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Entra ID<br>(フェデレーション資格情報で検証)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>Azureアクセストークン発行</div></div></div><br><br>クライアントシークレットをGitHub Secretsに保存する方法は機能はしますが、シークレットの定期的なローテーションが必要であり、Secretsへのアクセス権限やリポジトリ設定のミスによる漏洩リスクも残るため、まさに要件が排除したい運用負荷とリスクをそのまま抱えることになります。マネージドIDはAzureのリソースにのみ関連付けられる仕組みであり、GitHub ActionsのランナーというAzure外部の実行環境に直接インストールしたり紐づけたりすることはそもそもできません。Key Vaultへのサービスプリンシパル資格情報の保存も、結局シークレットという長期間有効な機密情報そのものを管理し続ける必要がある点で目標に反します。",
@@ -206,10 +206,10 @@ const QUESTIONS = [
   scenario: "Contoso社は、社外パートナー企業の担当者が特定の社内プロジェクトアプリに90日間だけアクセスできるようにしたいと考えています。パートナーの担当者自身がポータルからアクセスを要求し、社内の承認者が承認した場合のみ付与され、期限が来ると自動的に権限が失効するセルフサービスの仕組みを求めています。",
   question: "この要件を実現するために使用すべき機能はどれですか？",
   choices: [
-    "Microsoft Entra IDの資格管理（Entitlement Management）でアクセスパッケージを作成する",
-    "Conditional Accessポリシーで有効期限付きのセッション制御を設定する",
-    "PIMで対象アプリのロールを適格（Eligible）としてパートナーに個別に割り当てる",
-    "Entraアクセスレビューを作成し、90日ごとにレビューを実施する"
+    "資格管理（Entitlement Management）でアクセスパッケージを作成する",
+    "Conditional Accessで有効期限付きのセッション制御を設定する",
+    "PIMで対象アプリのロールを適格（Eligible）としてパートナーに個別割り当てる",
+    "Entraアクセスレビューを作成し90日ごとに実施する"
   ],
   answer: 0,
   explanation: "<strong>資格管理（Entitlement Management）</strong>の<strong>アクセスパッケージ</strong>機能は、社内外のユーザー（パートナーなどのB2Bゲストを含む）が特定のリソース群（アプリ、グループ、SharePointサイトなど）へのアクセスをセルフサービスで要求できるカタログとポリシーを提供します。要求時に承認者による承認ステップを必須にでき、アクセス期間（この場合は90日）を割り当てポリシーとして設定すれば、期限到来時に自動的にアクセスが失効します。さらにアクセスパッケージは招待が未済の外部ユーザーに対してB2B招待を自動的に発行する機能も持ち、パートナー連携のライフサイクル管理全体を一元的にカバーする、まさにこのシナリオのために設計された機能です。<br><br>PIMは主にAzureリソースロールやEntraディレクトリロールといった特権的なロールを対象にした時限的アクティブ化の仕組みであり、アプリケーションへの一般的なアクセス要求・承認・自動失効というセルフサービス型のワークフローには設計上適していません。アクセスレビューは既に付与されている権限を定期的に棚卸しして継続要否を判断する仕組みであり、新規アクセスの要求受付から承認、期限付き付与までの一連のプロセスを構築する機能ではありません。Conditional Accessは認証時の条件付きアクセス制御であり、アクセス権そのものの発行・失効管理を担う機能ではありません。",
@@ -245,10 +245,10 @@ const QUESTIONS = [
   scenario: "Contoso社は日本・米国・欧州の3リージョンでAzureリソースを運用しています。各リージョンのIT運用チームは自リージョンのログのみを閲覧・分析したいと考えており、また各国のデータレジデンシー規制により、各リージョンのログはそのリージョン内に留める必要があります。一方でセキュリティチームは、全リージョンのログを横断的に相関分析し、グローバルなインシデントを検出したいという要件も持っています。",
   question: "この要件を満たすLog Analyticsワークスペースの設計として最も適切なものはどれですか？",
   choices: [
-    "全リージョン共通の単一ワークスペースにすべてのログを集約する",
-    "サブスクリプションごとに1つのワークスペースを作成し、リージョンについては考慮しない",
-    "リージョンごとに個別のワークスペースを作成するが、相関分析は行わず各チームが個別に分析する",
-    "リージョンごとに個別のワークスペースを作成し、セキュリティチームはクロスワークスペースクエリで横断的に相関分析する"
+    "全リージョン共通の単一ワークスペースにログを集約する",
+    "サブスクリプションごとに1つのワークスペースを作成しリージョンは考慮しない",
+    "リージョンごとに個別のワークスペースを作成するが相関分析は行わない",
+    "各リージョンに個別ワークスペースを作り、クロスワークスペースクエリで横断分析する"
   ],
   answer: 3,
   explanation: "Log Analyticsワークスペースは<strong>作成するリージョンを選べ、そこに格納されるログデータはそのリージョン内に留まる</strong>ため、リージョンごとに個別のワークスペースを作成すれば、各国のデータレジデンシー要件と、各運用チームが自リージョンのログにアクセス範囲を限定するというアクセス制御の両方を同時に満たせます。その上で、KQLの<strong>クロスワークスペースクエリ</strong>（`workspace()`演算子で複数ワークスペースのテーブルを1つのクエリ内で結合・集計する機能）を使えば、データを物理的に1か所へ複製・移動することなく、セキュリティチームが全リージョンを横断した相関分析を行えます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>分散ワークスペース + クロスワークスペースクエリ</div><div class='exp-flow'><div class='flow-box'>日本WS</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>クロスワークスペース<br>クエリ（Sentinel/<br>Log Analytics）</div><div class='flow-arrow'>&larr;</div><div class='flow-box'>欧州WS</div></div><div class='flow-label'>各リージョンのログは物理的にそのリージョンに留まったまま、クエリ時にのみ横断参照する</div></div><br><br>単一の共通ワークスペースに全ログを集約すると、データレジデンシー要件に違反する可能性があり、各リージョンチームのアクセス範囲を限定することも難しくなります（ワークスペース単位でRBACを分離できないため）。相関分析を諦める案は、セキュリティチームの「グローバルなインシデント検出」という要件を満たせません。サブスクリプション単位の設計はリージョンという軸を直接反映しないため、データレジデンシー要件との対応関係が不明確になります。",
@@ -260,7 +260,7 @@ const QUESTIONS = [
   choices: [
     "Deny",
     "Append",
-    "DeployIfNotExists（マネージドIDによる修復タスクと組み合わせる）",
+    "DeployIfNotExists",
     "AuditIfNotExists"
   ],
   answer: 2,
@@ -271,10 +271,10 @@ const QUESTIONS = [
   scenario: "大企業のContoso社は、数百のサブスクリプションを持つAzure環境全体に、一貫したガバナンス、セキュリティ、ネットワーキングの基盤を迅速に展開したいと考えています。プラットフォーム管理チームと個々のアプリケーションチームの管理境界を明確に分離し、将来のサブスクリプション追加にも対応できる拡張性のある設計が求められています。",
   question: "Microsoftが推奨するこのような大規模組織向けの標準化されたアーキテクチャ手法はどれですか？",
   choices: [
-    "全リソースを単一のサブスクリプションと単一のリソースグループにまとめて管理を簡素化する",
-    "Azure Resource Managerテンプレートのみを使用してリソースを都度個別にデプロイする",
-    "各アプリケーションチームに個別のMicrosoft Entraテナントを新規発行する",
-    "Azure Landing Zone（Enterprise-Scale）に基づく管理グループ階層とポリシー駆動のガバナンス設計"
+    "全リソースを単一サブスクリプション・単一リソースグループに集約する",
+    "ARMテンプレートのみを使用しリソースを都度個別にデプロイする",
+    "各アプリチームに個別のMicrosoft Entraテナントを新規発行する",
+    "Landing Zoneの管理グループ階層＋ポリシー駆動ガバナンスを採用する"
   ],
   answer: 3,
   explanation: "<strong>Azure Landing Zone（Enterprise-Scale）</strong>は、大規模組織がAzure環境を長期的にスケーラブルかつ一貫した方法で統治するためにMicrosoftが提唱する参照アーキテクチャです。ルート管理グループの下に「Platform」（管理・接続・IDなど中央基盤を担うサブスクリプション群）と「Landing Zones」（実際のアプリケーションワークロードを配置するサブスクリプション群、さらに用途別にCorp/Onlineなどへ分割）という管理グループ階層を構築し、Azure Policyをコードとして各階層に割り当てることで、新しいサブスクリプションを追加した瞬間に一貫したガバナンス（命名規則、必須タグ、許可リソース種類、ネットワークトポロジなど）が自動的に継承される設計になっています。プラットフォームチームとアプリケーションチームの責務も管理グループ・サブスクリプション単位で明確に分離できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>Landing Zoneの管理グループ階層(簡略)</div><div class='exp-flow'><div class='flow-box'>ルート管理グループ</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Platform<br>(ID/接続/管理)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Landing Zones<br>(Corp/Online)</div></div></div><br><br>単一サブスクリプション・単一リソースグループへの集約は、サブスクリプションレベルのクォータ制限（リソース数上限など）にすぐ抵触しやすく、チーム間のRBACやポリシーの境界を細かく分離することが構造的に困難になるため、大規模環境には不適切です。アプリケーションチームごとに新規のMicrosoft Entraテナントを発行すると、ID管理・条件付きアクセス・監視がテナントの数だけ分断されてしまい、組織全体としての一元的なガバナンスや可視性が著しく損なわれます。ARMテンプレートを都度個別にデプロイするだけの運用では、階層的なポリシー適用や継続的なガバナンスの自動継承という仕組みが欠けており、拡張性に乏しくなります。",
@@ -297,10 +297,10 @@ const QUESTIONS = [
   scenario: "Contoso社のFinOpsチームは、各部門のサブスクリプションで月間支出が予算を超過しそうな場合に、超過前の段階でコスト責任者にメール通知を送りたいと考えています。また、実際に予算を超過した場合は自動的にアクションを実行し、担当者への追加のエスカレーション通知も行いたいとしています。管理作業は最小限に抑えたい方針です。",
   question: "この要件を満たすために構成すべきものはどれですか？",
   choices: [
-    "Azure Advisorのコスト推奨事項を毎朝手動で確認し、担当者にSlackで共有する",
-    "各サブスクリプションの請求書をエクスポートし、Power BIで手動集計してしきい値超過を目視確認する",
-    "Azure Cost Managementで予算（Budget）を作成し、複数のしきい値（例: 予測80%・実績100%）ごとにアラート条件を設定し、通知先にアクショングループを指定する",
-    "Azure Monitorのメトリクスアラートで、VMのCPU使用率が高い場合にメール通知を送る"
+    "Azure Advisorのコスト推奨事項を毎朝手動確認しSlackで共有する",
+    "各サブスクリプションの請求書をエクスポートしPower BIで手動集計する",
+    "Cost Managementで予算を作成し複数しきい値でアクショングループへ通知する",
+    "Azure MonitorのメトリクスアラートでVM CPU使用率上昇時にメール通知する"
   ],
   answer: 2,
   explanation: "<strong>Azure Cost Managementの予算（Budget）</strong>機能を使うと、サブスクリプションやリソースグループなどのスコープに対して月間・四半期・年間の予算額を設定し、実績額または<strong>予測額</strong>が指定したしきい値（例: 予測80%、実績100%など複数設定可能）に達した時点で自動的にアラートを発報できます。通知先に<strong>アクショングループ</strong>（Azure Monitorの共通の通知/自動化の仕組み）を指定すれば、メール通知だけでなく、実際に超過した場合にLogic AppsやAzure Functionsをトリガーして自動対応（例: 特定リソースの自動停止、Teams/Slackへの投稿）まで一気通貫で構成でき、追加の管理作業をほぼ発生させずに要件を満たせます。<br><br>Azure MonitorのメトリクスアラートはCPU使用率やディスクI/Oなどのリソースパフォーマンス指標を対象とするものであり、コスト（支出額）そのものを監視する仕組みではありません。Azure Advisorはベストプラクティスに基づく推奨事項を提示するアドバイザリー機能であり、予算超過を検知してリアルタイムに通知する仕組みは持ちません。請求書エクスポート＋手動集計は実現可能ではあるものの、「事前のしきい値通知」「超過時の自動アクション」を都度手作業で行うことになり、「管理作業は最小限に」という要件に反します。",
@@ -310,10 +310,10 @@ const QUESTIONS = [
   scenario: "Contoso社のセキュリティ担当者は、Microsoft Defender for Cloudのダッシュボードを確認したところ、いくつかのサブスクリプションでセキュアスコアが低いことに気付きました。担当者は、具体的にどのような対応をすればスコアが向上し、どの推奨事項が最もリスク低減効果が高いかを把握したいと考えています。",
   question: "この情報を確認するために参照すべき機能はどれですか？",
   choices: [
-    "Azure Advisorのコスト最適化タブ",
-    "Defender for Cloudの「推奨事項（Recommendations）」ページとセキュアスコアの内訳",
-    "Microsoft Sentinelの分析ルール一覧",
-    "Azure Monitorのブック（Workbooks）"
+    "Azure Advisorのコスト最適化タブを確認する",
+    "Defender for Cloudの推奨事項ページとセキュアスコアの内訳",
+    "Microsoft Sentinelの分析ルール一覧を確認する",
+    "Azure Monitorのブック（Workbooks）を確認する"
   ],
   answer: 1,
   explanation: "Microsoft Defender for Cloudの<strong>推奨事項（Recommendations）</strong>ページには、各セキュリティコントロール（例：MFAの有効化、暗号化の適用、ネットワークアクセス制限など）に含まれる個々の推奨事項ごとに、それを解消した場合に<strong>セキュアスコア</strong>へ何ポイント寄与するかが明示されており、優先度の高い対応から着手するための判断材料になります。セキュアスコア自体もコントロール単位の達成率（例：MFAコントロールのうち何%が達成済みか）を可視化する設計になっており、「何をすればどれだけスコアが上がるか」を確認する目的にはこのページが直接対応します。<br><br>Azure Monitorのブックはログやメトリックを組み合わせた任意のカスタムダッシュボードを作成する汎用の可視化機能であり、セキュアスコアの算出根拠や推奨事項の一覧を標準で提供するものではありません。Microsoft Sentinelの分析ルールは脅威検知のためのクエリ定義であり、リソース構成に関する推奨事項やスコアリングとは異なる領域（インシデント検知）を扱います。Azure Advisorはコスト・パフォーマンス・信頼性・運用の卓越性・セキュリティといった複数のカテゴリにまたがる全般的な推奨を提供しますが、セキュリティに特化した詳細なスコアリングとその内訳の管理はDefender for Cloudの担当領域であり、コスト最適化タブは今回の要件と無関係です。",
@@ -349,9 +349,9 @@ const QUESTIONS = [
   scenario: "Contoso社の運用チームは、毎週土曜の深夜にメンテナンスウィンドウを設けてパッチ適用作業を行っています。この期間中は多数のアラートが発火することが予想されるため、担当者への不要な通知（メール、SMS、電話）を一時的に停止したいですが、アラート自体の記録は継続して残したいと考えています。",
   question: "この要件を満たすためにAzure Monitorで構成すべき機能はどれですか？",
   choices: [
-    "アラート処理ルール（Alert Processing Rule）でメンテナンス期間中に通知を抑制するスケジュールを設定する",
-    "対象のアラートルールを完全に無効化する",
-    "アクショングループを削除する",
+    "アラート処理ルールでメンテナンス期間中の通知だけを抑制する",
+    "対象のアラートルールをメンテナンス期間中は無効化する",
+    "アクショングループを削除しメンテナンス後に再作成する",
     "Log Analyticsワークスペースのデータ保持期間を一時的に短縮する"
   ],
   answer: 0,
@@ -362,10 +362,10 @@ const QUESTIONS = [
   scenario: "Contoso社は、社内で利用しているサードパーティ製SIEM（Security Information and Event Management）製品に、Azureリソースの診断ログをほぼリアルタイムでストリーミングして取り込みたいと考えています。オンプレミスに構築されたそのSIEM製品はAzure外にあります。",
   question: "診断設定の送信先として使用すべきものはどれですか？",
   choices: [
-    "Azure Monitorパーティションドメトリックストア",
-    "Log Analyticsワークスペース",
-    "Event Hub（Event Hubからサードパーティ製品がストリームを取得または転送する）",
-    "ストレージアカウント"
+    "Azure Monitorのパーティション済みメトリックストアへ送信する",
+    "Log Analyticsワークスペースへ送信する",
+    "Event Hubへストリーミング送信する",
+    "ストレージアカウントへ送信する"
   ],
   answer: 2,
   explanation: "診断設定（Diagnostic Settings）の送信先として<strong>Event Hub</strong>を選択すると、対象リソースのログやメトリックが発生の都度、Event Hubへほぼリアルタイムでストリーミングされます。Event HubはAMQPやKafkaプロトコルに対応したイベントストリーミング基盤であり、オンプレミスやAzure外に構築されたサードパーティ製SIEM製品は、対応コネクタやカスタムコンシューマーを介してこのストリームを継続的に読み取ることで、低レイテンシに近い形でログを取り込めます。これはAzureのテレメトリを外部の監視基盤へ橋渡しする際の標準的な連携パターンです。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>診断設定の送信先比較</div><table class='exp-compare'><tr><th>送信先</th><th>主な用途</th></tr><tr class='hl'><td>Event Hub</td><td class='ok'>リアルタイム連携・外部SIEM</td></tr><tr><td>Log Analyticsワークスペース</td><td>クエリ分析・アラート</td></tr><tr><td>ストレージアカウント</td><td>長期アーカイブ・低コスト保管</td></tr></table></div><br><br>Log Analyticsワークスペースへの送信は、Microsoft SentinelやAzure Monitor自体のクエリ・分析基盤としての利用には最適ですが、外部のサードパーティ製品が直接そこからリアルタイムに近い形でストリームを取得する標準インターフェースは提供されておらず、通常はAPI経由のバッチ的な取得になります。ストレージアカウントへの送信は長期保存やアーカイブ、コンプライアンス目的のバッチ処理に向いており、ファイルが定期的に書き出される方式のため低レイテンシのストリーミング用途には適しません。「パーティションドメトリックストア」という送信先はAzure Monitorの診断設定として実在するオプションではありません。",
@@ -376,7 +376,7 @@ const QUESTIONS = [
   question: "この要件を満たすために構成すべき組み合わせはどれですか？",
   choices: [
     "Conditional Accessでインシデント作成ポリシーを設定する",
-    "Microsoft Entra ID用のデータコネクタを有効化し、スケジュールされた分析ルール（またはMicrosoft提供のテンプレート）でインシデントを作成する",
+    "Entra IDデータコネクタ＋分析ルールでインシデントを作成する",
     "Log Analyticsワークスペースの保存期間を延長するだけでよい",
     "Azure Policyでサインインログの監査を強制する"
   ],
@@ -388,7 +388,7 @@ const QUESTIONS = [
   scenario: "Contoso社のSOC（セキュリティオペレーションセンター）チームは、Microsoft Sentinelで「高リスク」と判定されたインシデントが作成された際に、担当者が確認する前に自動的に該当ユーザーアカウントを一時的に無効化し、SOCチームのTeamsチャネルに通知を送信する自動対応フローを構築したいと考えています。",
   question: "この要件を実現するために構築すべきものはどれですか？",
   choices: [
-    "Logic Appsで構築したSentinelプレイブック（Playbook）を自動化ルールから呼び出す",
+    "Sentinelプレイブック（Logic Apps）を自動化ルールから呼び出す",
     "Azure Automationのランブックを手動で毎回実行する",
     "Conditional Accessのユーザーリスクポリシーのみを設定する",
     "Defender for CloudのJIT VMアクセスを設定する"
@@ -416,10 +416,10 @@ const QUESTIONS = [
   scenario: "Fabrikam社はAzure Database for PostgreSQLを新規に構築するアプリケーションのバックエンドとして使用する予定です。可用性ゾーン間でのゾーン冗長な高可用性構成を実現し、プライマリのゾーンで障害が発生した場合に自動的にスタンバイサーバーへフェイルオーバーできるようにする必要があります。",
   question: "この要件を満たすために構成すべき内容として最も適切なものはどれですか？",
   choices: [
-    "Azure Database for PostgreSQL フレキシブルサーバーの読み取りレプリカを別ゾーンに作成する",
-    "Azure Database for PostgreSQL 単一サーバー（Single Server）を複数リージョンにデプロイする",
-    "Azure Database for PostgreSQL フレキシブルサーバーでゾーン冗長高可用性（Zone-redundant HA）を有効にする",
-    "Azure Cache for Redisをフレキシブルサーバーの前段に配置してキャッシュ経由でアクセスする"
+    "PostgreSQL フレキシブルサーバーの読み取りレプリカを別ゾーンに作成する",
+    "PostgreSQL 単一サーバー（Single Server）を複数リージョンにデプロイする",
+    "PostgreSQL フレキシブルサーバーでゾーン冗長HAを有効にする",
+    "Azure Cache for Redisをフレキシブルサーバーの前段でキャッシュ経由アクセスする"
   ],
   answer: 2,
   explanation: "<strong>Azure Database for PostgreSQL フレキシブルサーバー</strong>の<strong>ゾーン冗長高可用性（Zone-redundant HA）</strong>は、プライマリと同期レプリケーションされたスタンバイサーバーを別の可用性ゾーンに自動配置し、プライマリの可用性ゾーンで障害が起きた場合でも自動検知・自動フェイルオーバーによってダウンタイムを最小化します。同一ゾーン内にスタンバイを置く「同一ゾーンHA」も選択できますが、本問のようにゾーン障害への耐性が必要な場合はゾーン冗長を選びます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ゾーン冗長HAの構成</div><div class='exp-flow'><div class='flow-box hl'>プライマリ<br>(ゾーン1)</div><div class='flow-arrow'>&rarr;<br>同期レプリケーション</div><div class='flow-box'>スタンバイ<br>(ゾーン2)</div><div class='flow-arrow'>&rarr;<br>ゾーン1障害時</div><div class='flow-box hl-green'>自動フェイルオーバー<br>(ゾーン2が新プライマリ)</div></div></div><br><br><strong>単一サーバー（Single Server）</strong>デプロイモデルはMicrosoftによって廃止が進められている旧世代の提供形態で、ゾーン冗長HAという概念自体を持ちません。複数リージョンへのデプロイはリージョン障害対策にはなりますが、それ自体は自動フェイルオーバーの仕組みを構成するものではありません。<strong>読み取りレプリカ</strong>は非同期レプリケーションであり、プライマリ障害時に自動的にレプリカが昇格することはなく、手動または明示的な操作での昇格が必要なため要件を満たしません。<strong>Azure Cache for Redis</strong>はキャッシュ層でありデータベースの可用性には関与しません。<br><br>Azure SQL Databaseのゾーン冗長構成（Premium/Business Criticalティア）と考え方は似ていますが、PostgreSQLフレキシブルサーバーではHAはサーバー作成時またはあとから明示的に有効化するオプトイン機能である点に注意してください。",
@@ -445,7 +445,7 @@ const QUESTIONS = [
     "Azure Table Storageのクエリ機能",
     "Blob Storageのメタデータタグによるフィルタリング",
     "Azure Cosmos DBの組み込みフルテキストインデックス",
-    "Azure AI Search（インデクサーとOCRスキルを使用したスキルセット）"
+    "AI Searchのインデクサー＋OCRスキルのスキルセット"
   ],
   answer: 3,
   explanation: "<strong>Azure AI Search</strong>はBlob Storage上のドキュメントを取り込む<strong>インデクサー</strong>と、AIによる拡張処理を行う<strong>スキルセット</strong>を組み合わせることで、PDFやWord文書のテキスト抽出に加え、組み込みの<strong>OCRスキル</strong>によってスキャン画像内の文字も認識し、検索可能な全文インデックスに統合できます。抽出したテキストと元の構造化データ（メタデータなど）を1つのインデックスにマッピングし、キーワード検索・フィルター・ファセットなど高度な検索機能を提供できる点も強みです。<br><br><strong>Table Storage</strong>や<strong>Cosmos DB</strong>はいずれもデータの保存・クエリを担うストア型サービスであり、非構造化文書に対する全文検索エンジンやOCRパイプラインを内蔵していません（Cosmos DBにも簡易な全文/ベクター検索機能はありますが、文書ファイル自体の解析やOCRは行いません）。<strong>Blob Storageのメタデータタグ</strong>はキーと値のペア（タグ）による絞り込みに限定され、文書本文の内容を検索対象にはできません。<br><br>OCRやレイアウト解析だけを目的とするなら<strong>Azure AI Document Intelligence（旧Form Recognizer）</strong>という専用サービスもありますが、本問のように「全文検索」という検索体験自体を構築する場合は、そのDocument IntelligenceのAIスキルをAI Searchのスキルセットに組み込んで使うか、AI Search組み込みのOCRスキルを使うのが一般的です。",
@@ -510,7 +510,7 @@ const QUESTIONS = [
     "コンテナーのTTL（Time to Live）を短く設定する",
     "整合性レベルをStrongからEventualに変更する",
     "コンテナーのインデックスポリシーをすべてのプロパティに対して有効化する",
-    "パーティションキーの選択を見直し、より均等に分散するキー（例：顧客IDと日付の複合キー）に変更する"
+    "パーティションキーを顧客IDと日付の複合キーに変更する"
   ],
   answer: 3,
   explanation: "Cosmos DBは内部的にデータを物理パーティションに分散して格納しており、各論理パーティション（同一パーティションキー値を持つデータ群）は特定の物理パーティションに固定的にマッピングされます。特定のパーティションキー値（大口顧客ID）に書き込みが集中すると、そのキーが属する物理パーティションだけがRUの上限に達して「ホットパーティション」となりスロットリング（429エラー）が発生します。<strong>パーティションキーの選択を見直し</strong>、顧客IDと日付の複合キーのような高いカーディナリティを持つキーに変更することで、負荷を多数の物理パーティションへ均等に分散でき、根本的な解決になります。<br><br><strong>インデックスポリシー</strong>は書き込み時のインデックス更新コスト（RU消費）やクエリ性能には影響しますが、特定パーティションへのアクセス集中という偏りの問題自体は解消しません。<strong>整合性レベルの変更（Strong→Eventual）</strong>はレイテンシや一部RUコストの低減にはつながる可能性がありますが、パーティション間の負荷不均衡というホットパーティション問題の本質的な原因には対処できません。<strong>TTL</strong>は古いデータの自動削除機能であり、負荷分散とは無関係です。<br><br>設計時には、既存のパーティションキーに日付・ハッシュ値・エンティティIDなどを付加する「合成（シンセティック）パーティションキー」を用いることが一般的な回避パターンとして知られています。",
@@ -575,7 +575,7 @@ const QUESTIONS = [
     "ZRS（ゾーン冗長ストレージ）",
     "LRS（ローカル冗長ストレージ）",
     "GRS（geo冗長ストレージ）",
-    "RA-GZRS（読み取りアクセス地理ゾーン冗長ストレージ）"
+    "RA-GZRS"
   ],
   answer: 3,
   explanation: "<strong>RA-GZRS（読み取りアクセス地理ゾーン冗長ストレージ）</strong>は、プライマリリージョン内でデータを3つの可用性ゾーンに同期複製する<strong>ゾーン冗長ストレージ（ZRS）</strong>の特性と、地理的に離れたセカンダリリージョンへの非同期レプリケーション（GRS相当）、さらにセカンダリリージョンのデータへの読み取り専用アクセスを組み合わせた、Azure Storageの冗長性オプションの中で最も可用性の高い構成です。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>ストレージ冗長性の選択</div><div class='exp-decision'><div class='dec-row dec-yes'><span class='dec-cond'>ゾーン冗長 + セカンダリリージョンでの読み取りが必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>RA-GZRS</span></div><div class='dec-row'><span class='dec-cond'>ゾーン障害への耐性のみ必要？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>ZRS</span></div><div class='dec-row'><span class='dec-cond'>リージョン障害からの復旧のみ（読み取り不要）？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>GRS</span></div><div class='dec-row'><span class='dec-cond'>単一データセンター内の冗長化で十分？</span><span class='dec-arrow'>&rarr;</span><span class='dec-result'>LRS</span></div></div></div><br><br><strong>LRS</strong>は単一データセンター内の複数の物理ストレージユニットへの複製に留まり、データセンター障害やリージョン障害には耐えられません。<strong>ZRS</strong>はゾーン（データセンター単位）障害への耐性を持ちますが、リージョン全体の障害には対応せず、セカンダリリージョンへのレプリケーションもありません。<strong>GRS</strong>はセカンダリリージョンへのレプリケーションは行いますが、プライマリ側はLRS相当（単一データセンター内での冗長化）にとどまり、かつセカンダリへの読み取りアクセスは既定では提供されません（読み取りアクセスにはRA-GRSが必要）。<br><br>GZRS/RA-GZRSはすべてのAzureリージョンでサポートされているわけではなく、ペアリージョンが可用性ゾーンをサポートしている必要がある点にも留意してください。",
@@ -585,10 +585,10 @@ const QUESTIONS = [
   scenario: "Contoso社は東日本リージョンのストレージアカウントにマスターデータのBlobを保存しています。西日本リージョンにあるアプリケーションから同じデータを低レイテンシで読み取れるように、Blobが作成・更新されるたびに自動的に西日本リージョンの別のストレージアカウントへ非同期でコピーしたいと考えています。障害復旧目的のレプリケーションではなく、あくまで読み取り性能の向上が目的です。",
   question: "この要件を満たすために使用すべき機能はどれですか？",
   choices: [
-    "Azure Data Factoryでリアルタイムのコピーパイプラインを構築する",
-    "ストレージアカウントの冗長性をGRSに変更する",
-    "Blobのオブジェクトレプリケーション（Object Replication）を構成する",
-    "AzCopyでcronジョブを使い定期的に同期する"
+    "Data Factoryでリアルタイムのコピーパイプラインを構築する",
+    "ストレージアカウントの冗長性をGRSへ変更し複製する",
+    "Blobのオブジェクトレプリケーションを構成する",
+    "AzCopyをcronジョブで定期実行し同期する"
   ],
   answer: 2,
   explanation: "<strong>オブジェクトレプリケーション（Object Replication）</strong>は、ソースとデスティネーションという任意の2つのストレージアカウント（異なるリージョンでも可）間で、Blobの変更（作成・更新）を非同期に自動コピーする機能です。ポリシーでレプリケーションルールを定義するだけで、Blobの作成・更新のたびに自動的にコピーが行われ、レイテンシの低減や読み取り性能の向上を目的とした構成に利用されます。利用にはソース・デスティネーション双方でBlobバージョニングと変更フィード機能を有効にしておく必要があります。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>オブジェクトレプリケーションの流れ</div><div class='exp-flow'><div class='flow-box hl'>東日本<br>(ソース アカウント)</div><div class='flow-arrow'>&rarr;<br>非同期コピー<br>（作成・更新のたび）</div><div class='flow-box'>西日本<br>(デスティネーション アカウント)</div></div></div><br><br><strong>GRSへの冗長性変更</strong>はディザスタリカバリ目的の内部レプリケーションであり、通常運用中はセカンダリのデータに直接アクセスできず（RA-GRSでも読み取り専用のフェイルオーバー待機用）、任意の別ストレージアカウントへ能動的にコピーする機能ではありません。<strong>AzCopyによるcronジョブ</strong>は手動でのスケジュール管理や差分検出ロジックの実装が必要で、リアルタイム性やマネージド性に欠けます。<strong>Data Factory</strong>のパイプラインもバッチ的なコピーには向きますが、Blobごとのイベント発生と同時に近い形で反映する用途にはオーバーヘッドが大きく、コストも高くなります。<br><br>類似の「複数リージョンでの低レイテンシ読み取り」をコンテンツ配信の文脈で実現したい場合は<strong>Azure CDN／Azure Front Door</strong>によるキャッシュ配信という選択肢もありますが、これはエッジでのキャッシュであり、宛先ストレージアカウントへの実体コピーを目的とするオブジェクトレプリケーションとは性質が異なります。",
@@ -598,10 +598,10 @@ const QUESTIONS = [
   scenario: "Fabrikam社はオンプレミスのファイルサーバーをAzure Filesに移行する予定です。オンプレミスのActive Directory Domain Services (AD DS) に参加している既存のクライアントPCから、これまでと同じNTFSベースのアクセス許可（DACL）を使ってAzure Filesの共有にシームレスにアクセスできるようにする必要があります。",
   question: "Azure Filesで構成すべき認証方式はどれですか？",
   choices: [
-    "匿名アクセス（パブリックアクセス）",
-    "オンプレミスActive Directory Domain Services (AD DS) 認証",
-    "ストレージアカウントキーによる認証",
-    "Shared Access Signature（SAS）による認証"
+    "匿名アクセス（パブリックアクセス）を許可する",
+    "オンプレミスAD DS（Active Directory）認証",
+    "ストレージアカウントキーによる認証を使用する",
+    "SAS（Shared Access Signature）による認証"
   ],
   answer: 1,
   explanation: "Azure Filesは<strong>オンプレミスActive Directory Domain Services（AD DS）認証</strong>をサポートしており、オンプレミスADドメインに参加済みのクライアントは、Kerberos認証チケットを使ってSMB共有にサインインし、共有レベルのアクセス許可に加えて、使い慣れたNTFSライクなディレクトリ・ファイル単位のアクセス制御リスト（DACL）をそのまま適用できます。この方式では、オンプレミスのAD DSのID情報をMicrosoft Entra Connectでクラウド側に同期しておく必要があります。<br><br><strong>ストレージアカウントキー</strong>による認証は、アカウント全体に対する管理者相当のフルコントロールを付与するものであり、ユーザーやグループ単位できめ細かくアクセス許可を分けることはできません。<strong>SAS</strong>はスコープと有効期限を指定した一時的なアクセス委任トークンであり、既存のADベースの権限モデルとは根本的に仕組みが異なります。<strong>匿名アクセス</strong>はそもそも認証自体を行わないため要件に反します。<br><br>クラウドネイティブなAD環境や、ハイブリッドではなく完全にMicrosoft Entra IDだけでID管理したい場合には、Azure Filesが提供する<strong>Microsoft Entra Kerberos認証</strong>（Entra IDに参加したWindowsクライアント向け）という選択肢もありますが、これはAD DSドメイン参加済みのオンプレミスクライアントとは適用対象が異なるため、本問のようにオンプレミスAD DS環境をそのまま使う場合はAD DS認証が適切です。",
@@ -612,9 +612,9 @@ const QUESTIONS = [
   question: "この要件を満たすAzure Filesの構成はどれですか？",
   choices: [
     "Azure Blob Storageの階層型名前空間",
-    "Azure Table Storage",
+    "Azure Table Storageのクエリ機能",
     "Standardファイル共有（SMBプロトコル）",
-    "PremiumファイルストレージのNFS 4.1プロトコルの共有"
+    "PremiumファイルストレージのNFS 4.1共有"
   ],
   answer: 3,
   explanation: "Azure Filesの<strong>NFS 4.1プロトコル</strong>による共有は、<strong>FileStorage</strong>アカウント種類を用いたPremiumファイルストレージでのみ提供されるオプションで、POSIX準拠のファイルアクセス許可（ユーザー・グループ・その他に対する読み書き実行権限）、シンボリックリンク・ハードリンクをサポートし、SSDベースの高いIOPS・スループットによりLinuxの科学技術計算やHPC系ワークロードの並列I/Oに適しています。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>プロトコル/サービス比較</div><table class='exp-compare'><tr><th>プロトコル/サービス</th><th>POSIX準拠</th><th>ハードリンク</th><th>主な用途</th></tr><tr class='hl'><td>Azure Files NFS 4.1</td><td class='ok'>&check;</td><td class='ok'>&check;</td><td>Linux HPC・並列I/O</td></tr><tr><td>Azure Files SMB</td><td class='ng'>&times;</td><td class='ng'>&times;</td><td>Windows共有・NTFS権限</td></tr><tr><td>ADLS Gen2（階層型名前空間）</td><td class='ok'>&check;（ACLのみ）</td><td class='ng'>&times;</td><td>ビッグデータ分析</td></tr><tr><td>Blob NFS 3.0</td><td class='ng'>一部のみ</td><td class='ng'>&times;</td><td>Blobオブジェクトへの直接NFSアクセス</td></tr></table></div><br><br><strong>Standardファイル共有（SMBプロトコル）</strong>はWindows由来のプロトコルであり、POSIXパーミッションモデルやLinuxネイティブのファイルシステムセマンティクス（ハードリンクなど）はサポートしません。<strong>Blob Storageの階層型名前空間（ADLS Gen2）</strong>は分析ワークロード向けの機能でPOSIX ACLを提供しますが、ファイルシステムとして直接NFSクライアントにマウントして使う用途を主目的とはしておらず、ハードリンクのような完全なPOSIXファイルシステムセマンティクスまでは提供しません。<strong>Table Storage</strong>はファイルシステムではなくキー・バリュー型のデータストアです。<br><br>混同されやすい点として、Blob Storageには別途「Blob NFS 3.0」という機能もありますが、これはAzure FilesのNFS 4.1共有とは異なる製品（Blobオブジェクトに対するNFSアクセス）であり、ハードリンクなど一部のPOSIXセマンティクスのサポート範囲も異なります。要件がハードリンクなどの完全なPOSIXファイルシステム動作である場合は、Azure FilesのNFS 4.1共有を選択します。",
@@ -639,7 +639,7 @@ const QUESTIONS = [
   choices: [
     "AzCopyを使用してネットワーク経由で並列転送する",
     "ExpressRouteを新規に契約してネットワーク経由で転送する",
-    "Azure Data Box（物理アプライアンス）を使用してオフラインでデータを転送する",
+    "Azure Data Box（物理アプライアンス）でオフライン転送する",
     "Azure Data Factoryのセルフホスト統合ランタイムを使用する"
   ],
   answer: 2,
@@ -663,10 +663,10 @@ const QUESTIONS = [
   scenario: "Tailwind Traders社はAzure Cosmos DBに保存されている注文コンテナーに新しいドキュメントが挿入されるたびに、そのドキュメントをリアルタイムで処理して在庫システムへ反映するAzure Functionsを起動したいと考えています。ポーリングではなく、変更をイベント駆動でトリガーできる仕組みが必要です。",
   question: "この要件を実現するために使用すべきCosmos DBの機能はどれですか？",
   choices: [
-    "Cosmos DBのTTL（Time to Live）機能",
-    "Cosmos DBの変更フィード（Change Feed）とAzure Functionsのトリガーバインディング",
-    "Cosmos DB Synapse Link",
-    "Cosmos DBのマルチリージョン書き込み"
+    "Cosmos DBのTTL（Time to Live）機能を設定する",
+    "変更フィード＋Functionsトリガーバインディングを使用する",
+    "Cosmos DB Synapse Linkで分析クエリを実行する",
+    "Cosmos DBのマルチリージョン書き込みを有効にする"
   ],
   answer: 1,
   explanation: "<strong>Cosmos DBの変更フィード（Change Feed）</strong>は、コンテナー内で発生したドキュメントの挿入・更新をパーティションキーの範囲ごとに時系列順で読み取れるログのような機構です。<strong>Azure Functionsのトリガーバインディング（Cosmos DB trigger）</strong>と組み合わせることで、変更フィードの読み取り位置（リース）の管理をAzure Functions側が自動的に行いながら、変更が発生するたびにポーリングなしでFunctionインスタンスを起動し、イベント駆動でリアルタイムに下流の在庫システムへ反映する処理を実装できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>変更フィードによるイベント駆動処理</div><div class='exp-flow'><div class='flow-box'>注文コンテナー<br>(ドキュメント挿入)</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>変更フィード<br>(Change Feed)</div><div class='flow-arrow'>&rarr;<br>トリガー</div><div class='flow-box'>Azure Functions</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>在庫システム</div></div></div><br><br><strong>TTL（Time to Live）</strong>は一定期間経過後にドキュメントを自動的に期限切れ・削除する機能であり、変更検知やイベント発火とは無関係です。<strong>Synapse Link</strong>は、トランザクション処理用のリソース（RU）を消費せずに列指向の分析ストアに対して分析クエリを実行できるようにする機能で、リアルタイムのイベント処理を目的としたものではありません。<strong>マルチリージョン書き込み</strong>は書き込み可能なリージョンを地理的に複数に広げる機能であり、変更のトリガー機構そのものではありません。<br><br>類似の目的として、Cosmos DBは<strong>Azure Event Grid</strong>との統合（変更フィードをソースとするイベントサブスクリプション）もサポートしています。Functionsのトリガーバインディングは実装がシンプルで密結合な用途に、Event Grid経由の連携は複数の下流システムへ疎結合にファンアウトしたい場合に使い分けられます。",
@@ -676,9 +676,9 @@ const QUESTIONS = [
   scenario: "Contoso社は既存のオンプレミスSQL Server 2019のライセンスをSoftware Assurance付きで保有しています。Azure SQL Databaseへ移行する際に、このライセンスを再利用してコストを削減したいと考えていますが、現在の購入モデルではこのオプションが選択できないことに気付きました。",
   question: "この要件を満たすために変更すべき設定はどれですか？",
   choices: [
-    "geoレプリケーションを無効化する",
-    "サービスレベルをBasicティアに変更する",
-    "DTUベースの購入モデルからvCoreベースの購入モデルに変更し、Azureハイブリッド特典を有効にする",
+    "geoレプリケーションを無効化しコストを削減する",
+    "サービスレベルをBasicティアに変更しコストを削減する",
+    "vCore購入モデルに変更しハイブリッド特典を有効化する",
     "エラスティックプールを解除して単一データベースに戻す"
   ],
   answer: 2,
@@ -689,10 +689,10 @@ const QUESTIONS = [
   scenario: "Fabrikam社はAzure SQL Databaseで自動フェイルオーバーグループを構成しています。リージョン障害が発生してセカンダリサーバーへフェイルオーバーした際、アプリケーション側の接続文字列を変更することなく自動的に新しいプライマリへ接続を継続できるようにしたいと考えています。",
   question: "この要件を実現する自動フェイルオーバーグループの機能はどれですか？",
   choices: [
-    "透過的データ暗号化（TDE）",
-    "アクティブ geoレプリケーションのセカンダリデータベース個別の接続文字列",
-    "読み取り専用エンドポイントによる負荷分散",
-    "フェイルオーバーグループのリスナーエンドポイント（フェイルオーバーグループ名を含むDNS名）"
+    "透過的データ暗号化（TDE）を有効にする",
+    "アクティブgeoレプリケーションのセカンダリ個別接続文字列",
+    "読み取り専用エンドポイントで負荷分散する",
+    "フェイルオーバーグループのリスナーエンドポイント"
   ],
   answer: 3,
   explanation: "自動フェイルオーバーグループを構成すると、プライマリ用（読み取り/書き込み）とセカンダリ用（読み取り専用）それぞれに、フェイルオーバーグループ名を含む固定の<strong>リスナーエンドポイント（DNS名）</strong>が発行されます。アプリケーションは個々のサーバー名ではなくこのリスナー名に接続することで、実際にどちらのサーバーが現在のプライマリかを意識する必要がなくなり、フェイルオーバー発生時にはDNSレコードが自動的に新しいプライマリを指すよう切り替わるため、接続文字列を変更せずに接続を継続できます。<br><br><strong>読み取り専用エンドポイント</strong>は読み取りワークロードをセカンダリへ振り分けるための別エンドポイントであり、書き込み接続先の自動切り替えとは異なる機能です。<strong>TDE</strong>はデータの暗号化に関する機能であり、接続エンドポイントの管理とは無関係です。<strong>アクティブgeoレプリケーションのセカンダリ個別の接続文字列</strong>を直接使用すると、フェイルオーバー発生時にアプリケーション側で接続文字列を手動で切り替える対応が必要になり、要件の「変更することなく」に反します。<br><br>複数の異なるサービス（Webアプリとデータベースなど）を含むリージョン全体のフェイルオーバーをオーケストレーションしたい場合は、<strong>Azure Traffic Manager</strong>や<strong>Azure Front Door</strong>のようなグローバルなトラフィックルーティングサービスと組み合わせるケースもありますが、SQL Database単体の書き込み先切り替えに関してはフェイルオーバーグループのリスナー機能だけで完結します。",
@@ -715,7 +715,7 @@ const QUESTIONS = [
   scenario: "Contoso社はデータレイクとして数百TBのログデータをBlob Storageに保存し、Azure Synapse AnalyticsやAzure Databricksから分析クエリを実行しています。ディレクトリ単位でのアクセス制御（POSIX ACL）を行いたい要件と、ビッグデータ分析ワークロードでのファイル操作性能を最大化したい要件があります。",
   question: "この要件を満たすために有効化すべきストレージアカウントの機能はどれですか？",
   choices: [
-    "階層型名前空間（Hierarchical Namespace）を持つAzure Data Lake Storage Gen2",
+    "階層型名前空間（HNS）を有効にしADLS Gen2化する",
     "ストレージアカウントの冗長性をRA-GRSに変更する",
     "Azure Files のPremiumティア",
     "Blob Storageの静的Webサイトホスティング"
@@ -741,10 +741,10 @@ const QUESTIONS = [
   scenario: "Adventure Works社は現在Azure Table Storageでカタログデータを管理していますが、事業のグローバル展開に伴い、複数リージョンへのデータの自動レプリケーション、単一桁ミリ秒の読み取りレイテンシSLA、そして柔軟な整合性レベルの選択が必要になりました。既存のAPIコードはできるだけ再利用したいと考えています。",
   question: "この要件を満たすために移行すべきサービスはどれですか？",
   choices: [
-    "Azure SQL Databaseに移行しテーブルとして再設計する",
-    "Azure Cosmos DB for Table（Table API）",
-    "Azure Blob Storageのメタデータ機能",
-    "Azure Files Premiumティア"
+    "Azure SQL Databaseにテーブルとして再設計する",
+    "Cosmos DB for Table（Table API）に移行する",
+    "Azure Blob Storageのメタデータ機能を使用する",
+    "Azure Files Premiumティアに移行する"
   ],
   answer: 1,
   explanation: "<strong>Azure Cosmos DB for Table（Table API）</strong>は、Azure Table StorageのAPI・データモデル・SDKとの高い互換性を保ちながら、Cosmos DBの基盤機能である複数リージョンへの自動レプリケーション、単一桁ミリ秒の読み取り/書き込みレイテンシSLA、そして強一貫性から結果整合性までの複数の整合性レベルの選択といった高度な機能を追加で利用できる上位互換サービスです。既存のTable Storage向けコードをほぼそのまま再利用しながら移行できます。<br><br><strong>Blob Storageのメタデータ機能</strong>はオブジェクトに付与できる少数のキー・バリュー属性にすぎず、独立したキー・バリューデータベースの代替にはなりません。<strong>Azure SQL Databaseへの再設計</strong>はリレーショナルスキーマへの変換、SQLクエリへの書き換え、トランザクションモデルの見直しなど大規模な変更が必要になり、「既存のAPIコードを再利用したい」という要件に反します。<strong>Azure Files</strong>はファイル共有サービスであり、Table StorageのREST APIとは全く異なる仕組みです。<br><br>なお、Microsoftは新規開発のワークロードに対しては、より豊富なクエリ機能とインデックス制御を持つ<strong>Cosmos DB for NoSQL</strong>を推奨する傾向にあります。ただし本問のように既存のTable Storage向けAPIコードの再利用を最優先する移行シナリオでは、互換性を重視したTable APIが適切な選択になります。",
@@ -780,10 +780,10 @@ const QUESTIONS = [
   scenario: "Tailwind Traders社は非常にI/O集約的なOLTPワークロードを持つミッションクリティカルなAzure SQL Databaseを運用しています。ローカルSSDに近い最低ストレージレイテンシを実現しつつ、追加コストなしで読み取りワークロードをオフロードできる読み取り専用レプリカも必要としています。",
   question: "この要件を満たすAzure SQL Databaseのサービスティアはどれですか？",
   choices: [
-    "Business Criticalティア",
-    "Hyperscaleティア",
-    "General Purposeティア",
-    "Basicティア"
+    "Business Criticalティアを選択する",
+    "Hyperscaleティアで大規模DBに対応する",
+    "General Purposeティアで運用する",
+    "Basicティアのまま運用する"
   ],
   answer: 0,
   explanation: "<strong>Business Criticalティア</strong>は、コンピューティングノードに直結されたローカルSSDをデータファイルの格納に使用するアーキテクチャを採用しており、リモートストレージを経由するGeneral Purposeティアに比べて著しく低いストレージI/Oレイテンシを実現します。内部的にはSQL ServerのAlways On可用性グループ技術を利用して、プライマリに加え最大数個の読み取り可能なセカンダリレプリカを同一リージョン内に維持しており、これらのセカンダリは高可用性のためのフェイルオーバー用途に加えて、追加コストなしで読み取り専用ワークロードのオフロード先としても利用できます。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>SQL Databaseサービスティア比較</div><table class='exp-compare'><tr><th>ティア</th><th>ストレージ</th><th>レイテンシ</th><th>無償の読み取りセカンダリ</th></tr><tr class='hl'><td>Business Critical</td><td>ローカルSSD直結</td><td class='ok'>最小</td><td class='ok'>あり</td></tr><tr><td>General Purpose</td><td>リモートBlob Storage</td><td class='ng'>やや高い</td><td class='ng'>なし</td></tr><tr><td>Hyperscale</td><td>分離型（ページサーバー）</td><td>中</td><td>スケールアウトノードとして追加可</td></tr></table></div><br><br><strong>General Purposeティア</strong>はリモートのBlob Storageをデータファイルの保存先として利用するアーキテクチャのため、Business Criticalよりストレージレイテンシが高く、追加コストなしの読み取り可能セカンダリも提供しません。<strong>Hyperscaleティア</strong>は、コンピューティングとストレージを分離した多層アーキテクチャにより非常に大規模なデータベース（テラバイト級）への高速なスケーリングやバックアップ/復元に優れますが、ローカルSSDに基づく最低レイテンシという特性はBusiness Criticalの設計とは異なります。<strong>Basicティア</strong>はDTUベースの最小構成であり、性能・可用性ともに本問の要件を大きく下回ります。<br><br>Hyperscaleにも読み取り専用のセカンダリノード（読み取りスケールアウト用のレプリカ）を追加できますが、Hyperscaleのセカンダリはページサーバーとログサービスを介したアーキテクチャに基づくものであり、Business Criticalのようにローカルアタッチストレージによる最低レイテンシを主眼とした設計ではない点が違いです。ミッションクリティカルなOLTPで「最低レイテンシ」と「無償の読み取りセカンダリ」の両方を明確に求める場合はBusiness Criticalが第一候補になります。",
