@@ -194,12 +194,13 @@
         </div>
       </div>
       <div class="tip">⚠ 「特権ロールの昇格を承認制にしたい」「サインインリスクで自動ブロックしたい」は、すべてP2が必要というシグナル。</div>
+      <div class="tip">P1でも一部のリスク検出レポート（低精度の検出のみ）は参照可能。リスクベースの条件付きアクセスポリシー（サインイン/ユーザーリスクによる自動ブロック・自動対応）を組むにはP2が必須。</div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-header">
-      <span class="keyword">Azure ADの多要素認証を強制したい</span>
+      <span class="keyword">Microsoft Entra 多要素認証を強制したい</span>
       <span class="arrow">→</span>
       <span class="answer">Conditional Access（条件付きアクセス）</span>
       <span class="badge badge-hot">頻出！</span>
@@ -210,7 +211,7 @@
         <li>MFA要求・準拠デバイス要件・特定IPブロックなどを組み合わせられる。</li>
         <li>条件：ユーザー/グループ・クラウドアプリ・名前付きの場所（Named Location）・デバイスプラットフォーム・クライアントアプリ（レガシー認証の一括ブロックを含む）。</li>
         <li>制御：ブロック、MFA要求、準拠デバイス要求、利用規約（Terms of Use）への同意、セッション制御（サインイン頻度短縮・永続ブラウザーセッション無効化）。</li>
-        <li>Azure AD Premium P1 以上が必要。</li>
+        <li>Microsoft Entra ID P1 以上が必要。</li>
       </ul>
       <div class="tip">⚠ セキュリティデフォルト（無料）と混同しない。カスタムポリシーが必要なら必ずConditional Access。</div>
     </div>
@@ -307,9 +308,9 @@
         <li>継承は上位スコープ→下位スコープの一方向のみ。下位で付与したロールが上位に影響することはない。</li>
       </ul>
       <div class="compare">
-        <div class="compare-title">RBAC vs Azure AD ロール</div>
+        <div class="compare-title">RBAC vs Microsoft Entra ロール</div>
         RBAC = Azureリソース（VM・ストレージ等）への権限管理<br>
-        Azure AD ロール = Azure AD自体（ユーザー・グループ管理等）への権限管理
+        Microsoft Entra ロール = Microsoft Entra ID自体（ユーザー・グループ管理等）への権限管理
       </div>
       <div class="tip">⚠ BLOBデータの読み取り等の「データプレーン操作」は、Reader/Contributorのような管理プレーンロールでは許可されない。Storage Blob Data ReaderのようなDataActionsを含むロールが必要。</div>
     </div>
@@ -317,13 +318,28 @@
 
   <div class="card">
     <div class="card-header">
-      <span class="keyword">外部ユーザー（取引先など）にAzure ADのアプリへアクセスさせたい</span>
+      <span class="keyword">アプリ登録とサービスプリンシパル、SSO方式（SAML/OIDC）の使い分けが分からない</span>
       <span class="arrow">→</span>
-      <span class="answer">Azure AD B2B</span>
+      <span class="answer">アプリ登録＝アプリの定義、サービスプリンシパル＝テナント内での実体・権限付与単位</span>
     </div>
     <div class="card-body">
       <ul>
-        <li>招待されたゲストユーザーが自社のAzure ADテナントにアクセス。</li>
+        <li>アプリ登録（App Registration）：アプリのグローバルな定義（マルチテナント含む）。作成すると自テナントにサービスプリンシパルが自動生成される。</li>
+        <li>エンタープライズアプリケーション：他テナント/ギャラリーのアプリを自テナントで使うためのサービスプリンシパル（＝そのテナントでの利用インスタンス）。RBACやアクセス割り当てはサービスプリンシパル単位で行う。</li>
+        <li>SSO方式の選択：SAMLは既存のエンタープライズ標準・SAML専用SaaS向け、OIDC（OpenID Connect、OAuth 2.0ベース）はモダンなWeb/モバイル/SPAアプリ向けで新規開発では基本こちらを選ぶ。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">外部ユーザー（取引先など）にMicrosoft Entra IDのアプリへアクセスさせたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Microsoft Entra B2Bコラボレーション</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>招待されたゲストユーザーが自社のMicrosoft Entra IDテナントにアクセス。</li>
         <li>B2C（一般消費者向けID管理）と混同しない。</li>
       </ul>
       <div class="compare">
@@ -331,7 +347,7 @@
         B2B = 企業間コラボ（パートナー、取引先）<br>
         B2C = エンドユーザー向けアプリのID管理（Googleログイン等のソーシャルID連携）
       </div>
-      <div class="tip">旧Azure AD B2C → 現Microsoft Entra External ID。消費者向けアプリでセルフサービスのサインアップ/サインインを実装する場合に使用。</div>
+      <div class="tip">⚠ Azure AD B2Cは2025年5月1日以降新規購入不可（既存テナントは2030年5月まで利用継続可）。Microsoft Entra External IDはB2Cの単純な改称ではなく別製品の後継で、消費者向けアプリのセルフサービスサインアップ/サインインを新規実装する場合はこちらを使う。</div>
     </div>
   </div>
 
@@ -347,8 +363,9 @@
         <li>アプリ・グループ・SharePointサイト等をまとめた「アクセスパッケージ」を作成し、承認フロー・有効期限・定期アクセスレビューを設定できる。</li>
         <li>接続済み組織（Connected Organization）を登録すると、Entra ID未導入の外部組織のユーザーもリクエスト対象にできる。</li>
         <li>B2Bゲスト招待を都度手動で行うより、大規模・自動化されたガバナンスに向く。</li>
+        <li>ライフサイクルワークフロー（Lifecycle Workflows）：入社（Joiner）・異動（Mover）・退職（Leaver）のタイミングに合わせて、アクセスパッケージの自動割り当て・グループ追加・アカウント無効化などを自動実行できる。</li>
       </ul>
-      <div class="tip">Microsoft Entra ID P2が必要。</div>
+      <div class="tip">Microsoft Entra ID Governance または Microsoft Entra Suite が必要（アクセスパッケージ等の一部機能はP2でも動作する場合がある）。</div>
     </div>
   </div>
 
@@ -365,6 +382,32 @@
         <li>フェデレーション（AD FS等）：既存の外部IdPをそのまま使いたい場合。</li>
         <li>Cloud Sync：軽量プロビジョニングエージェント。買収などで互いに信頼関係のない複数のオンプレADフォレストを1つのテナントに同期する場合に有利。</li>
       </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">同期・認証方式の選び方</div>
+        <div class="decision-ladder">
+          <div class="decision-step">
+            <span class="cond">オンプレAD障害時もクラウド側だけでサインインを継続したい</span>
+            <span class="arrow">→</span>
+            <span class="result">PHS（パスワードハッシュ同期）</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">パスワードハッシュを一切クラウドに送りたくない</span>
+            <span class="arrow">→</span>
+            <span class="result">PTA（パススルー認証）</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">既存のスマートカード認証やサードパーティIdPをそのまま使いたい</span>
+            <span class="arrow">→</span>
+            <span class="result">フェデレーション（AD FS等）</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">相互信頼のない複数フォレストを軽量にまとめたい</span>
+            <span class="arrow">→</span>
+            <span class="result">Cloud Sync</span>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ PHSはオンプレAD DSがダウンしていてもEntra ID側の認証が継続できる点がPTA/フェデレーションとの最大の違い。</div>
     </div>
   </div>
 
@@ -377,6 +420,22 @@
     <div class="card-body">
       <ul>
         <li>SSPRはP1以上で有効化（一部機能はFreeでも可）。ハイブリッド環境ではEntra Connectでパスワードライトバックを有効にしてオンプレADにも反映させる。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">レガシーなLDAP/Kerberos/NTLM依存アプリや、オンプレADファイル共有をAzure上で運用したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Microsoft Entra Domain Services／アプリケーションプロキシ／Azure Files Entra Kerberos認証</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Microsoft Entra Domain Services：Entra IDをソースにマネージドのドメインサービス（LDAP/Kerberos/NTLM/グループポリシー相当）を提供。レガシーなオンプレADベースアプリをリフト＆シフトでAzureに移行する際に、ドメインコントローラーを自前運用せずに済む。</li>
+        <li>Microsoft Entra アプリケーションプロキシ：オンプレミスのWebアプリを外部エージェント経由でEntra IDのConditional Access等を適用しつつ安全に社外公開する（VPN不要）。</li>
+        <li>Azure Files：Entra Kerberos認証（クラウドネイティブ、Entra IDのユーザー/グループでSMBアクセス制御）と、オンプレAD DS認証（既存ADドメイン参加PCからのシームレスアクセス、AD DSへのライン・オブ・サイトが必要）を要件に応じて使い分ける。</li>
       </ul>
     </div>
   </div>
@@ -421,13 +480,33 @@
             <div class="tier-name">AuditIfNotExists</div>
             <div class="tier-spec">動作<b>関連リソース欠如を監査</b></div>
           </div>
-          <div class="tier-card best">
+          <div class="tier-card">
             <div class="tier-name">DeployIfNotExists</div>
             <div class="tier-spec">動作<b>欠如していれば自動デプロイ</b></div>
           </div>
+          <div class="tier-card">
+            <div class="tier-name">DenyAction</div>
+            <div class="tier-spec">動作<b>リソースの削除操作自体を拒否</b></div>
+          </div>
         </div>
       </div>
-      <div class="tip">⚠ Append/Modifyは「作成をブロックせず値を強制」、DeployIfNotExists/AuditIfNotExistsは「関連リソース（診断設定等）の有無」をチェックする点で対象が異なる。DeployIfNotExistsの実行にはマネージドIDが必要。RBACと混同注意：RBACは「誰が何をできるか」、Policyは「何を作れるか」のルール。</div>
+      <div class="tip">⚠ Append/Modifyは「作成をブロックせず値を強制」、DeployIfNotExists/AuditIfNotExistsは「関連リソース（診断設定等）の有無」をチェックする点で対象が異なる。DeployIfNotExistsの実行にはマネージドIDが必要。DenyActionは既存リソースの削除操作をブロックする効果で誤削除防止に有効。効果に優劣はなく用途で選ぶ（評価順は disabled → append/modify → deny → audit → manual → auditIfNotExists → denyAction）。RBACと混同注意：RBACは「誰が何をできるか」、Policyは「何を作れるか」のルール。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">タグ付けルールを組織全体で強制・継承したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Policy（Deny/Append/Modify）でタグ付けを強制</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>必須タグが未設定のリソース作成を止めたい → Deny効果でブロック。</li>
+        <li>作成時にタグを自動付与したいだけ → Append効果。既存リソースにも遡って追加/補正したい → Modify効果（remediation taskで既存分に適用）。</li>
+        <li>組み込みポリシー定義でリソースグループのタグをリソースへ自動継承させることも可能。</li>
+        <li>1リソースに付与できるタグは最大50個。</li>
+      </ul>
     </div>
   </div>
 
@@ -440,10 +519,25 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>最大6階層（ルート管理グループ含む）。</li>
+        <li>ルート管理グループ配下に最大6階層（ルート管理グループ・サブスクリプション自体はこの階層数に含まない）。</li>
         <li>Azure Policy・RBAC を管理グループに割り当てると配下のサブスクリプションに継承される。</li>
         <li>大企業の組織構造（部門別サブスク）をそのまま反映できる。</li>
         <li>Landing Zone設計の定石：ルート直下の中間管理グループ（プラットフォーム/ランディングゾーン等）に共通イニシアチブを1回割り当て、配下の環境別管理グループやサンドボックスにはポリシー例外で個別調整する。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">オンプレミスや他クラウドのサーバーにもAzure Policy・Monitor・Defender for Cloudを適用したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Arc</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>オンプレミス/他クラウド（AWS・GCP等）のサーバーをAzure Resource Manager上の「Arc対応サーバー」として登録し、Azureネイティブのリソースと同様に管理できるようにする。</li>
+        <li>登録後はAzure Policyの割り当て、Azure Monitor（AMA/DCR）によるログ収集、Defender for Cloudによる保護など、Azureと同じガバナンス/監視の仕組みをそのまま適用できる。</li>
+        <li>Arc対応Kubernetes、Arc対応SQL Serverなど、サーバー以外のワークロードにも対応。</li>
       </ul>
     </div>
   </div>
@@ -474,7 +568,7 @@
         <li>Blueprints = Policy・RBAC・ARMテンプレートを1パッケージにして繰り返しデプロイ。</li>
         <li>Landing Zone = 大規模組織向けの推奨アーキテクチャパターン（CAF準拠）。</li>
       </ul>
-      <div class="tip">⚠ Blueprintsは非推奨方向。新規案件ではテンプレート仕様（Template Specs）＋デプロイスタック（Deployment Stacks）の組み合わせが推奨される。</div>
+      <div class="tip">⚠ Azure Blueprintsは2026年7月31日に段階的リタイア開始、2027年1月31日に完全リタイア予定。リタイア後は既存Blueprintの拒否割り当て（Blueprint Locks）も削除される。新規案件ではテンプレート仕様（Template Specs）＋デプロイスタック（Deployment Stacks）の組み合わせが推奨される。</div>
     </div>
   </div>
 
@@ -489,6 +583,27 @@
         <li>複数リソースをまとめて1つの「スタック」として管理し、denySettingsで削除・変更操作をスタック単位で拒否できる。</li>
         <li>個々のリソースに1つずつロックを設定する手間を省ける。ARM/Bicepデプロイと統合されている。</li>
       </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">削除・変更を防ぐ手段の比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">リソースロック</div>
+            <div class="tier-spec">適用単位<b>個別リソース/RG/サブスク</b></div>
+            <div class="tier-spec">所有者でも回避不可<b>○（解除操作が必要）</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Policy Deny/DenyAction</div>
+            <div class="tier-spec">適用単位<b>管理グループ以下の全スコープ</b></div>
+            <div class="tier-spec">所有者でも回避不可<b>○（例外を設定しない限り）</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">デプロイスタック denySettings</div>
+            <div class="tier-spec">適用単位<b>スタックが管理するリソース一式</b></div>
+            <div class="tier-spec">所有者でも回避不可<b>○（denySettings解除が必要）</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">ロックは個別リソースの手動運用向け、Policy Deny/DenyActionは組織全体のガバナンス強制向け、denySettingsはIaCでデプロイした一式をまとめて保護したい場合に向く。</div>
     </div>
   </div>
 
@@ -528,10 +643,47 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>1年/3年の予約でオンデマンド比最大約70%割引。スコープを「共有」にすると組織内の複数サブスクリプションで消費可能。</li>
+        <li>1年/3年の予約でオンデマンド比最大72%割引。スコープを「共有」にすると組織内の複数サブスクリプションで消費可能。</li>
         <li>インスタンスサイズの柔軟性が有効なVMシリーズなら、同一シリーズ内でサイズを変更しても割引が引き継がれる。</li>
+        <li>Azure Hybrid Benefit：Windows Server/SQL Serverの既存オンプレライセンス（Software Assurance付き）をAzure側の課金に持ち込んで二重支払いを避ける。予約/Savings Planと併用可能。</li>
+        <li>Dev/Test価格：本番以外のサブスクリプションに適用できる割引レート（一部サービスの月額ライセンス費用が不要になる等）。本番ワークロードには使えない。</li>
+        <li>Spot VM：Azure側の余剰キャパシティを大幅割引で利用。いつでも立ち退き（Eviction）される前提のため、バッチ処理やステートレスな中断可能ワークロード向け。</li>
       </ul>
-      <div class="tip">⚠ Savings Plan（使用量ベースのコミット割引）と混同しない：予約は特定リソースタイプ・数量に対する割引、Savings Planはコミット金額に対する柔軟な割引。</div>
+      <div class="viz-wrap">
+        <div class="viz-title">コスト最適化オプション比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">従量課金（PAYG）</div>
+            <div class="tier-spec">コミット対象<b>なし</b></div>
+            <div class="tier-spec">柔軟性<b>最大（いつでも停止/変更可）</b></div>
+            <div class="meter-row"><div class="meter-label">割引率</div><div class="meter-track"><div class="meter-fill" style="width:0%"></div></div></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">予約（Reservations）</div>
+            <div class="tier-spec">コミット対象<b>特定リソース種別・数量</b></div>
+            <div class="tier-spec">柔軟性<b>スコープ/サイズ変更に制約</b></div>
+            <div class="meter-row"><div class="meter-label">割引率</div><div class="meter-track"><div class="meter-fill" style="width:72%"></div></div></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Savings Plan</div>
+            <div class="tier-spec">コミット対象<b>時間あたりのコミット金額</b></div>
+            <div class="tier-spec">柔軟性<b>サービス/リージョン/サイズ変更可</b></div>
+            <div class="meter-row"><div class="meter-label">割引率</div><div class="meter-track"><div class="meter-fill" style="width:65%"></div></div></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Spot</div>
+            <div class="tier-spec">コミット対象<b>なし</b></div>
+            <div class="tier-spec">柔軟性<b>低（強制立ち退きあり）</b></div>
+            <div class="meter-row"><div class="meter-label">割引率</div><div class="meter-track"><div class="meter-fill" style="width:90%"></div></div></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Hybrid Benefit</div>
+            <div class="tier-spec">コミット対象<b>既存オンプレライセンス</b></div>
+            <div class="tier-spec">柔軟性<b>予約/Savings Planと併用可</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ Savings Plan（使用量ベースのコミット割引）と予約を混同しない：予約は特定リソースタイプ・数量に対する割引、Savings Planはコミット金額に対する柔軟な割引。</div>
     </div>
   </div>
 
@@ -566,6 +718,7 @@
         <li>メトリクスアラートは動的しきい値（Dynamic Thresholds）で過去の傾向から自動学習させられる。</li>
         <li>アラート処理ルール（Alert Processing Rules）：メンテナンス期間中など特定条件下の通知だけを抑制できる（アラート自体の発報は止めない）。</li>
         <li>Application Insights はアプリ専用の監視機能で、Monitorの一部。分散トレース＋アプリケーションマップでマイクロサービス間の依存関係・遅延を可視化。</li>
+        <li>ログの粒度の区別：アクティビティログ（サブスクリプションレベルの管理操作の監査証跡。全リソース共通で自動収集）、リソースログ（診断ログ。リソース種別ごとの詳細な操作/アクセスログで診断設定による送信先指定が必要）、プラットフォームメトリック（自動収集される数値データ）、ゲストOSログ（VM内部のイベントログ等。AMA＋DCR経由の収集設定が必要）を区別する。</li>
       </ul>
     </div>
   </div>
@@ -673,17 +826,19 @@
           </div>
           <div class="tier-card">
             <div class="tier-name">Premium</div>
-            <div class="tier-spec">キー保護<b>HSM（FIPS 140-2 Lv2）</b></div>
-            <div class="tier-spec">用途<b>HSM保護キーが必要な場合</b></div>
+            <div class="tier-spec">テナント<b>マルチテナント共有HSM</b></div>
+            <div class="tier-spec">対象<b>Secrets/Keys/Certs</b></div>
+            <div class="tier-spec">認定<b>FIPS 140-3 Lv3</b></div>
           </div>
           <div class="tier-card best">
             <div class="tier-name">Managed HSM</div>
-            <div class="tier-spec">キー保護<b>専用HSM（FIPS 140-2 Lv3）</b></div>
-            <div class="tier-spec">用途<b>単一テナント専有・最高水準のコンプラ要件</b></div>
+            <div class="tier-spec">テナント<b>単一テナント専有HSMプール</b></div>
+            <div class="tier-spec">対象<b>Keysのみ</b></div>
+            <div class="tier-spec">認定<b>FIPS 140-3 Lv3</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ Managed HSMはVault全体が単一テナント専有のHSMプール。Secrets/Certificatesは扱わずKeysのみが対象。</div>
+      <div class="tip">⚠ Premium/Managed HSMは共にFIPS 140-3 Lv3認定でHSM強度は同じ。違いは<strong>テナント分離</strong>（Managed HSMは単一テナント専有のセキュリティドメインを顧客が自己保有）と<strong>対象範囲</strong>（Managed HSMはKeysのみ、Secrets/Certificatesは非対応）。</div>
     </div>
   </div>
 
@@ -741,18 +896,29 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>OS・パッチ・バックアップはMicrosoftが管理。SLA 99.99%。</li>
+        <li>OS・パッチ・バックアップはMicrosoftが管理。SLA 99.99%（<strong>Business Critical/Premiumのゾーン冗長構成は99.995%</strong>）。</li>
         <li>DTU モデル / vCore モデルの2種類の購入方式。</li>
-        <li>Hyperscale：最大100TB、読み取りスケールアウト対応の大規模向けサービス。</li>
+        <li>Hyperscale：単一DBは<strong>最大128TB</strong>（エラスティックプール内のDBは100TB）、読み取りスケールアウト対応の大規模向けサービス。</li>
         <li>サーバーレス：アイドル時は自動一時停止でコスト削減。</li>
         <li>vCore購入モデルでは<strong>Azureハイブリッド特典</strong>（既存のSQL Serverライセンス+SAを転用）でコスト削減可能。DTUモデルでは使用不可。</li>
         <li>自動フェールオーバーグループ：プライマリ障害時に自動フェールオーバー。アプリ側は固定の<strong>リスナーエンドポイント</strong>（読み取り/書き込み用と読み取り専用の2種）に接続し続ければよく、接続文字列の変更が不要。</li>
       </ul>
-      <div class="compare">
-        <div class="compare-title">SQL DB vs SQL Managed Instance vs SQL Server on VM</div>
-        SQL DB = 完全PaaS（一部機能制限あり）<br>
-        SQL MI = SQL Serverとほぼ100%互換。リフト＆シフト移行向け<br>
-        SQL on VM = 完全コントロール必要・特殊拡張機能が必要な場合
+      <div class="decision-ladder">
+        <div class="decision-step">
+          <span class="cond">OSレベルの完全な制御・特殊拡張機能が必要</span>
+          <span class="arrow">→</span>
+          <span class="result">SQL Server on VM</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">SQL Agent/CLR/リンクサーバー等インスタンス機能が必要</span>
+          <span class="arrow">→</span>
+          <span class="result">SQL Managed Instance</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">上記が不要・完全PaaSで運用したい</span>
+          <span class="arrow">→</span>
+          <span class="result">SQL Database</span>
+        </div>
       </div>
     </div>
   </div>
@@ -765,12 +931,32 @@
       <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
-      <table>
-        <tr><th>ティア</th><th>ストレージ</th><th>レプリカ</th><th>特徴・選ぶ場面</th></tr>
-        <tr><td>General Purpose</td><td>リモートSSD</td><td>1</td><td>標準的なワークロード。コスト重視</td></tr>
-        <tr><td><strong>Business Critical</strong></td><td><strong>ローカルSSD</strong></td><td><strong>3〜4（AlwaysOn AG）</strong></td><td><strong>I/Oレイテンシ最小・可用性ゾーン対応・自動フェールオーバー。高可用性要件に最適</strong></td></tr>
-        <tr><td>Hyperscale</td><td>分散ページサーバー</td><td>可変</td><td>最大100TB超の超大規模DB向け。大容量要件がないなら選ばない</td></tr>
-      </table>
+      <div class="viz-wrap">
+        <div class="viz-title">サービスティア比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">General Purpose</div>
+            <div class="tier-spec">ストレージ<b>リモートSSD</b></div>
+            <div class="tier-spec">レプリカ<b>1</b></div>
+            <div class="tier-spec">SLA<b>99.99%</b></div>
+            <div class="tier-spec">選ぶ場面<b>標準ワークロード・コスト重視</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Business Critical</div>
+            <div class="tier-spec">ストレージ<b>ローカルSSD</b></div>
+            <div class="tier-spec">レプリカ<b>3〜4（AlwaysOn AG）</b></div>
+            <div class="tier-spec">SLA<b>99.99%（ゾーン冗長構成で99.995%）</b></div>
+            <div class="tier-spec">選ぶ場面<b>I/O最小・可用性ゾーン対応が必要</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Hyperscale</div>
+            <div class="tier-spec">ストレージ<b>分散ページサーバー</b></div>
+            <div class="tier-spec">レプリカ<b>可変</b></div>
+            <div class="tier-spec">最大サイズ<b>単一DB 128TB</b></div>
+            <div class="tier-spec">選ぶ場面<b>超大容量DB・高速バックアップ/復元</b></div>
+          </div>
+        </div>
+      </div>
       <div class="tip">「I/Oレイテンシ最小 ＋ 可用性ゾーン障害でも稼働」→ Business Critical 一択。Hyperscaleは大容量要件がある場合のみ。</div>
     </div>
   </div>
@@ -793,14 +979,15 @@
 
   <div class="card">
     <div class="card-header">
-      <span class="keyword">フルマネージドなMySQL / PostgreSQL / MariaDB が必要</span>
+      <span class="keyword">フルマネージドなMySQL / PostgreSQL が必要</span>
       <span class="arrow">→</span>
-      <span class="answer">Azure Database for MySQL / PostgreSQL / MariaDB</span>
+      <span class="answer">Azure Database for MySQL / PostgreSQL</span>
     </div>
     <div class="card-body">
       <ul>
         <li>OSS系DBのフルマネージドPaaS。バックアップ・HA・パッチ自動化。</li>
-        <li>Flexible Server が現在の推奨SKU（Single Serverは非推奨化方向）。</li>
+        <li><strong>Flexible Server 一択</strong>（Single Serverは MySQLが2024年9月、PostgreSQLが2025年3月に<strong>廃止済み</strong>）。</li>
+        <li>⚠ <strong>Azure Database for MariaDB は2025年9月19日に廃止済み</strong>。新規作成は不可で、既存環境は MySQL Flexible Server への移行が必要。</li>
         <li>ゾーン冗長HA：同一リージョン内の別ゾーンにスタンバイを配置し自動フェールオーバー（可用性ゾーン障害対策が必要な場合に指定）。</li>
         <li>読み取りレプリカ：非同期レプリケーションの読み取り専用コピーを複数作成可能。分析・レポート用クエリをレプリカに逃がしてプライマリの負荷を下げる用途に使う。</li>
         <li>PostgreSQL Flexible Serverは拡張機能（PostGIS等）を許可リストから有効化して利用できる。</li>
@@ -861,7 +1048,8 @@
         <li>API選択肢：NoSQL（SQL構文）/ MongoDB / Cassandra / Gremlin（グラフ）/ Table。</li>
         <li>整合性レベル5段階：Strong / Bounded Staleness / Session / Consistent Prefix / Eventual。</li>
         <li>RU（Request Unit）課金：1RU = 1KBドキュメントの読み取りコスト。</li>
-        <li><strong>書き込みレイテンシ（99パーセンタイルで15ms以内）とスループット（RU/s）の両方にSLAを提供</strong>する唯一のAzureサービス。</li>
+        <li><strong>読み取り・書き込みともにP99レイテンシ10ms未満</strong>、スループット（RU/s）にもSLAを提供する数少ないAzureサービスの一つ。</li>
+        <li>バックアップ方式：<strong>定期バックアップ</strong>（既定、8時間おき・既定30日保持、復元は別アカウントに新規作成）と<strong>継続バックアップ</strong>（PITR、任意時点への復元が可能・7日または30日のウィンドウ）から選択。継続バックアップの方が復元の自由度が高いが追加コストがかかる。</li>
       </ul>
       <div class="tip">整合性レベルの選択は頻出。「最高の一貫性=Strong」「最高のパフォーマンス=Eventual」。</div>
       <div class="tip">「書き込みレイテンシ・スループットのSLAが必要」→ Cosmos DB 一択。Blob・SQL DBにはスループットSLAがない。</div>
@@ -907,43 +1095,61 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>アクセス層：Hot（頻繁）/ Cool（30日以上）/ Cold（90日以上）/ Archive（180日以上、取り出しに時間がかかる）。</li>
+        <li>アクセス層：Hot（頻繁アクセス）/ Cool / Cold / Archive（取り出しに時間がかかる）。</li>
         <li>ライフサイクル管理ポリシーで自動的に層を移動・削除できる。</li>
-        <li>不変ストレージ（WORM）：法規制対応・改ざん防止。設定方法は<strong>BLOBアクセスポリシー（不変性ポリシー）</strong>を作成する。</li>
+        <li>不変ストレージ（WORM）：法規制対応・改ざん防止。設定方法は<strong>コンテナー（またはBLOBバージョン）に対する不変性ポリシー</strong>を作成する（SASの「stored access policy」とは別概念なので混同注意）。</li>
         <li>不変性ポリシーの種類：<strong>期間ベース保持ポリシー</strong>（指定期間は変更・削除不可、新規書き込みは可）／ <strong>訴訟ホールド</strong>（期間指定なしで保持）。</li>
-        <li>Data Lake Storage Gen2：Blob + 階層型名前空間（HNS、ビッグデータ分析向け）。</li>
+        <li>Data Lake Storage Gen2：Blob + 階層型名前空間（HNS、ビッグデータ分析向け）。詳細は下記ADLS Gen2カード参照。</li>
       </ul>
       <div class="viz-wrap">
-        <div class="viz-title">アクセス層比較（ストレージ単価と取り出しコストはトレードオフ）</div>
+        <div class="viz-title">アクセス層比較（日数は早期削除ペナルティが発生する<strong>最小保存期間</strong>。ストレージ単価と取り出しコストはトレードオフ）</div>
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">Hot</div>
             <div class="tier-spec">ストレージ単価<b>最も高い</b></div>
             <div class="tier-spec">取り出し<b>即時・追加費用なし</b></div>
-            <div class="tier-spec">目安<b>毎日アクセス</b></div>
+            <div class="tier-spec">最小保存期間<b>なし</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Cool</div>
             <div class="tier-spec">ストレージ単価<b>やや低い</b></div>
             <div class="tier-spec">取り出し<b>即時・読み取り課金あり</b></div>
-            <div class="tier-spec">目安<b>30日以上未アクセス</b></div>
+            <div class="tier-spec">最小保存期間<b>30日</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Cold</div>
             <div class="tier-spec">ストレージ単価<b>低い</b></div>
             <div class="tier-spec">取り出し<b>即時・Coolより課金高</b></div>
-            <div class="tier-spec">目安<b>90日以上未アクセス</b></div>
+            <div class="tier-spec">最小保存期間<b>90日</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Archive</div>
             <div class="tier-spec">ストレージ単価<b>最安</b></div>
             <div class="tier-spec">取り出し<b>要リハイドレート（時間）</b></div>
-            <div class="tier-spec">目安<b>180日以上・年1回程度</b></div>
+            <div class="tier-spec">最小保存期間<b>180日</b></div>
           </div>
         </div>
       </div>
+      <div class="tip">⚠「最小保存期間」は目安の推奨アクセス頻度ではなく、期間内に削除・層変更すると<strong>早期削除ペナルティ（残り日数分の課金）</strong>が発生する契約上の境界値。</div>
       <div class="tip">⚠ Archive層は読み出す前に<strong>リハイドレート</strong>が必要（オフラインデータ扱い）。優先度は標準（〜15時間）／高（〜1時間、追加コスト）から選択。</div>
       <div class="tip">HNS有効化（ADLS Gen2）時のアクセス制御：Azure RBACは<strong>コンテナー単位</strong>までしか制御できない。ディレクトリ/ファイル単位の細かい制御には<strong>POSIX ACL</strong>が必要。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">ビッグデータ分析基盤としてHadoop互換のファイルシステムが必要</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Data Lake Storage（ADLS）Gen2</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Blob Storage上に<strong>階層型名前空間（HNS）</strong>を有効化した構成。ファイルシステム互換（ディレクトリのリネーム/削除がアトミック）でビッグデータ分析に最適化。</li>
+        <li><strong>POSIX ACL</strong>：ディレクトリ/ファイル単位でユーザー・グループ・その他に対するread/write/executeを細かく設定可能。RBACはコンテナー単位までしか制御できないため併用が前提。</li>
+        <li>Synapse Analytics・Databricks・HDInsight・Microsoft Fabric（OneLake）など分析エンジンとのネイティブ連携が可能。ビッグデータ分析基盤の既定のストレージ層として使われる。</li>
+        <li>Blob用のツール・APIとも互換性があり、既存のBlobベースのワークロードから段階的に移行できる。</li>
+      </ul>
+      <div class="tip">「Hadoop/Spark分析基盤のストレージ」「ディレクトリ単位のACLで権限制御したい」→ ADLS Gen2（HNS有効化）。単純なオブジェクト保存だけならHNS無効の通常Blobで十分。</div>
     </div>
   </div>
 
@@ -956,56 +1162,65 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>Blob・Files・Disks等ほぼ全ストレージサービスで選択可能。RA-系のみ「セカンダリリージョンからの読み取り」に対応。</li>
+        <li>Blob・キュー・テーブルはLRS/ZRS/GRS/GZRS/RA-系すべて選択可能。<strong>マネージドディスクはLRS/ZRSのみ</strong>。<strong>Azure Files（Premium/SSD）はLRS/ZRSのみ</strong>（Standardは全オプション可だがRA-系のセカンダリ読み取りは不可）。</li>
       </ul>
       <div class="viz-wrap">
-        <div class="viz-title">冗長性ティア比較（塗りつぶし＝保護される範囲）</div>
+        <div class="viz-title">冗長性ティア比較（塗りつぶし＝保護される範囲。GRSとGZRSは<strong>耐久性は同値（16ナイン）</strong>で、差はゾーン障害耐性の有無）</div>
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">LRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg"></div></div>
             <div class="cov-label">単一データセンター内のみ</div>
-            <div class="tier-spec">耐久性<b>99.999999999%</b></div>
+            <div class="tier-spec">耐久性<b>99.999999999%（11ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリのみ</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">ZRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg"></div></div>
-            <div class="cov-label">同一リージョン内の3AZ</div>
-            <div class="tier-spec">耐久性<b>99.9999999999%</b></div>
+            <div class="cov-label">同一リージョン内の3つ以上のAZ</div>
+            <div class="tier-spec">耐久性<b>99.9999999999%（12ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリのみ</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">GRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg on warn"></div></div>
-            <div class="cov-label">ペアリージョンへ非同期複製</div>
-            <div class="tier-spec">耐久性<b>99.99999999999999%</b></div>
+            <div class="cov-label">ペアリージョンへ非同期複製（ゾーン保護なし）</div>
+            <div class="tier-spec">耐久性<b>99.99999999999999%（16ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリのみ</b></div>
           </div>
-          <div class="tier-card best">
+          <div class="tier-card">
             <div class="tier-name">RA-GRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg on warn"></div></div>
-            <div class="cov-label">GRS + セカンダリ読み取り可</div>
-            <div class="tier-spec">耐久性<b>同上</b></div>
+            <div class="cov-label">GRS + セカンダリ読み取り可（ゾーン保護なし）</div>
+            <div class="tier-spec">耐久性<b>同上（16ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリ+セカンダリ</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">GZRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on warn"></div></div>
             <div class="cov-label">3AZ + ペアリージョン複製</div>
-            <div class="tier-spec">耐久性<b>最高水準</b></div>
+            <div class="tier-spec">耐久性<b>GRSと同値（16ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリのみ</b></div>
           </div>
           <div class="tier-card best">
             <div class="tier-name">RA-GZRS</div>
             <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on warn"></div></div>
-            <div class="cov-label">GZRSの最上位・読み取り可</div>
-            <div class="tier-spec">耐久性<b>最高水準</b></div>
+            <div class="cov-label">GZRS + セカンダリ読み取り可（唯一ゾーン障害にもリージョン障害にも耐えつつ常時読み取り可能）</div>
+            <div class="tier-spec">耐久性<b>同上（16ナイン）</b></div>
             <div class="tier-spec">読み取り<b>プライマリ+セカンダリ</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ GRS/GZRSのセカンダリは既定では読み取り不可（フェールオーバー後にのみアクセス可）。「常時読み取りたい」ならRA-系を選ぶ。可用性ゾーン障害に耐えたいなら Z系（ZRS/GZRS）が必須。</div>
+      <div class="viz-wrap">
+        <div class="viz-title">コスト目安（低→高）</div>
+        <div class="meter-row"><div class="meter-label">LRS</div><div class="meter-track"><div class="meter-fill" style="width:35%"></div></div></div>
+        <div class="meter-row"><div class="meter-label">ZRS</div><div class="meter-track"><div class="meter-fill" style="width:50%"></div></div></div>
+        <div class="meter-row"><div class="meter-label">GRS</div><div class="meter-track"><div class="meter-fill" style="width:65%"></div></div></div>
+        <div class="meter-row"><div class="meter-label">GZRS</div><div class="meter-track"><div class="meter-fill" style="width:78%"></div></div></div>
+        <div class="meter-row"><div class="meter-label">RA-GRS</div><div class="meter-track"><div class="meter-fill" style="width:88%"></div></div></div>
+        <div class="meter-row"><div class="meter-label">RA-GZRS</div><div class="meter-track"><div class="meter-fill" style="width:100%"></div></div></div>
+      </div>
+      <div class="tip">⚠ GRS/GZRSのセカンダリは既定では読み取り不可（フェールオーバー後にのみアクセス可）。「常時読み取りたい」ならRA-系を選ぶ。可用性ゾーン障害に耐えたいなら Z系（ZRS/GZRS）が必須。「ゾーン障害・リージョン障害の両方に耐え、かつ常時読み取りたい」→ RA-GZRS一択。</div>
     </div>
   </div>
 
@@ -1021,9 +1236,28 @@
         <li>Blobバージョニング：上書き・削除のたびに自動で旧バージョンを保持。任意のバージョンに復元可能。</li>
         <li>論理削除（Soft Delete）：削除後も保持期間内はごみ箱のように復元可能（コンテナー単位・Blob単位の両方に設定可）。</li>
         <li>誤操作対策の頻出パターンは「バージョニング＋論理削除」の<strong>組み合わせ</strong>で問われる。</li>
+        <li>コンテナーの論理削除：コンテナー自体の誤削除からも復旧可能（Blob単位の論理削除とは別に有効化が必要）。</li>
+        <li><strong>ポイントインタイムリストア（PITR）</strong>：コンテナー単位で過去の任意時点の状態にBlobをロールバック可能。バージョニング＋変更フィード＋論理削除が有効なことが前提条件。</li>
         <li><strong>オブジェクトレプリケーション</strong>：コンテナー単位で別のストレージアカウント（別リージョンも可）へ非同期に自動コピーする機能。アプリから読み取り可能なレプリカを作る用途やリージョン間のデータ移動に使う（GRSの災害対策用の裏側コピーとは別物で、直接読み書きできない点が異なる）。</li>
         <li>静的Webサイトホスティング：<code>$web</code>コンテナーを有効化するとBlob Storageだけでサーバーレスに静的サイト（HTML/CSS/JS）を配信できる。</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">ストレージアカウントの種類・パフォーマンス層を選びたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">ワークロードの形とアクセスパターンで選ぶ</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>StorageV2（汎用v2）</strong>：Blob/Files/Queue/Tableをすべて扱える標準アカウント。Hot/Cool/Cold/Archive層を利用可能。特別な理由がなければこれを選ぶ。</li>
+        <li><strong>Premium Block Blob</strong>：SSDベース。低レイテンシ・高トランザクションレートが必要なワークロード（分析・IoTデータ取り込み等）向け。アクセス層の概念はなし。</li>
+        <li><strong>Premium Page Blob</strong>：非マネージドディスク（VHD）向けのSSDベース高性能ストレージ。</li>
+        <li><strong>Premium File Storage（FileStorage）</strong>：Azure Files Premiumティア専用のSSDベースアカウント。</li>
+      </ul>
+      <div class="tip">「高トランザクション・低レイテンシのBlobワークロード」→ Premium Block Blob。「Azure FilesでNFS 4.1やPremium SMBが必要」→ FileStorageアカウント。</div>
     </div>
   </div>
 
@@ -1036,7 +1270,7 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>SMB 3.0 / NFS 4.1 対応。Windowsドライブとしてマウント可能。</li>
+        <li>SMB 3.1.1（既定・暗号化）/ 3.0 / 2.1 対応。NFS 4.1にも対応。Windowsドライブとしてマウント可能。</li>
         <li>Azure File Sync：オンプレのファイルサーバーとクラウドをリアルタイム同期。キャッシュ機能付き。</li>
         <li>Premium（SSD）/ Standard（HDD）の2ティア。<strong>NFS 4.1共有はPremiumティアでのみ</strong>利用可能（Standardでは不可）。</li>
       </ul>
@@ -1048,17 +1282,18 @@
     <div class="card-header">
       <span class="keyword">Azure Filesをユーザー単位のNTFS権限でSMB認証（Kerberos）したい</span>
       <span class="arrow">→</span>
-      <span class="answer">識別ベース認証：オンプレAD DS ／ Microsoft Entra Kerberos から選択</span>
+      <span class="answer">識別ベース認証：オンプレAD DS ／ Microsoft Entra Kerberos ／ Microsoft Entra Domain Services から選択</span>
       <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
       <ul>
         <li>オンプレAD DS認証：オンプレADのアカウントとAzure ADを同期させ、既存のオンプレADユーザー資格情報でKerberos認証。オンプレADへのライン・オブ・サイトが必要。</li>
         <li>Microsoft Entra Kerberos：Microsoft Entra Connectで同期されたハイブリッドIDアカウントに対し、クラウド側だけでKerberosチケットを発行。オンプレADへの継続的な接続が不要。</li>
+        <li><strong>Microsoft Entra Domain Services</strong>：マネージドドメインを使い、オンプレADを持たない（または持ちたくない）環境でAD互換のKerberos認証を実現。オンプレADからのリフト＆シフト移行で、オンプレAD運用を維持したくない場合に選ぶ。</li>
         <li>Microsoft Entra ID認証：現状SMBマウントには非対応。REST API（OAuth）経由のアクセスのみ。</li>
         <li>いずれの方式でも、共有レベルのRBAC（Azure組み込みロール）と、ディレクトリ/ファイル単位のNTFS ACLの<strong>両方</strong>を構成する必要がある。</li>
       </ul>
-      <div class="tip">「オンプレADは維持しつつAzureでシームレスに認証」→ AD DS認証。「オンプレAD管理を減らしクラウド完結にしたい」→ Entra Kerberos。</div>
+      <div class="tip">「オンプレADは維持しつつAzureでシームレスに認証」→ AD DS認証。「オンプレAD管理を減らしクラウド完結にしたい」→ Entra Kerberos。「オンプレADが無い／持ちたくないがAD互換認証が必要」→ Entra Domain Services。</div>
     </div>
   </div>
 
@@ -1087,10 +1322,31 @@
     <div class="card-body">
       <div class="compare">
         <div class="compare-title">Queue Storage vs Service Bus</div>
-        Queue Storage = シンプル・大量メッセージ（最大64KB/件、最大80GB）<br>
+        Queue Storage = シンプル・大量メッセージ（メッセージ最大64KiB、<strong>単一キュー上限は500TiB</strong>）<br>
         Service Bus = 順序保証・重複排除・セッション・Dead Letter Queue（DLQ）など高機能
       </div>
-      <div class="tip">「メッセージの順序保証が必要」「1件256KBを超えたい」→ Service Bus を選ぶ。</div>
+      <div class="tip">「メッセージの順序保証が必要」「64KBを超えたい」→ Service Bus を選ぶ（Standardは256KB、Premiumは100MBまで対応）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">シンプルなキー値ストアを低コストで使いたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Table Storage</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>NoSQLのキー値ストア。パーティションキー＋行キーの複合キーでエンティティを一意に識別。スキーマレス。</li>
+        <li>Cosmos DB for Table APIと互換性のあるデータモデル・SDKを使用（アプリコードを変更せずに移行可能）。</li>
+        <li>低コストだが、グローバル分散・低レイテンシSLA・複数の整合性レベルなどCosmos DBの高度な機能は持たない。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">Table Storage vs Cosmos DB for Table</div>
+        Table Storage = 単一リージョン・低コスト・シンプルなキー値アクセスで十分な場合<br>
+        Cosmos DB for Table = グローバル分散・自動インデックス・保証された低レイテンシSLA・高スループットが必要な場合
+      </div>
+      <div class="tip">「とにかく安く」「単一リージョンで十分」→ Table Storage。「グローバル分散・SLA保証・自動スケール」→ Cosmos DB for Table。</div>
     </div>
   </div>
 
@@ -1104,15 +1360,34 @@
       <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
-      <table>
-        <tr><th>ツール</th><th>用途</th><th>オンライン移行</th></tr>
-        <tr><td>Azure Migrate</td><td>VMware/Hyper-V/物理サーバーのリフト＆シフト評価・移行（Azure VM化）</td><td>可</td></tr>
-        <tr><td>Database Migration Service（DMS）</td><td>SQL Server/Oracle/MySQL/PostgreSQL等のDBスキーマ+データ移行</td><td>可（継続レプリケーションで最小ダウンタイム）</td></tr>
-        <tr><td>Azure Data Factory</td><td>ETL/データ統合パイプライン。大規模データの変換を伴う移動</td><td>可（Self-hosted IRでオンプレ接続）</td></tr>
-        <tr><td>Storage Migration Service</td><td>Windows Serverのファイルサーバー（共有・セキュリティ設定含む）の移行</td><td>可（Windows Admin Center経由）</td></tr>
-        <tr><td>Azure Data Box</td><td>TB〜PB級データのオフライン一括転送（帯域不足時）</td><td>不可（物理輸送）</td></tr>
-      </table>
-      <div class="tip">「帯域幅が足りない・データ量がTB〜PB級」→ Data Box。「ファイルサーバーを丸ごと移行」→ Storage Migration Service。「DBを最小ダウンタイムでカットオーバー」→ DMS。Azure-SSIS統合ランタイムがオンプレSQL Serverに到達する必要がある場合は、ExpressRoute/VPNで接続されたVNetにIRを参加させる。</div>
+      <div class="decision-ladder">
+        <div class="decision-step">
+          <span class="cond">帯域幅が足りない・データ量がTB〜PB級（オフライン転送）</span>
+          <span class="arrow">→</span>
+          <span class="result">Azure Data Box</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">VMware/Hyper-V/物理サーバーをAzure VMへリフト＆シフト</span>
+          <span class="arrow">→</span>
+          <span class="result">Azure Migrate</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">SQL Server/Oracle/MySQL/PostgreSQL等のDBを最小ダウンタイムでカットオーバー</span>
+          <span class="arrow">→</span>
+          <span class="result">Database Migration Service（DMS）</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">Windows Serverのファイルサーバー（共有・セキュリティ設定含む）を丸ごと移行</span>
+          <span class="arrow">→</span>
+          <span class="result">Storage Migration Service</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">変換を伴うETL・大規模データ統合パイプラインが必要</span>
+          <span class="arrow">→</span>
+          <span class="result">Azure Data Factory</span>
+        </div>
+      </div>
+      <div class="tip">Azure-SSIS統合ランタイムがオンプレSQL Serverに到達する必要がある場合は、ExpressRoute/VPNで接続されたVNetにIRを参加させる。DMSはオンライン移行なら継続レプリケーションで最小ダウンタイム、Storage Migration ServiceはWindows Admin Center経由で実行。</div>
     </div>
   </div>
 
@@ -1126,15 +1401,48 @@
       <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
-      <table>
-        <tr><th>機能</th><th>保護対象</th><th>備考</th></tr>
-        <tr><td>TDE（透過的データ暗号化）</td><td>保存データ全体（データファイル・ログ・バックアップ）</td><td>SQL DB/MIで既定有効。アプリ変更不要</td></tr>
-        <tr><td><strong>Always Encrypted</strong></td><td>特定の機密列（カード番号等）</td><td>クライアント側で暗号化・復号。<strong>DB管理者からも平文の値を秘匿できる</strong></td></tr>
-        <tr><td>Dynamic Data Masking（DDM）</td><td>クエリ結果の表示のみ</td><td>データ自体は暗号化されない。監査ログや権限昇格からは保護しない</td></tr>
-        <tr><td>インフラストラクチャ暗号化</td><td>ストレージの物理層（二重暗号化）</td><td>プラットフォーム管理鍵に加え二重防御が必要な規制要件向け</td></tr>
-        <tr><td>カスタマーマネージドキー（CMK）</td><td>暗号化キーの管理主体</td><td>Key Vaultで顧客がキーをローテーション・失効管理</td></tr>
-      </table>
+      <div class="viz-wrap">
+        <div class="viz-title">保護範囲比較（塗りつぶし＝守れる：保存時／転送中／DBAから／画面表示 の4軸）</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">TDE<br>（透過的データ暗号化）</div>
+            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg"></div><div class="cov-seg"></div></div>
+            <div class="cov-label">保存データ全体（データファイル・ログ・バックアップ）を暗号化。SQL DB/MIで既定有効、アプリ変更不要</div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Always Encrypted</div>
+            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg"></div></div>
+            <div class="cov-label">特定の機密列をクライアント側で暗号化・復号。<strong>DB管理者からも平文の値を秘匿できる</strong>唯一の方式</div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Dynamic Data<br>Masking（DDM）</div>
+            <div class="cov-bar"><div class="cov-seg"></div><div class="cov-seg"></div><div class="cov-seg"></div><div class="cov-seg on"></div></div>
+            <div class="cov-label">クエリ結果の表示のみマスク。データ自体は平文のまま保存・伝送されるため暗号化の代替にはならない</div>
+          </div>
+        </div>
+      </div>
+      <ul>
+        <li>インフラストラクチャ暗号化：ストレージの物理層で既定の暗号化にさらに重ねる二重暗号化。プラットフォーム管理鍵に加え二重防御が必要な規制要件向け。</li>
+        <li>カスタマーマネージドキー（CMK）：暗号化キーの管理主体をMicrosoftから顧客に移す。Key Vaultで顧客がキーをローテーション・失効管理。</li>
+      </ul>
       <div class="tip">⚠「DB管理者にも値を見せたくない」→ Always Encrypted。「画面表示だけ隠したい」→ DDM（マスキングは暗号化ではない）。「同じデータを2回暗号化する規制要件」→ インフラストラクチャ暗号化 + CMK。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">通信経路（転送中）のデータを保護したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">セキュア転送の強制 ＋ TLS/SMB暗号化</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>ストレージアカウントの「セキュア転送が必須」設定：HTTP接続を拒否しHTTPS（TLS）のみ許可。既定で有効。</li>
+        <li>TLSの最小バージョンをアカウント単位で指定可能（TLS 1.2以上を推奨・強制）。</li>
+        <li>Azure Files：SMB 3.1.1は既定で暗号化。マウント時にSMB暗号化を強制することも可能。</li>
+        <li><strong>Always Encrypted with secure enclaves</strong>：暗号化された列に対してもサーバー側のセキュアエンクレーブ内でパターンマッチングや範囲検索・JOINが可能（通常のAlways Encryptedは等価検索のみで範囲検索不可という制約を緩和）。</li>
+      </ul>
+      <div class="tip">「暗号化列に対して範囲検索・LIKE検索をしたい」→ Always Encrypted with secure enclaves。通常のAlways Encryptedでは実現できない。</div>
     </div>
   </div>
 
@@ -1160,29 +1468,34 @@
             <div class="tier-name">Basic</div>
             <div class="tier-spec">SLA<b>なし</b></div>
             <div class="tier-spec">レプリケーション<b>なし</b></div>
+            <div class="tier-spec">永続化<b>不可</b></div>
             <div class="tier-spec">用途<b>開発・検証</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Standard</div>
             <div class="tier-spec">SLA<b>あり</b></div>
             <div class="tier-spec">レプリケーション<b>2ノード（プライマリ/レプリカ）</b></div>
+            <div class="tier-spec">永続化<b>不可</b></div>
             <div class="tier-spec">用途<b>本番の基本HA</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Premium</div>
+            <div class="tier-spec">SLA<b>あり</b></div>
+            <div class="tier-spec">レプリケーション<b>2ノード＋VNet統合・クラスタリング可</b></div>
             <div class="tier-spec">永続化<b>可（RDB/AOF）</b></div>
-            <div class="tier-spec">ネットワーク<b>VNet統合・クラスタリング可</b></div>
             <div class="tier-spec">用途<b>VNet分離・高スループット</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Enterprise /<br>Enterprise Flash</div>
-            <div class="tier-spec">モジュール<b>RediSearch等対応</b></div>
-            <div class="tier-spec">geoレプリケーション<b>アクティブ‐アクティブ可</b></div>
+            <div class="tier-spec">SLA<b>あり（最上位）</b></div>
+            <div class="tier-spec">レプリケーション<b>アクティブ‐アクティブgeoレプリケーション可</b></div>
+            <div class="tier-spec">永続化<b>可＋RediSearch等モジュール対応</b></div>
             <div class="tier-spec">用途<b>マルチリージョン書き込み・最上位可用性</b></div>
           </div>
         </div>
       </div>
       <div class="tip">「VNet内に閉じたい／データ永続化が必要」→ Premium以上。「複数リージョンで同時書き込み（アクティブgeoレプリケーション）」→ Enterprise / Enterprise Flash。</div>
+      <div class="tip">⚠ Enterprise / Enterprise Flashは<strong>2027年3月31日に廃止予定</strong>。後継はAzure Managed Redis。新規設計では移行計画を考慮する。</div>
     </div>
   </div>
 
@@ -1199,6 +1512,48 @@
         <li>ベクター検索（RAGパターン）にも対応。</li>
       </ul>
       <div class="tip">エンリッチメントキャッシュを有効化すると、変更のないドキュメントのAI Enrichment結果を再利用でき、インデクサー再実行のコスト・処理時間を削減できる。</div>
+    </div>
+  </div>
+
+  <div class="group-title">データ統合・データ分析</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数ソースのデータを統合してビッグデータ分析・DWHを構築したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">用途に応じてSynapse / Fabric / Databricks / Stream Analyticsを使い分ける</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Azure Synapse Analytics</strong>：DWH（専用SQLプール）とビッグデータ処理（Sparkプール）、パイプライン（Data Factory相当）を1つのワークスペースに統合した分析プラットフォーム。大規模構造化データのバッチ分析・レポーティングが中心。</li>
+        <li><strong>Microsoft Fabric</strong>：Synapse・Power BI・Data Factoryなどを単一SaaSに統合した次世代分析基盤。<strong>OneLake</strong>（全ワークロード共通の単一データレイク）を中核に、取り込みから可視化までEnd-to-Endを1製品で完結させる。新規の全社統合分析基盤として推奨される方向性。</li>
+        <li><strong>Azure Databricks</strong>：Apache Spark基盤のデータ処理・機械学習プラットフォーム。Notebook中心のデータエンジニアリング・データサイエンス・MLOpsに強い。Spark専門チームがいる場合や高度なML/AIパイプラインに向く。</li>
+        <li><strong>Azure Stream Analytics</strong>：IoT Hub/Event Hubs等からのリアルタイムストリームデータをSQL風クエリで処理。バッチではなく<strong>低レイテンシのリアルタイム処理</strong>に特化。</li>
+      </ul>
+      <div class="decision-ladder">
+        <div class="decision-step">
+          <span class="cond">リアルタイムストリーム処理（秒〜ミリ秒単位）が主目的</span>
+          <span class="arrow">→</span>
+          <span class="result">Stream Analytics</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">Spark/Notebookベースの大規模データエンジニアリング・ML/AIが中心</span>
+          <span class="arrow">→</span>
+          <span class="result">Databricks</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">BI・可視化まで含めた全社統合SaaS基盤を新規構築したい</span>
+          <span class="arrow">→</span>
+          <span class="result">Microsoft Fabric</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">DWH中心のバッチ分析・大規模SQL集計が中心</span>
+          <span class="arrow">→</span>
+          <span class="result">Synapse Analytics</span>
+        </div>
+      </div>
+      <div class="tip">「バッチ vs リアルタイム」「DWH/SQL中心 vs Spark/ML中心」「個別サービス vs 統合SaaS」の軸で整理して覚える。試験ではキーワード（OneLake→Fabric、Spark/Notebook→Databricks、リアルタイムストリーム→Stream Analytics）から逆引きされることが多い。</div>
     </div>
   </div>
 </div>
@@ -1250,6 +1605,51 @@
         </div>
       </div>
       <div class="tip">⚠ RPOは「バックアップの実行間隔（例: 1日1回）」そのものではない。実際のRPOは障害発生タイミング次第で0時間〜ほぼ間隔と同じ時間の範囲で変動する、実測ベースの値。ASRのような継続的レプリケーションはRPOを数分〜数十分まで短縮できる。</div>
+      <div class="compare">
+        <div class="compare-title">複合SLAの計算（暗記用）</div>
+        直列構成（両方が正常でないとサービス継続できない）= 各コンポーネントSLAの単純乗算　例）99.95%×99.99%≈99.94%（単体より低下）<br>
+        冗長構成（n個中1つでも生きていればよい）= 1 − (1 − A)ⁿ　例）99.9%が2台冗長 → 1−(1−0.999)²=99.9999%（単体より向上）
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Backup／Site Recovery／geo-replication、どれを使うべきか迷う</span>
+      <span class="arrow">→</span>
+      <span class="answer">目的で選ぶ：データ保護＝Backup／VM丸ごとのDR＝Site Recovery／DB個別のDR＝geo-replication系</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Azure Backup：誤削除・破損・ランサムウェアからの<strong>データ保護</strong>が主目的。復元は新規作成寄りでRTOは長め。</li>
+        <li>Site Recovery（ASR）：VM／物理サーバー単位の<strong>継続レプリケーション＋リージョンフェールオーバー</strong>が主目的。RTO/RPOが短い。</li>
+        <li>geo-replication系（SQL DBのアクティブgeoレプリケーション／フェールオーバーグループ、Cosmos DBのマルチリージョンなど）：<strong>PaaS DB個別</strong>のリージョン間レプリケーション。</li>
+      </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">RPO・RTO・コストの相対比較（値が小さいほど短い/安い）</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Azure Backup</div>
+            <div class="meter-row"><div class="meter-label">RPO</div><div class="meter-track"><div class="meter-fill" style="width:60%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">RTO</div><div class="meter-track"><div class="meter-fill" style="width:90%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">コスト</div><div class="meter-track"><div class="meter-fill" style="width:20%"></div></div></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Site Recovery</div>
+            <div class="meter-row"><div class="meter-label">RPO</div><div class="meter-track"><div class="meter-fill" style="width:15%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">RTO</div><div class="meter-track"><div class="meter-fill" style="width:30%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">コスト</div><div class="meter-track"><div class="meter-fill" style="width:60%"></div></div></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">geo-replication系</div>
+            <div class="meter-row"><div class="meter-label">RPO</div><div class="meter-track"><div class="meter-fill" style="width:10%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">RTO</div><div class="meter-track"><div class="meter-fill" style="width:20%"></div></div></div>
+            <div class="meter-row"><div class="meter-label">コスト</div><div class="meter-track"><div class="meter-fill" style="width:70%"></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ 3つは排他ではなく併用が基本。「VMはASRで丸ごとDR、DB内のデータはBackupでランサムウェア対策、PaaS DBはgeo-replicationでリージョン分散」のように役割分担して組み合わせる設問が多い。</div>
     </div>
   </div>
 
@@ -1265,15 +1665,41 @@
     <div class="card-body">
       <ul>
         <li>オンプレ（MARS エージェント）からもバックアップ可能。</li>
-        <li>論理的削除（Soft Delete）：誤削除から一定期間（既定14日、延長可）保護。</li>
+        <li>論理的削除（Soft Delete）：誤削除から一定期間（既定14日、<strong>最大180日</strong>まで延長可）保護。</li>
         <li>Backup Center でマルチサブスクリプションのバックアップを一元管理。</li>
       </ul>
-      <div class="compare">
-        <div class="compare-title">Recovery Services コンテナー vs Backup コンテナー（Backup vault）</div>
-        Recovery Services コンテナー = VM／Azure Files（スナップショット）／SQL Server on Azure VM／SAP HANA on Azure VM<br>
-        Backup コンテナー（Backup vault） = Blob Storage の vaulted バックアップ（コンテナー化バックアップ）専用
+      <div class="viz-wrap">
+        <div class="viz-title">Recovery Services コンテナー vs Backup コンテナー（Backup vault）</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Recovery Services コンテナー</div>
+            <div class="tier-spec">対象<b>VM／Azure Files（スナップショット）</b></div>
+            <div class="tier-spec">対象<b>SQL Server on Azure VM／SAP HANA on Azure VM</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Backup コンテナー（Backup vault）</div>
+            <div class="tier-spec">対象<b>Blob／Azure Managed Disks</b></div>
+            <div class="tier-spec">対象<b>PostgreSQL（単一・Flexible）／AKS</b></div>
+            <div class="tier-spec">対象<b>MySQL Flexible（プレビュー）／Data Lake Storage／Elastic SAN</b></div>
+          </div>
+        </div>
       </div>
       <div class="tip">⚠ 3種類混在（VM・SQL・Blob）の要件では「VM・SQLはRecovery Servicesコンテナー、BlobはBackupコンテナー」の組み合わせが必須。1つのコンテナー種別にまとめることはできない。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">リージョンをフェールオーバーせずに、別リージョンへVMを復元したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">クロスリージョン復元（CRR）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>Recovery Services コンテナーの冗長性を<strong>GRS（地理冗長）</strong>にし、CRRを有効化するとセカンダリリージョンへ直接VMを復元できる。</li>
+        <li>リージョン全体をフェールオーバーせず、対象リソースだけをピンポイントで別リージョンに復元したい場合に使う。</li>
+      </ul>
+      <div class="tip">⚠ コンテナーの冗長性（LRS/GRS）は<strong>バックアップを構成する前</strong>にしか変更できない。既にバックアップ運用中のコンテナーで後からGRSに切り替えることはできない点に注意。</div>
     </div>
   </div>
 
@@ -1303,37 +1729,39 @@
       <ul>
         <li>1つの日次スケジュールから週次・月次・年次の復元ポイントを選び、それぞれ独立した保持期間を設定できる（標準・拡張ポリシーとも対応）。</li>
         <li><strong>拡張（Enhanced）ポリシー</strong>：1日に複数回（最短4時間間隔）バックアップを取得可能。GFSの保持設定自体とは別機能（頻度の拡張）。</li>
+        <li>コスト最適化：月次・年次の復元ポイントは<strong>アーカイブ層</strong>へ移動可能。アクセス頻度が低い長期保持分のストレージコストを抑えられる（復元時は他層よりリハイドレーション時間が必要）。</li>
       </ul>
       <div class="viz-wrap">
-        <div class="viz-title">GFS 保持階層（Grandfather-Father-Son）</div>
+        <div class="viz-title">GFS 保持階層（Grandfather-Father-Son・4階層は優劣ではなく補完関係）</div>
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">日次（Daily）</div>
-            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg"></div><div class="cov-seg"></div></div>
+            <div class="meter-row"><div class="meter-label">保持</div><div class="meter-track"><div class="meter-fill" style="width:15%"></div></div></div>
             <div class="cov-label">直近の誤削除・障害対応</div>
-            <div class="tier-spec">保持例<b>〜数週間</b></div>
+            <div class="tier-spec">保持例<b>〜数週間（最大9999日）</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">週次（Weekly）</div>
-            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg"></div><div class="cov-seg"></div></div>
+            <div class="meter-row"><div class="meter-label">保持</div><div class="meter-track"><div class="meter-fill" style="width:35%"></div></div></div>
             <div class="cov-label">週1点を長めに保持</div>
             <div class="tier-spec">保持例<b>〜数か月</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">月次（Monthly）</div>
-            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg"></div></div>
+            <div class="meter-row"><div class="meter-label">保持</div><div class="meter-track"><div class="meter-fill" style="width:60%"></div></div></div>
             <div class="cov-label">月1点をさらに長期保持</div>
             <div class="tier-spec">保持例<b>〜数年</b></div>
           </div>
-          <div class="tier-card best">
+          <div class="tier-card">
             <div class="tier-name">年次（Yearly）</div>
-            <div class="cov-bar"><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on"></div><div class="cov-seg on"></div></div>
+            <div class="meter-row"><div class="meter-label">保持</div><div class="meter-track"><div class="meter-fill" style="width:100%"></div></div></div>
             <div class="cov-label">コンプライアンス用に最長保持</div>
-            <div class="tier-spec">保持例<b>最大10年</b></div>
+            <div class="tier-spec">保持例<b>最大99年</b></div>
           </div>
         </div>
       </div>
       <div class="tip">⚠ 「拡張ポリシー＝バックアップ頻度の拡張（1日複数回）」であり、GFSの保持ルール自体は標準ポリシーでも従来から設定可能。両者を混同する誤答が多い。</div>
+      <div class="tip">⚠ 「最大10年」は拡張ポリシーの<strong>既定値</strong>にすぎない。年次保持は実際には最大99年、日次保持も最大9999日まで設定できる。4階層は「どれが一番良いか」ではなく、目的（直近復旧〜長期コンプライアンス）に応じて併用するもの。</div>
     </div>
   </div>
 
@@ -1349,9 +1777,14 @@
         <div class="viz-title">ランサムウェア対策の防御レイヤー（強度順）</div>
         <div class="tier-grid">
           <div class="tier-card">
+            <div class="tier-name">アカウント外へのvaultedコピー</div>
+            <div class="tier-spec">保護<b>ソースアカウント削除・侵害</b></div>
+            <div class="tier-spec">回避<b>Backup vault自体を侵害されると影響</b></div>
+          </div>
+          <div class="tier-card">
             <div class="tier-name">ソフト削除</div>
             <div class="tier-spec">保護<b>誤削除・軽微な悪意</b></div>
-            <div class="tier-spec">回避<b>権限があれば無効化可</b></div>
+            <div class="tier-spec">回避<b>secure-by-defaultで無効化自体は不可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">不変性ポリシー（ロック）</div>
@@ -1367,8 +1800,10 @@
       </div>
       <ul>
         <li>MUAは<strong>Resource Guard</strong>（理想は別テナントの別サブスクリプション）をコンテナーに関連付けて有効化。以後、保持期間短縮・ソフト削除無効化・バックアップ削除・セキュリティPIN変更などに承認者の許可が必須になる。</li>
+        <li>ソフト削除は現在secure-by-defaultにより、ポータル/PowerShell/CLI/REST いずれからも<strong>無効化自体が不可</strong>（全パブリックリージョンでGA済み）。ただし保持期間の短縮やバックアップの削除は依然としてMUAの承認対象。</li>
+        <li>用語の混同注意：「不変vault」＝Backup/Recovery Servicesコンテナーの不変性ポリシー（バックアップ運用向け）。「不変ストレージ（WORM）」＝Blob Storageのタイムベース保持ポリシー（ストレージ層そのものの機能）。両者は別の仕組み。</li>
       </ul>
-      <div class="tip">⚠ Resource Managerの「削除ロック（CanNotDelete）」はコンテナー自体の削除しか防げず、内部設定変更は防げない。ソフト削除単独も権限があれば無効化できるため不十分。「侵害された管理者」対策には不変ロック＋MUAの組み合わせが必要。</div>
+      <div class="tip">⚠ Resource Managerの「削除ロック（CanNotDelete）」はコンテナー自体の削除しか防げず、内部設定変更は防げない。「侵害された管理者」対策には不変ロック＋MUAの組み合わせが必要。ソースアカウント自体が削除・侵害されるリスクには、そもそもアカウント外部（Backup vault）へのvaultedコピーが前提となる。</div>
     </div>
   </div>
 
@@ -1383,7 +1818,7 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>Azure → Azure / オンプレ → Azure / Azure → オンプレ のレプリケーションが可能。</li>
+        <li>Azure → Azure / オンプレ → Azure のレプリケーションが可能。「Azure → オンプレ」は独立したレプリケーション方向ではなく、<strong>オンプレ→Azureへフェールオーバーした後のフェールバック</strong>としてのみ発生する。</li>
         <li>フェールオーバーテストを本番に影響なく実施できる（本番・オンプレと接続しない分離テスト用VNetを指定）。</li>
         <li>RPO は数秒〜数分、RTOは数分〜数時間（ポリシー次第）。</li>
         <li><strong>リカバリプラン</strong>：複数VMをグループ化し、グループ単位で起動順序（ブートオーダー）を定義。Automationランブックのステップを前後に挿入して、DNS更新等も自動化できる。</li>
@@ -1442,8 +1877,9 @@
         可用性ゾーン = 異なる物理DC（ゾーン）に分散。SLA 99.99%。より高い冗長性。
       </div>
       <div class="tip">「99.99%のSLAが必要」→ 可用性ゾーンを選ぶ。</div>
+      <div class="tip">⚠ 可用性セットと可用性ゾーンは<strong>同一VM/スケールセットで併用不可</strong>（どちらか一方を選択）。</div>
       <div class="viz-wrap">
-        <div class="viz-title">冗長化レベル比較（塗りつぶし＝耐えられる障害範囲）</div>
+        <div class="viz-title">冗長化レベル比較（塗りつぶし＝耐えられる障害範囲。マルチリージョンの3区画目が黄色＝自動化にはTraffic Manager/Front Door等の別途構成が必要という意味）</div>
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">単一VM</div>
@@ -1477,6 +1913,9 @@
         VMスケールセット（通常）= 1つで複数AZにまたがって配置可能 → 1つで3AZ対応<br>
         VMスケールセット（Dedicated Host使用時）= ホストグループに紐付くため1AZ固定 → ホストグループと同数（3AZ対応なら3つ）必要
       </div>
+      <ul>
+        <li><strong>VMスケールセット Flexible オーケストレーション</strong>：可用性セットの後継としてMicrosoftが現在推奨する構成。異なるVMサイズの混在や、既存VMのスケールセットへの追加が可能。可用性セットと同様「同一構成のVM群を分散配置する」目的で使われるが、より柔軟。</li>
+      </ul>
     </div>
   </div>
 
@@ -1489,8 +1928,8 @@
     </div>
     <div class="card-body">
       <ul>
-        <li>Traffic Manager は DNS ベースのグローバルロードバランサー（L7ではなくDNS）。</li>
-        <li>ルーティング方式：Priority（優先度）/ Weighted（重み）/ Performance（最低レイテンシ）/ Geographic。</li>
+        <li>Traffic Manager は DNS ベースのグローバルロードバランサー（トラフィック自体はTraffic Managerを経由せず、DNS応答のみを返す）。</li>
+        <li>ルーティング方式：Priority（優先度）/ Weighted（重み）/ Performance（最低レイテンシ）/ Geographic（地理的位置）/ MultiValue（複数の正常エンドポイントIPをまとめて返却）/ Subnet（送信元IP範囲でエンドポイントをマッピング）の6種類。</li>
         <li>障害検出（ヘルスチェック）に基づいて自動的にDNSを切り替え。</li>
       </ul>
       <div class="viz-wrap">
@@ -1498,7 +1937,7 @@
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">Traffic Manager</div>
-            <div class="tier-spec">階層<b>DNS（L3相当）</b></div>
+            <div class="tier-spec">階層<b>DNSレベル（トラフィック自体はTMを通過しない）</b></div>
             <div class="tier-spec">切替速度<b>DNS TTL依存で不確実</b></div>
             <div class="tier-spec">得意<b>非HTTPも含む幅広い用途</b></div>
           </div>
@@ -1517,7 +1956,7 @@
         </div>
       </div>
       <div class="tip">「グローバルDR」= Traffic Manager/Front Door。「リージョン内HA」= Load Balancer / App Gateway。</div>
-      <div class="tip">⚠ RTOを数分程度に確実に抑えたいWeb/API要件 → Front Door（アプリ層ヘルスプローブで自動切替）を選ぶ。Traffic ManagerはDNSのTTLやリゾルバーのキャッシュに切替速度が左右されるため確実性に欠ける。Cross-region LBはL4のためHTTPレベルの正常性判定・WAFができない。</div>
+      <div class="tip">⚠ RTOを数分程度に確実に抑えたいWeb/API要件 → Front Door（アプリ層ヘルスプローブで自動切替）を選ぶ。Traffic ManagerはDNSレベルで動作しトラフィック自体を経由しないため、アプリ層（HTTPステータス等）の正常性を直接判定できず、切替速度もDNSのTTLやリゾルバーのキャッシュに左右され確実性に欠ける。Cross-region LBはL4のためHTTPレベルの正常性判定・WAFができない。</div>
     </div>
   </div>
 
@@ -1532,6 +1971,7 @@
       <ul>
         <li>アクティブ geo レプリケーション：最大4つのセカンダリDB（読み取り可能）を別リージョンに作成。フェールオーバーは<strong>手動昇格</strong>。</li>
         <li>フェールオーバーグループ：接続文字列を変えずに自動フェールオーバー。複数DBをまとめて管理。SQL Managed Instanceのアクティブgeoレプリケーションは非対応 → DR手段はフェールオーバーグループのみ。</li>
+        <li>フェールオーバーグループの自動フェールオーバーポリシーには<strong>Microsoft管理（automatic）</strong>と<strong>顧客管理（manual）</strong>の2種類があり、挙動が大きく異なる（下表参照）。Microsoftは顧客管理ポリシーを推奨している。</li>
       </ul>
       <div class="viz-wrap">
         <div class="viz-title">SQL DB DRオプション比較</div>
@@ -1539,25 +1979,69 @@
           <div class="tier-card">
             <div class="tier-name">ゾーン冗長構成</div>
             <div class="tier-spec">自動FO<b>不要（同一DB内で吸収）</b></div>
-            <div class="tier-spec">一括管理<b>DB単位</b></div>
+            <div class="tier-spec">RPO<b>0</b></div>
+            <div class="tier-spec">RTO<b>数秒〜数十秒</b></div>
             <div class="tier-spec">リージョン跨ぎ<b>不可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">アクティブ geo レプリケーション</div>
             <div class="tier-spec">自動FO<b>不可（手動昇格）</b></div>
-            <div class="tier-spec">一括管理<b>DB単位で個別</b></div>
+            <div class="tier-spec">RPO<b>通常5秒未満（非同期）</b></div>
+            <div class="tier-spec">RTO<b>手動昇格の実施時間次第</b></div>
             <div class="tier-spec">リージョン跨ぎ<b>可（最大4セカンダリ）</b></div>
           </div>
+          <div class="tier-card">
+            <div class="tier-name">FOグループ（Microsoft管理）</div>
+            <div class="tier-spec">自動FO<b>自動（操作不要）</b></div>
+            <div class="tier-spec">RTO<b>猶予期間を1時間未満に設定不可</b></div>
+            <div class="tier-spec">発動範囲<b>リージョン内の全FOGを一括切替</b></div>
+          </div>
           <div class="tier-card best">
-            <div class="tier-name">自動フェールオーバーグループ</div>
-            <div class="tier-spec">自動FO<b>自動（Microsoft管理）</b></div>
-            <div class="tier-spec">一括管理<b>グループ単位で一括</b></div>
-            <div class="tier-spec">エンドポイント<b>リスナー名で不変</b></div>
+            <div class="tier-name">FOグループ（顧客管理）</div>
+            <div class="tier-spec">自動FO<b>手動トリガー（スクリプト等）</b></div>
+            <div class="tier-spec">RTO<b>数十秒〜（トリガー次第）</b></div>
+            <div class="tier-spec">発動範囲<b>グループ単位で個別制御可・Microsoft推奨</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">geo-restore（バックアップ）</div>
+            <div class="tier-spec">自動FO<b>不可（新規DB作成による復元）</b></div>
+            <div class="tier-spec">RPO<b>最大1時間</b></div>
+            <div class="tier-spec">RTO<b>数十分〜数時間（最後の手段）</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ フェールオーバーグループの<strong>読み取り専用リスナー</strong>のフェールオーバーは既定で無効（別途 ReadOnlyEndpointFailoverPolicy で有効化が必要）。既定のままだと旧プライマリ復旧までリードオンリー接続ができない点に注意。</div>
-      <div class="tip">⚠ geo冗長バックアップからの「geoリストア」はDB新規作成による復元のため数十分〜数時間かかる → RTOが短い要件には使えない（最後の手段と位置づける）。</div>
+      <div class="tip">⚠ フェールオーバーグループの<strong>読み取り専用リスナー</strong>のフェールオーバーは既定で無効（別途 ReadOnlyEndpointFailoverPolicy で有効化が必要）。既定のままだとセカンダリが回復するまで読み取り専用セッションは接続できない点に注意。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure SQL Databaseで「7年保持したい」「30日前の状態に戻したい」</span>
+      <span class="arrow">→</span>
+      <span class="answer">DRの3択ではなく PITR / LTR（バックアップ機能）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>PITR（Point-In-Time Restore）</strong>：既定7日、最大35日の範囲で任意の時点に新しいDBとして復元できる。全SKUで既定有効。</li>
+        <li><strong>LTR（Long-Term Retention）</strong>：週次・月次・年次の復元ポイントを個別ポリシーで保持。最大<strong>10年</strong>まで保持可能。</li>
+      </ul>
+      <div class="tip">⚠ 「N日前に戻したい」「N年間保持したい」という要件は、geo-replication／フェールオーバーグループ／ゾーン冗長のDR3択の話ではなく、<strong>PITR/LTR</strong>（バックアップの保持・復元）の話。DRとバックアップの目的の違いを混同させる典型的な引っかけ問題。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">SQL Server on Azure VM（IaaS）でHA/DRを組みたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Always On 可用性グループ（AG）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>PaaSのAzure SQL Databaseとは異なり、<strong>IaaS（VM上のSQL Server）</strong>ではAlways On可用性グループを自前で構成してHA/DRを実現する。</li>
+        <li><strong>ゾーン跨ぎAG</strong>：同一リージョン内の複数可用性ゾーンにレプリカを配置してHAを確保。</li>
+        <li><strong>分散可用性グループ</strong>：2つの独立したAG（クラスター）をリージョンをまたいで連携させ、DRを実現。</li>
+      </ul>
+      <div class="tip">⚠ 「IaaS DBかPaaS DBか」で使う機能が変わる。PaaSのAzure SQL Databaseはフェールオーバーグループ／geoレプリケーションを使うが、VM上で自前運用するSQL ServerはAlways On可用性グループ（Windows Server フェールオーバークラスタリング上に構築）を使う。</div>
     </div>
   </div>
 
@@ -1588,6 +2072,35 @@
       <div class="tip">⚠ サービス管理フェールオーバーは障害宣言から開始まで1時間以上かかる場合もあり、即座に完了するとは限らない。マルチマスターは競合解決の設計が別途必要になる点に注意。</div>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Cosmos DBのデータを誤削除・誤更新から特定時点に復元したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">継続的バックアップ（Continuous Backup）でポイントインタイム復元</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>継続的バックアップ</strong>：7日間保持（Continuous7日）または30日間保持（Continuous30日）のいずれかを選択。保持期間内の任意の時点へセルフサービスで復元できる（復元先は<strong>新しいアカウント</strong>）。</li>
+        <li><strong>定期バックアップ（既定）</strong>：既定の間隔・世代数でバックアップを取得し地理冗長に保持するモード。継続的バックアップに比べて復元可能な時点の粒度が粗い。</li>
+      </ul>
+      <div class="tip">⚠ マルチリージョン書き込みやサービス管理フェールオーバーは<strong>リージョン障害</strong>への対応であり、誤削除・誤更新（データ破損）そのものは救えない。「コンテナーやアカウントを誤って削除した」という要件には、フェールオーバー構成ではなく継続的バックアップによるポイントインタイム復元が正解。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">App Service / AKSの事業継続性を高めたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">デプロイスロット＋マルチリージョン設計／AKSはBackup vaultでクラスター単位バックアップ</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>App Service：<strong>デプロイスロット</strong>でステージング環境を用意し、スワップによる無停止デプロイ・問題発生時の即時ロールバックが可能。ただしスロットは同一リージョン内の仕組みなので単体では冗長化にならず、可用性向上には複数リージョンへのデプロイ＋Traffic Manager/Front Doorの組み合わせが必要。</li>
+        <li>AKS：Backup vaultを使ってクラスターの構成やリソースをバックアップ可能（対象範囲は上記「Backup コンテナー」の表を参照）。マルチリージョンDRでは複数リージョンにクラスターを展開し、グローバル分散サービスで振り分ける設計にする。</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================ -->
@@ -1607,17 +2120,17 @@
     </div>
     <div class="card-body">
       <table>
-        <tr><th>サービス</th><th>選ぶ場面</th></tr>
-        <tr><td>Azure VM</td><td>IaaS・フル制御・レガシーアプリ移行</td></tr>
-        <tr><td>Azure App Service</td><td>Web/API アプリ。PaaS。OS管理不要</td></tr>
-        <tr><td>Azure Kubernetes Service（AKS）</td><td>本格的なコンテナオーケストレーション・マイクロサービス・きめ細かい制御が必要</td></tr>
-        <tr><td>Azure Container Apps（ACA）</td><td>Kubernetesの知識なしでコンテナ運用。KEDAベースでゼロまでスケールイン可</td></tr>
-        <tr><td>Azure Container Instances（ACI）</td><td>単発・シンプルなコンテナ実行（オーケストレーション不要）</td></tr>
-        <tr><td>Azure Functions</td><td>イベント駆動・サーバーレス・短時間処理</td></tr>
-        <tr><td>Azure Logic Apps</td><td>ワークフロー自動化・ノーコード統合</td></tr>
+        <tr><th>サービス</th><th>分類</th></tr>
+        <tr><td>Azure VM</td><td>IaaS（仮想マシン）</td></tr>
+        <tr><td>Azure App Service</td><td>PaaS（Web/APIホスティング）</td></tr>
+        <tr><td>Azure Kubernetes Service（AKS）</td><td>コンテナオーケストレーション（フル制御）</td></tr>
+        <tr><td>Azure Container Apps（ACA）</td><td>サーバーレスコンテナ（KEDAベース）</td></tr>
+        <tr><td>Azure Container Instances（ACI）</td><td>単発コンテナ実行</td></tr>
+        <tr><td>Azure Functions</td><td>サーバーレス関数（イベント駆動）</td></tr>
+        <tr><td>Azure Logic Apps</td><td>ノーコードワークフロー統合</td></tr>
         <tr><td>Azure Batch</td><td>大規模並列バッチ処理（HPC）</td></tr>
       </table>
-      <div class="tip">Container Apps は「Consumption」と「専用（Dedicated）」の2つのワークロードプロファイルを同一環境に混在可能。最小レプリカ数0でスケール・トゥ・ゼロ、課金なし。</div>
+      <div class="tip">選択の判断基準（制御 vs 運用負荷）は次のカードの判断ラダーを参照。Container Apps は「Consumption」と「専用（Dedicated）」の2つのワークロードプロファイルを同一環境に混在可能。最小レプリカ数0でスケール・トゥ・ゼロ、課金なし。</div>
     </div>
   </div>
 
@@ -1705,7 +2218,7 @@
             <div class="tier-name">予約インスタンス（RI）</div>
             <div class="meter-row"><div class="meter-label">割引</div><div class="meter-track"><div class="meter-fill" style="width:72%"></div></div></div>
             <div class="tier-spec">コミット<b>1年 or 3年</b></div>
-            <div class="tier-spec">柔軟性<b>VMサイズ/リージョン固定</b></div>
+            <div class="tier-spec">柔軟性<b>VMシリーズ＋リージョンにコミット（同シリーズ内はサイズ変更しても割引が適用されるインスタンスサイズの柔軟性あり）</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Azure 節約プラン</div>
@@ -1719,14 +2232,9 @@
             <div class="tier-spec">コミット<b>なし</b></div>
             <div class="tier-spec">中断リスク<b>あり（立ち退き）</b></div>
           </div>
-          <div class="tier-card">
-            <div class="tier-name">Azure Hybrid Benefit</div>
-            <div class="tier-spec">対象<b>Windows Server/SQL Serverの既存ライセンス</b></div>
-            <div class="tier-spec">併用<b>RI・節約プランと併用可</b></div>
-          </div>
         </div>
       </div>
-      <div class="tip">⚠ RIと節約プランは排他ではなくAzure Hybrid Benefitと併用可能（割引が積み重なる）。「3年予約＋HB」のような組み合わせ問題に注意。Spotは事前通知（最短30秒）後に強制停止されうる点が唯一のデメリット。</div>
+      <div class="tip">⚠ RIと節約プランは排他ではなくAzure Hybrid Benefit（Windows Server/SQL Serverの既存ライセンス持ち込み）と併用可能（割引が積み重なる乗算的な割引）。「3年予約＋HB」のような組み合わせ問題に注意。Spotは事前通知（最短30秒）後に強制停止されうる点が唯一のデメリット。RIは同一シリーズ内であればサイズが変わっても割引が自動適用される「インスタンスサイズの柔軟性」を持つ点に注意（VMサイズ固定ではない）。</div>
     </div>
   </div>
 
@@ -1749,6 +2257,26 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">VNet/サブネットのアドレス設計で問われる数値を押さえたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">予約IP・専用サブネットのサイズ要件を暗記</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>各サブネットはAzureが<strong>先頭4個＋末尾1個の計5 IP</strong>を予約（ネットワークアドレス・デフォルトゲートウェイ・DNS用2個・ブロードキャストアドレス）。実際に使えるIP数はそれを除いた数。</li>
+        <li><strong>GatewaySubnet</strong>：VPN/ExpressRoute Gatewayの専用サブネット。名前は固定。最小 <code>/27</code> 以上を推奨（ゲートウェイSKU追加を見越すため）。</li>
+        <li><strong>AzureFirewallSubnet</strong>：Azure Firewall専用サブネット。名前は固定。最小 <code>/26</code>。</li>
+        <li><strong>AzureBastionSubnet</strong>：Azure Bastion専用サブネット。名前は固定。推奨 <code>/26</code> 以上。</li>
+        <li>サブネット委任（Delegation）：App Service VNet統合・Container Instances等、特定のPaaSサービス専用にサブネットを明け渡す設定。</li>
+        <li>アドレス空間が重複するVNet同士はピアリング不可。重複が判明した場合は該当VNetのアドレス空間再設計（多くは作り直し）が必要になりやすい。</li>
+      </ul>
+      <div class="tip">「/27でVPN Gatewayが作成できない」「Firewall/Bastion用のサブネットが小さすぎる」は、これらの専用サブネットの最小サイズを知っているかを問う典型パターン。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">ロードバランサーの選択</span>
       <span class="arrow">→</span>
       <span class="answer">用途別の選択ガイド</span>
@@ -1761,9 +2289,10 @@
           <div class="tier-card">
             <div class="tier-name">Azure Load Balancer</div>
             <div class="tier-spec">レイヤー<b>L4（TCP/UDP）</b></div>
-            <div class="tier-spec">スコープ<b>リージョン内</b></div>
+            <div class="tier-spec">スコープ<b>リージョナル（Standard SKUはGlobal階層でクロスリージョン分散も可）</b></div>
+            <div class="tier-spec">SKU<b>Standardのみ（Basic Load Balancer/Basic パブリックIPは2025年9月30日で提供終了）</b></div>
             <div class="tier-spec">WAF<b>非対応</b></div>
-            <div class="tier-spec">特徴<b>シンプル・高スループット・非HTTPも可</b></div>
+            <div class="tier-spec">特徴<b>シンプル・高スループット・非HTTPも可。既定で全インバウンドを拒否するためNSGでの明示的な許可が必須。ゾーン冗長構成可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Application Gateway</div>
@@ -1772,7 +2301,7 @@
             <div class="tier-spec">WAF<b>対応（WAF SKU）</b></div>
             <div class="tier-spec">特徴<b>SSL終端・URLルーティング・Cookieセッション</b></div>
           </div>
-          <div class="tier-card best">
+          <div class="tier-card">
             <div class="tier-name">Azure Front Door</div>
             <div class="tier-spec">レイヤー<b>L7（HTTP/S）</b></div>
             <div class="tier-spec">スコープ<b>グローバル</b></div>
@@ -1786,9 +2315,91 @@
             <div class="tier-spec">WAF<b>非対応</b></div>
             <div class="tier-spec">特徴<b>DNSベースでHTTP以外にも対応。フェールオーバー/地理分散</b></div>
           </div>
+          <div class="tier-card">
+            <div class="tier-name">Cross-region Load Balancer</div>
+            <div class="tier-spec">レイヤー<b>L4（TCP/UDP）</b></div>
+            <div class="tier-spec">スコープ<b>グローバル（Standard LBのGlobal階層）</b></div>
+            <div class="tier-spec">WAF<b>非対応</b></div>
+            <div class="tier-spec">特徴<b>各リージョンのリージョナルLBをバックエンドに束ね、TCP到達性ベースで分散。DNSを介さない</b></div>
+          </div>
         </div>
       </div>
-      <div class="tip">「WAF付きグローバルLB」→ Azure Front Door。「WAF付きリージョンLB」→ Application Gateway。「非HTTPプロトコルをグローバルに振り分け」→ Traffic Manager（DNSベースのためLBより高速フェールバックはできない点に注意）。</div>
+      <div class="tip">「WAF付きグローバルLB」→ Azure Front Door。「WAF付きリージョンLB」→ Application Gateway。「非HTTPプロトコルをグローバルに振り分け・フェールオーバーさせたい」→ Traffic Manager（DNSベースのためLoad Balancerより高速なフェールオーバーはできない点に注意。DNSのTTLやリゾルバーのキャッシュに切替時間が左右される）。「非HTTPをL4のままグローバルに分散し障害時に自動切替したい」→ Cross-region Load Balancer。</div>
+      <div class="tip">マルチリージョンDR（RTO/RPO要件からの選定・ヘルスプローブの詳細比較）は「③ 事業継続性」タブも参照。ここでは一般的なLB選定の観点で整理。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Webアプリケーションファイアウォール（WAF）の動作を理解したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Application Gateway WAF / Front Door WAF（モード・ルールセットで制御）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>モード：<strong>検出（Detection）</strong>＝ログのみで遮断しない。<strong>防止（Prevention）</strong>＝一致したリクエストをブロックする。</li>
+        <li>ルール：マネージドルールセット（OWASP CRS等のMicrosoft管理シグネチャ）とカスタムルール（IP制限・レート制限・地理フィルタ等を自前定義）を組み合わせ可能。</li>
+        <li>WAFはApplication Gateway（WAF SKU）とFront Door（Standard/Premium）の双方に構成できる。</li>
+      </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">Front Door: Standard vs Premium（WAF関連機能）</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Front Door Standard</div>
+            <div class="tier-spec">WAF<b>カスタムルールのみ</b></div>
+            <div class="tier-spec">Private Link<b>オリジン接続 非対応</b></div>
+            <div class="tier-spec">ボット保護<b>非対応</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Front Door Premium</div>
+            <div class="tier-spec">WAF<b>マネージドルールセット + カスタムルール</b></div>
+            <div class="tier-spec">Private Link<b>オリジンへのPrivate Link接続に対応</b></div>
+            <div class="tier-spec">ボット保護<b>マネージドのボット保護ルールセットに対応</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">「オリジンをパブリック露出せずPrivate Linkで守りたい」「マネージドルールセットでOWASP対策・ボット対策したい」→ Front Door Premiumが必要（Standardでは不可）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">踏み台サーバーなしにVMへ安全にRDP/SSH接続したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Bastion</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>ブラウザ（Azure Portal）やネイティブクライアントからTLS経由でVMにRDP/SSH接続。VM側にパブリックIPを割り当てる必要がない。</li>
+        <li>専用サブネット<code>AzureBastionSubnet</code>が必要。</li>
+      </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">Azure Bastion SKUティア比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Developer</div>
+            <div class="tier-spec">用途<b>開発・検証用の簡易接続</b></div>
+            <div class="tier-spec">構成<b>専用サブネット不要・スケール設定なし</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Basic</div>
+            <div class="tier-spec">接続<b>ブラウザ経由のみ</b></div>
+            <div class="tier-spec">スケーリング<b>非対応</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Standard</div>
+            <div class="tier-spec">接続<b>ネイティブクライアント対応・共有可能リンク・IPベース接続</b></div>
+            <div class="tier-spec">スケーリング<b>インスタンス数を手動スケール</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Premium</div>
+            <div class="tier-spec">追加機能<b>セッション記録</b></div>
+            <div class="tier-spec">構成<b>パブリックIPなしのプライベート専用デプロイが可能</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">「VMにパブリックIP/RDPポートを一切公開せず接続したい」→ Azure Bastion。セッション記録の監査要件が出たらPremium。</div>
     </div>
   </div>
 
@@ -1808,9 +2419,9 @@
             <div class="meter-row"><div class="meter-label">帯域</div><div class="meter-track"><div class="meter-fill" style="width:25%"></div></div></div>
             <div class="meter-row"><div class="meter-label">コスト</div><div class="meter-track"><div class="meter-fill" style="width:20%"></div></div></div>
             <div class="tier-spec">経路<b>インターネット経由（IPsecトンネル）</b></div>
-            <div class="tier-spec">SLA<b>99.9〜99.95%</b></div>
+            <div class="tier-spec">SLA<b>99.95%（VpnGw1-5、ゾーン冗長の有無を問わず共通）／Basic SKUはSLA対象外で本番非推奨</b></div>
           </div>
-          <div class="tier-card best">
+          <div class="tier-card">
             <div class="tier-name">ExpressRoute</div>
             <div class="meter-row"><div class="meter-label">帯域</div><div class="meter-track"><div class="meter-fill" style="width:85%"></div></div></div>
             <div class="meter-row"><div class="meter-label">コスト</div><div class="meter-track"><div class="meter-fill" style="width:75%"></div></div></div>
@@ -1831,12 +2442,35 @@
           </div>
         </div>
       </div>
+      <div class="viz-wrap">
+        <div class="viz-title">ExpressRoute ピアリング種別（接続先で区別）</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">プライベートピアリング</div>
+            <div class="tier-spec">接続先<b>VNet内のプライベートリソース</b></div>
+            <div class="tier-spec">用途<b>IaaS/オンプレ延伸のハイブリッドネットワーク</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Microsoftピアリング</div>
+            <div class="tier-spec">接続先<b>Microsoft 365 / Azure PaaSのパブリックエンドポイント</b></div>
+            <div class="tier-spec">用途<b>パブリックサービスへ専用線経由でアクセス</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">パブリックピアリング</div>
+            <div class="tier-spec">状態<b>非推奨（廃止方向）</b></div>
+            <div class="tier-spec">代替<b>Microsoftピアリングを使用</b></div>
+          </div>
+        </div>
+      </div>
       <ul>
-        <li>ExpressRoute ピアリング種別：<b>プライベートピアリング</b>＝VNet内リソースへの接続、<b>Microsoftピアリング</b>＝Microsoft 365/Azure PaaSなどパブリックサービスへの接続、<b>パブリックピアリング</b>＝非推奨（廃止方向）。</li>
+        <li>ExpressRoute FastPath：仮想ネットワークゲートウェイをバイパスし、オンプレ〜VM間のデータパスを直接転送してレイテンシを削減。</li>
+        <li>冗長化：1つのExpressRoute回線は標準で冗長ペア（2つの物理接続）で構成される。可用性をさらに高めるには、異なる2つのピアリングロケーションでそれぞれ回線を作成する構成が推奨。</li>
+        <li>暗号化：プライベートピアリングの経路自体はデフォルトで暗号化されないため、必要に応じて<b>MACsec</b>（ExpressRoute Direct区間）や<b>IPsec over ExpressRoute</b>（プライベートピアリング経路上にVPNトンネルを重ねる）で暗号化を追加する。</li>
         <li>ExpressRoute Global Reach：異なるExpressRoute回線に接続されたオンプレ拠点同士をMicrosoftのネットワーク経由で直接接続。</li>
         <li>可用性を高めたい場合、ExpressRouteのバックアップ経路としてサイト間VPNを同じGatewaySubnetに構成する設計が定番。</li>
       </ul>
       <div class="tip">「高帯域・低レイテンシ・セキュアな専用接続が必要」→ ExpressRoute。「複数の事業会社ごとに大容量の専用線を分けたい」→ ExpressRoute Direct。「多数の拠点/VNetをマネージドに集約したい」→ Virtual WAN。</div>
+      <div class="tip">⚠ 2025年11月1日以降、ゾーン非冗長（非AZ）のVPN Gateway SKUは新規作成不可。新規は原則ゾーン冗長SKUを選択する。</div>
     </div>
   </div>
 
@@ -1885,29 +2519,31 @@
         <li>Firewall Policy：親（ベース）ポリシーに全社共通ルールを定義し、子ポリシーに継承させて事業部門ごとにルールを委任・追加できる。</li>
       </ul>
       <div class="viz-wrap">
-        <div class="viz-title">Azure Firewall SKUティア比較</div>
+        <div class="viz-title">Azure Firewall SKUティア比較（可用性ゾーンは全SKU対応）</div>
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">Basic</div>
             <div class="tier-spec">対象<b>中小規模拠点</b></div>
             <div class="tier-spec">スループット<b>最大250Mbps</b></div>
-            <div class="tier-spec">機能<b>基本的なL3-L7フィルタリングのみ</b></div>
+            <div class="tier-spec">脅威インテリジェンス<b>アラートのみ（遮断不可）</b></div>
+            <div class="tier-spec">非対応<b>ネットワークFQDNフィルタ・DNSプロキシ・Webカテゴリ</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Standard</div>
             <div class="tier-spec">対象<b>一般的なエンタープライズ</b></div>
             <div class="tier-spec">スループット<b>自動スケールで最大30Gbps</b></div>
-            <div class="tier-spec">機能<b>FQDNフィルタリング・脅威インテリジェンス・DNSプロキシ</b></div>
+            <div class="tier-spec">脅威インテリジェンス<b>アラート＋遮断</b></div>
+            <div class="tier-spec">機能<b>FQDNフィルタリング・DNSプロキシ・Webカテゴリ</b></div>
           </div>
           <div class="tier-card best">
             <div class="tier-name">Premium</div>
             <div class="tier-spec">対象<b>高セキュリティ要件（決済処理等）</b></div>
-            <div class="tier-spec">スループット<b>最大100Gbps・可用性ゾーンで99.99%SLA</b></div>
-            <div class="tier-spec">機能<b>+ TLSインスペクション・IDPS（侵入検知/防御）・URL/Webカテゴリフィルタリング</b></div>
+            <div class="tier-spec">スループット<b>最大100Gbps</b></div>
+            <div class="tier-spec">機能<b>+ TLSインスペクション・IDPS（侵入検知/防御）・フルパスURLフィルタリング</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ TLSインスペクションとIDPSはPremium SKU限定の機能。「暗号化された通信の中身まで検査したい」「既知の攻撃パターンを検知・遮断したい」という要件が出たら即Premium。</div>
+      <div class="tip">⚠ Webカテゴリフィルタリングは<strong>Standardから</strong>利用可能（Premium限定ではない）。Premium限定なのはTLSインスペクション・IDPS・フルパスURLフィルタリング（TLS終端を伴う検査）。「暗号化された通信の中身まで検査したい」「既知の攻撃パターンを検知・遮断したい」という要件が出たら即Premium。「脅威インテリジェンスで遮断したい」ならStandard以上（Basicはアラートのみ）。可用性ゾーンとそのSLAは全SKU共通で、SKUの差別化要素ではない。</div>
     </div>
   </div>
 
@@ -2079,7 +2715,8 @@
             <div class="tier-name">Event Hubs</div>
             <div class="tier-spec">配信モデル<b>1:N（ストリーム・パーティション）</b></div>
             <div class="tier-spec">順序保証<b>パーティション内のみ</b></div>
-            <div class="tier-spec">上限<b>1MB/イベント目安</b></div>
+            <div class="tier-spec">上限<b>Basic256KB/Standard・Premium1MB/Dedicated20MB</b></div>
+            <div class="tier-spec">保持期間<b>Basic1日/Standard7日/Premium・Dedicated90日</b></div>
             <div class="tier-spec">主な用途<b>大量テレメトリ・ログ取り込み</b></div>
           </div>
         </div>
@@ -2100,6 +2737,7 @@
         <li>プッシュ型（サブスクライバーにイベントを配信）。ポーリング不要。</li>
         <li>カスタムトピックを作成して独自イベントも発行できる。イベントサブスクリプションでは「イベントタイプ」等の条件でフィルタし、宛先ごとに必要なイベントだけ絞り込める。</li>
         <li>イベントスキーマは既定の Event Grid スキーマのほか、業界標準の <b>CloudEvents v1.0</b> スキーマも選択可能（他クラウド・OSSとの相互運用性を重視する場合はCloudEvents）。</li>
+        <li>配信不能のイベントは設定したリトライポリシー（最大配信試行回数・イベント有効期間）に従って再試行され、それでも失敗した場合は<b>デッドレター</b>機能で指定したStorageアカウントのコンテナーへ退避できる（要設定。既定では無効）。</li>
       </ul>
     </div>
   </div>
@@ -2114,6 +2752,7 @@
       <ul>
         <li>コンシューマーグループ：同一Event Hub内のイベントストリームを、チームやアプリごとに独立したビュー（オフセット管理も分離）で読み取れる。</li>
         <li>Capture機能：受信したイベントを自動的にBlob StorageまたはADLS Gen2にAvro形式で保存。追加コードなしで設定するだけでアーカイブ・後段のバッチ分析に使える。</li>
+        <li>⚠ <b>Basicティアの制約</b>：Capture機能は利用不可・コンシューマーグループは1個のみ・保持期間は1日固定。複数チームでの独立読み取りやCaptureが要件ならStandard以上が必要。</li>
       </ul>
     </div>
   </div>
@@ -2173,7 +2812,7 @@
     <div class="card-header">
       <span class="keyword">API Managementのティア（SKU）を選びたい</span>
       <span class="arrow">→</span>
-      <span class="answer">要件（VNet統合・マルチリージョン・SLA）で選択</span>
+      <span class="answer">要件（VNet接続・マルチリージョン・SLA）で選択</span>
     </div>
     <div class="card-body">
       <div class="viz-wrap">
@@ -2181,37 +2820,64 @@
         <div class="tier-grid">
           <div class="tier-card">
             <div class="tier-name">Consumption</div>
-            <div class="tier-spec">VNet統合<b>不可</b></div>
+            <div class="tier-spec">VNetインジェクション<b>不可</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>不可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>不可</b></div>
             <div class="tier-spec">マルチリージョン<b>不可</b></div>
-            <div class="tier-spec">主な用途<b>サーバーレス・従量課金の軽量API</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>不可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Developer</div>
-            <div class="tier-spec">VNet統合<b>可（外部モードのみ）</b></div>
+            <div class="tier-spec">VNetインジェクション<b>可（内部/外部、SLAなし）</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
             <div class="tier-spec">マルチリージョン<b>不可</b></div>
-            <div class="tier-spec">主な用途<b>評価・開発環境（SLAなし）</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Basic</div>
-            <div class="tier-spec">VNet統合<b>不可</b></div>
+            <div class="tier-spec">VNetインジェクション<b>不可</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>不可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
             <div class="tier-spec">マルチリージョン<b>不可</b></div>
-            <div class="tier-spec">主な用途<b>小規模本番</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>不可</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Standard</div>
-            <div class="tier-spec">VNet統合<b>不可</b></div>
+            <div class="tier-spec">VNetインジェクション<b>不可</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>不可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
             <div class="tier-spec">マルチリージョン<b>不可</b></div>
-            <div class="tier-spec">主な用途<b>中規模本番</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>不可</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Premium</div>
+            <div class="tier-spec">VNetインジェクション<b>可（内部/外部）</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
+            <div class="tier-spec">マルチリージョン<b>可</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>可</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Standard v2</div>
+            <div class="tier-spec">VNetインジェクション<b>不可</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>可（隔離されたバックエンドへ接続）</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
+            <div class="tier-spec">マルチリージョン<b>不可</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>不可</b></div>
           </div>
           <div class="tier-card best">
-            <div class="tier-name">Premium</div>
-            <div class="tier-spec">VNet統合<b>可（内部/外部）</b></div>
-            <div class="tier-spec">マルチリージョン<b>可</b></div>
-            <div class="tier-spec">主な用途<b>エンタープライズ・マルチリージョン公開</b></div>
+            <div class="tier-name">Premium v2</div>
+            <div class="tier-spec">VNetインジェクション<b>可</b></div>
+            <div class="tier-spec">バックエンドVNet接続<b>可</b></div>
+            <div class="tier-spec">Private Endpoint（受信）<b>可</b></div>
+            <div class="tier-spec">マルチリージョン<b>不可（Premium(classic)のみ対応）</b></div>
+            <div class="tier-spec">セルフホステッドGW<b>不可</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ VNet統合やマルチリージョンデプロイが要件に含まれる問題では、実質 Premium一択になることが多い。「内部（プライベート）に閉じたAPIゲートウェイ」もPremium（内部VNetモード）が必要。</div>
+      <div class="tip">⚠ 「VNet統合＝全部Premium」ではない。バックエンドがVNet内に隔離されているだけなら<b>Standard v2</b>のVNet接続で足りる。ゲートウェイ自体をVNet内に注入（インジェクション）してプライベートに閉じたい場合はDeveloper/Premium（classic）またはPremium v2が必要。Private Endpoint（受信）はDeveloper/Basic/Standard/Premium（classic）で利用可能。Premium v2は可用性ゾーン対応だがマルチリージョンは非対応（マルチリージョンが必須ならPremium(classic)一択）。</div>
+      <div class="tip">⚠ Consumptionティアは開発者ポータル非対応・組み込みキャッシュ非対応（外部Redisキャッシュのみ利用可）。セルフホステッドゲートウェイはDeveloperとPremium（classic）でのみ利用可能。</div>
     </div>
   </div>
 
@@ -2241,6 +2907,45 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">ワークフロー/オーケストレーションの実装方法を選びたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">要件（コード表現・ノーコード・VNet統合・承認フロー）で選択</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="decision-ladder">
+        <div class="decision-step">
+          <span class="cond">複雑なロジックをコードで表現したい（ループ・条件分岐が複雑）</span>
+          <span class="arrow">→</span>
+          <span class="result">Durable Functions</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">ノーコードで300以上のコネクタを使いGUIで組み立てたい</span>
+          <span class="arrow">→</span>
+          <span class="result">Logic Apps（Consumption）</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">ノーコードだがVNet統合・単一テナントの安定性能が必要</span>
+          <span class="arrow">→</span>
+          <span class="result">Logic Apps（Standard）</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">Microsoft 365/Dynamics等を絡めた業務担当者向けの自動化・承認フロー</span>
+          <span class="arrow">→</span>
+          <span class="result">Power Automate</span>
+        </div>
+        <div class="decision-step">
+          <span class="cond">Azureリソース自体の運用自動化（VM起動停止・PowerShellランブック）</span>
+          <span class="arrow">→</span>
+          <span class="result">Azure Automation</span>
+        </div>
+      </div>
+      <div class="tip">⚠ Logic Apps・Power Automateは同じワークフローエンジン基盤だが、Logic Apps＝開発者向け（ARM/DevOps統合、IT管理下）、Power Automate＝業務担当者向け（Microsoft 365ライセンスで利用、Power Platformガバナンス配下）という位置づけの違いで選ぶ。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">複数の処理を並列実行して結果を集約したい／外部からの承認・イベントを待って処理を再開したい</span>
       <span class="arrow">→</span>
       <span class="answer">Durable Functions のオーケストレーションパターン</span>
@@ -2248,9 +2953,11 @@
     </div>
     <div class="card-body">
       <ul>
+        <li><b>関数チェーン（Function Chaining）</b>：複数の関数を順番に呼び出し、前段の出力を次段の入力として渡す最も基本的なパターン（例：注文受付→在庫確認→決済→通知）。</li>
         <li><b>ファンアウト/ファンイン</b>：複数の処理を並列に実行し、すべて完了したら結果を集約する（例：多数ファイルを並列処理→まとめて集計）。</li>
         <li><b>外部イベント待機（人による承認など）</b>：注文承認のように人の操作やコールバックが完了するまでオーケストレーションを一時停止しておき、外部からの通知を受けて処理を再開できる。タイムアウトも設定可能。</li>
         <li><b>モニターパターン</b>：一定間隔でポーリングしながら状態の変化を待つ処理を実装できる。</li>
+        <li><b>アグリゲーター（Durable Entities）</b>：外部からのイベントを時間経過とともに集約・状態管理する、アドレス可能な小さな状態機械（エンティティ）。IoTデバイスのカウンタ集計など、状態を持つミニサービスとして扱える。</li>
         <li>オーケストレーションの状態はランタイムが自動的に永続化するため、途中で失敗しても再実行に強い。</li>
       </ul>
       <div class="tip">⚠ 複雑な多段階ワークフローをコードで表現したい場合はDurable Functions。GUIでの可視化やノーコード連携（多数の既製コネクタ）が主目的ならLogic Appsを検討する。</div>
@@ -2272,28 +2979,36 @@
             <div class="tier-spec">ゼロスケール<b>可</b></div>
             <div class="tier-spec">VNet統合<b>不可</b></div>
             <div class="tier-spec">実行時間<b>既定5分(最大10分)</b></div>
+            <div class="tier-spec">状態<b>legacy（Linux版は廃止済み。新規はFlex Consumption推奨）</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">Premium</div>
-            <div class="tier-spec">ゼロスケール<b>設定次第(既定は待機あり)</b></div>
+            <div class="tier-spec">ゼロスケール<b>不可（常時1インスタンス以上が課金対象）</b></div>
             <div class="tier-spec">VNet統合<b>可</b></div>
-            <div class="tier-spec">実行時間<b>無制限(コールドスタート回避)</b></div>
+            <div class="tier-spec">実行時間<b>既定30分・上限なし</b></div>
           </div>
           <div class="tier-card">
             <div class="tier-name">専用(App Service Plan)</div>
             <div class="tier-spec">ゼロスケール<b>不可（常時稼働）</b></div>
             <div class="tier-spec">VNet統合<b>可</b></div>
-            <div class="tier-spec">実行時間<b>無制限</b></div>
+            <div class="tier-spec">実行時間<b>既定30分・上限なし（Always On必須）</b></div>
           </div>
           <div class="tier-card best">
             <div class="tier-name">Flex Consumption</div>
             <div class="tier-spec">ゼロスケール<b>可</b></div>
             <div class="tier-spec">VNet統合<b>可</b></div>
-            <div class="tier-spec">実行時間<b>長時間ワークロードに対応</b></div>
+            <div class="tier-spec">実行時間<b>既定30分・上限なし</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Container Apps(GA)</div>
+            <div class="tier-spec">ゼロスケール<b>可（KEDA）</b></div>
+            <div class="tier-spec">VNet統合<b>可</b></div>
+            <div class="tier-spec">実行時間<b>コンテナ次第・上限なし</b></div>
           </div>
         </div>
       </div>
-      <div class="tip">⚠ 「サーバーレス（ゼロスケール）とVNet統合を両立したい」→ Flex Consumptionプランが解。旧来はゼロスケール(Consumption)かVNet統合(Premium/専用)のどちらかを選ぶ必要があった。</div>
+      <div class="tip">⚠ 「サーバーレス（ゼロスケール）とVNet統合を両立したい」→ Flex Consumptionプランが解。旧来はゼロスケール(Consumption)かVNet統合(Premium/専用)のどちらかを選ぶ必要があった。Premiumはゼロスケール不可（常時1インスタンス分が課金対象）な点に注意。</div>
+      <div class="tip">⚠ HTTPトリガーは、上記の関数実行時間の上限とは別に<b>全プラン共通で230秒のリクエストタイムアウト（ロードバランサー側の壁）</b>がある。それより長い処理はDurable Functionsの非同期パターン（202 Accepted＋ポーリング）に切り出す。</div>
     </div>
   </div>
 
@@ -2303,14 +3018,134 @@
     <div class="card-header">
       <span class="keyword">静的コンテンツをグローバルに高速配信したい</span>
       <span class="arrow">→</span>
-      <span class="answer">Azure CDN / Azure Front Door</span>
+      <span class="answer">Azure Front Door</span>
+      <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
       <ul>
-        <li>Azure CDN：コンテンツをエッジにキャッシュ。Blob Storageと統合が簡単。</li>
-        <li>Azure Front Door：CDN＋グローバルLB＋WAF＋ヘルスチェック。Webアプリ全体を対象。</li>
+        <li>⚠ <b>Azure CDNは実質廃止に向かっている</b>：Azure CDN Standard/Premium <b>from Edgio</b> は<b>2025年1月15日にサービス終了済み</b>。Azure CDN Standard <b>from Microsoft（classic）</b>は<b>2025年8月15日以降、新規プロファイル・新規エンドポイント（ドメイン）の作成が不可</b>となっており、<b>2027年9月30日に完全廃止</b>予定。新規設計でAzure CDNを選んではいけない。</li>
+        <li>Azure Front Door：グローバルなエッジキャッシュ＋LB＋WAF＋ヘルスチェック。静的配信のみの用途でも、現在の推奨は<b>Front Door</b>。</li>
       </ul>
-      <div class="tip">「Webアプリのグローバル加速＋WAF」→ Front Door。「静的ファイルのキャッシュだけ」→ CDN。</div>
+      <div class="viz-wrap">
+        <div class="viz-title">Front Door Standard vs Premium</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Standard</div>
+            <div class="tier-spec">エッジキャッシュ<b>可</b></div>
+            <div class="tier-spec">WAFカスタムルール<b>可</b></div>
+            <div class="tier-spec">WAFマネージドルールセット<b>不可</b></div>
+            <div class="tier-spec">Bot保護<b>不可</b></div>
+            <div class="tier-spec">Private Link オリジン<b>不可</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Premium</div>
+            <div class="tier-spec">エッジキャッシュ<b>可</b></div>
+            <div class="tier-spec">WAFカスタムルール<b>可</b></div>
+            <div class="tier-spec">WAFマネージドルールセット<b>可（脅威インテリジェンス含む）</b></div>
+            <div class="tier-spec">Bot保護<b>可</b></div>
+            <div class="tier-spec">Private Link オリジン<b>可</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">「静的ファイルのキャッシュだけ」でも Front Door Standard が現在の既定解（Azure CDNは新規非推奨）。WAFの<b>マネージドルールセット・Bot保護・Private Linkオリジン</b>（オリジンをプライベートに閉じたい）のいずれかが必要ならPremiumを選ぶ。</div>
+    </div>
+  </div>
+
+  <div class="group-title">構成・シークレット管理</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">アプリの設定値や機能フラグを一元管理し、環境ごとに切り替えたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure App Configuration</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>アプリの<b>設定値・機能フラグ（Feature Flags）</b>を一元管理するマネージドサービス。キー/ラベルで環境（dev/stg/prod）ごとに値を切り替えられる。複数アプリで設定を共有できる。</li>
+        <li><b>Key Vault参照</b>：App Configuration自体にはシークレットの実体を置かず、Key Vault上のシークレットへの参照（URI）だけを登録する。アプリはApp Configuration用SDK経由で、通常の設定値と同じ感覚でKey Vaultのシークレット値を透過的に取得できる。</li>
+        <li><b>機能フラグ</b>：コード変更・再デプロイなしに機能のON/OFFを切り替えられる。カナリアリリースや段階的ロールアウトなどのリリース制御に使う。</li>
+        <li>アクセスには Microsoft Entra ID の<b>マネージドID</b>を使い、接続文字列をコードや設定に埋め込まずに認証できる。</li>
+        <li><b>Standard/Premiumティア</b>があり、<b>レプリカ</b>を追加リージョンに作成することで地理冗長化・読み取りの低遅延化を実現する。</li>
+      </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">設定・シークレットの置き場所</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">App Service アプリ設定<br>（環境変数）</div>
+            <div class="tier-spec">用途<b>単一アプリ固有の設定</b></div>
+            <div class="tier-spec">一元管理<b>不可（アプリごとに個別設定）</b></div>
+            <div class="tier-spec">機能フラグ<b>非対応</b></div>
+            <div class="tier-spec">シークレット保管<b>非推奨（実質平文）</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">App Configuration</div>
+            <div class="tier-spec">用途<b>複数アプリ共通の設定値・機能フラグ</b></div>
+            <div class="tier-spec">一元管理<b>可（キー/ラベルで環境分離）</b></div>
+            <div class="tier-spec">機能フラグ<b>対応</b></div>
+            <div class="tier-spec">シークレット保管<b>Key Vault参照で連携（実体は保持しない）</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Key Vault</div>
+            <div class="tier-spec">用途<b>シークレット・証明書・暗号キー</b></div>
+            <div class="tier-spec">一元管理<b>可（シークレット専用）</b></div>
+            <div class="tier-spec">機能フラグ<b>非対応</b></div>
+            <div class="tier-spec">シークレット保管<b>専用（暗号化・監査ログ・自動ローテーション）</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ 使い分け：<b>設定値・機能フラグ</b>はApp Configuration、<b>シークレット・証明書・暗号キー</b>はKey Vaultが本来の置き場所。App ConfigurationからKey Vault参照を使えば、アプリからは1つのSDK呼び出しで両方をまとめて透過的に取得できる。</div>
+    </div>
+  </div>
+
+  <div class="group-title">デプロイ自動化</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">インフラとアプリのデプロイを自動化・安全にリリースしたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">IaC（ARM/Bicep/Terraform）＋ CI/CDパイプライン</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="viz-wrap">
+        <div class="viz-title">IaC（宣言的インフラ定義）ツール比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">ARMテンプレート</div>
+            <div class="tier-spec">記法<b>JSON</b></div>
+            <div class="tier-spec">対象<b>Azureのみ</b></div>
+            <div class="tier-spec">状態管理<b>不要（Azure側で差分検出）</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Bicep</div>
+            <div class="tier-spec">記法<b>簡潔なDSL（ARMにトランスパイル）</b></div>
+            <div class="tier-spec">対象<b>Azureのみ</b></div>
+            <div class="tier-spec">状態管理<b>不要（Azure側で差分検出）</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Terraform</div>
+            <div class="tier-spec">記法<b>HCL</b></div>
+            <div class="tier-spec">対象<b>マルチクラウド</b></div>
+            <div class="tier-spec">状態管理<b>要（stateファイルで管理）</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Deployment Stacks</div>
+            <div class="tier-spec">記法<b>ARM/Bicepを束ねてデプロイ</b></div>
+            <div class="tier-spec">対象<b>Azureのみ</b></div>
+            <div class="tier-spec">状態管理<b>スタック単位でライフサイクル管理・一括削除（denySettingsで誤削除防止）</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="compare">
+        <div class="compare-title">GitHub Actions vs Azure Pipelines</div>
+        GitHub Actions = GitHub組み込みのCI/CD。GitHubリポジトリ中心の開発に向く。YAMLワークフロー<br>
+        Azure Pipelines = Azure DevOps組み込み。複数リポジトリ・複数言語の大規模組織向けでGUI/YAML両対応
+      </div>
+      <ul>
+        <li><b>App Service/Functionsのデプロイスロット</b>：本番と同じ設定で別スロットに新バージョンをデプロイし、ウォームアップ後にスロットをスワップ（ブルーグリーン）。切り戻しも再スワップで即座に可能。</li>
+        <li><b>Container Appsのリビジョン＋トラフィック分割</b>：新リビジョンに数%だけトラフィックを流すカナリアリリースや、100%切り替えのブルーグリーンを、ダウンタイムなしで実現できる。</li>
+      </ul>
     </div>
   </div>
 
@@ -2397,7 +3232,7 @@
     <div class="card-body">
       <ul>
         <li>WebSocket等を用いた双方向リアルタイム通信をマネージドで提供。大量の同時接続の管理をアプリ本体から切り離せる。</li>
-        <li>サーバーレス（Functions等）と組み合わせる「サーバーレスモード」と、常時接続を扱う「クラシックモード」がある。</li>
+        <li>サービスモードは<b>Default</b>（ハブサーバーあり。通常のASP.NET Core SignalR等の常時接続構成）／<b>Serverless</b>（Functions等と連携し、ハブサーバー不要）／<b>Classic</b>（旧アプリとの互換用レガシーモードで新規・既存とも非推奨）の3種類。ハブサーバーを持つ通常の常時接続構成は<b>Defaultモード</b>を選ぶ。</li>
         <li>大量の同時接続でも、App Service/Functions側のリソース負荷を増やさずにスケールできる。</li>
       </ul>
     </div>
@@ -2424,14 +3259,40 @@
     <div class="card-header">
       <span class="keyword">大量の同時リクエストでもスケールするWebアプリを設計したい</span>
       <span class="arrow">→</span>
-      <span class="answer">ステートレス設計 + 水平スケール + キャッシュ</span>
+      <span class="answer">ステートレス設計 + 水平スケール + 多層キャッシュ</span>
+      <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
       <ul>
         <li>セッション状態をRedisに外部化（ステートレス化）→ App Serviceのインスタンスを自由にスケール。</li>
-        <li>CDN で静的コンテンツをキャッシュ → オリジンへの負荷軽減。</li>
         <li>読み取り負荷 → Cache-Aside パターン（キャッシュになければDBから取得してキャッシュに書く）。</li>
       </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">キャッシュ層の選択（多層キャッシュ）</div>
+        <div class="decision-ladder">
+          <div class="decision-step">
+            <span class="cond">グローバルなエッジでの静的/準静的コンテンツキャッシュ</span>
+            <span class="arrow">→</span>
+            <span class="result">Front Door エッジキャッシュ</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">API層でバックエンド応答をゲートウェイ側にキャッシュ</span>
+            <span class="arrow">→</span>
+            <span class="result">APIM 応答キャッシュ（cache-lookup/cache-store）</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">アプリ/DB層のCache-Asideやセッション外部化</span>
+            <span class="arrow">→</span>
+            <span class="result">Azure Cache for Redis</span>
+          </div>
+          <div class="decision-step">
+            <span class="cond">単一インスタンス内だけで完結する超低遅延キャッシュ</span>
+            <span class="arrow">→</span>
+            <span class="result">プロセス内（インメモリ）キャッシュ</span>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ Redisのティア差：<b>Basic/Standard</b>＝開発・小規模向け（Standardはレプリカで可用性）。<b>Premium</b>＝永続化（RDB/AOF）・クラスタリング・VNet統合・受動的geo-replicationに対応。<b>Enterprise/Enterprise Flash</b>＝Redis Enterprise基盤で、RediSearch等のモジュールやアクティブ地理レプリケーション（マルチライト）に対応する上位SKU。</div>
     </div>
   </div>
 
