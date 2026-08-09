@@ -196,6 +196,37 @@ header p  { font-size: 0.8rem; opacity: .82; margin-top: 2px; }
 
 .choice-icon { font-size: 1.1rem; padding-top: 3px; flex-shrink: 0; min-width: 20px; text-align: center; }
 
+/* ===== 複数選択問題（チェックボックス風） ===== */
+.q-format-hint {
+  font-size: .8rem;
+  color: #6264a7;
+  background: #f3f0fa;
+  border: 1px solid #d6cdf0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+.choice-multi .choice-badge { border-radius: 6px; }
+.choice-multi.selected:not(.correct):not(.wrong) .choice-badge::after { content: '✓'; }
+.choice-multi .choice-badge::after { content: ''; font-size: 1rem; }
+.choice-multi.selected .choice-badge::after { content: '✓'; }
+
+/* ===== 並び替え問題（番号バッジ） ===== */
+.choice-order .choice-badge {
+  border-radius: 6px;
+  border: 2px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: .95rem;
+}
+.choice-order.selected .choice-badge {
+  background: #6264a7;
+  color: #fff;
+  border-color: #6264a7;
+}
+.choice-order.correct .choice-badge { background: #107c10; border-color: #107c10; color: #fff; }
+.choice-order.wrong .choice-badge { background: #c50f1f; border-color: #c50f1f; color: #fff; }
+
 /* ===== Answer Banner ===== */
 .answer-banner {
   display: none;

@@ -3,6 +3,8 @@
 // QUESTIONS_SET2 は data/questions2.js (第2回: 60問)
 // QUESTIONS_SET3 は data/questions3.js (本番模試A: 60問)
 // QUESTIONS_SET4 は data/questions4.js (本番模試B: 60問)
+// QUESTIONS_SET5 は data/questions5.js (弱点克服A: 再受験対策)
+// QUESTIONS_SET6 は data/questions6.js (弱点克服B: 再受験対策)
 
 (function () {
   'use strict';
@@ -17,7 +19,9 @@
     { id: 1, label: '分野別 第1回', questions: safeSet(typeof QUESTIONS      !== 'undefined' ? QUESTIONS      : null), desc: 'ID・ガバナンス・監視／データストレージ 中心' },
     { id: 2, label: '分野別 第2回', questions: safeSet(typeof QUESTIONS_SET2 !== 'undefined' ? QUESTIONS_SET2 : null), desc: '事業継続性／インフラ／アプリアーキテクチャ 中心' },
     { id: 3, label: '本番模試 A',   questions: safeSet(typeof QUESTIONS_SET3 !== 'undefined' ? QUESTIONS_SET3 : null), desc: '本番同様のドメイン配分＋ケーススタディ形式', exam: true },
-    { id: 4, label: '本番模試 B',   questions: safeSet(typeof QUESTIONS_SET4 !== 'undefined' ? QUESTIONS_SET4 : null), desc: '本番同様のドメイン配分＋ケーススタディ形式', exam: true }
+    { id: 4, label: '本番模試 B',   questions: safeSet(typeof QUESTIONS_SET4 !== 'undefined' ? QUESTIONS_SET4 : null), desc: '本番同様のドメイン配分＋ケーススタディ形式', exam: true },
+    { id: 5, label: '弱点克服 A',   questions: safeSet(typeof QUESTIONS_SET5 !== 'undefined' ? QUESTIONS_SET5 : null), desc: 'データストレージ／高可用性／監視 を重点強化＋新形式問題', exam: true },
+    { id: 6, label: '弱点克服 B',   questions: safeSet(typeof QUESTIONS_SET6 !== 'undefined' ? QUESTIONS_SET6 : null), desc: 'データストレージ／高可用性／監視 を重点強化＋新形式問題', exam: true }
   ].filter(function (s) { return s.questions !== null; });
 
   // answers[i] = 選択した選択肢インデックス。未回答は undefined。
@@ -56,12 +60,32 @@
     return answers.filter(function (a) { return a !== undefined; }).length;
   }
 
+  // ── 正誤判定ヘルパー（single / multi / order 共通）──────────────────────
+
+  function arraysEqualUnordered(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    var sa = a.slice().sort(), sb = b.slice().sort();
+    return sa.every(function (v, i) { return v === sb[i]; });
+  }
+
+  function arraysEqualOrdered(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every(function (v, i) { return v === b[i]; });
+  }
+
+  function isAnswerCorrect(q, sel) {
+    if (sel === undefined) return false;
+    if (q.type === 'multi') return arraysEqualUnordered(sel, q.answer);
+    if (q.type === 'order') return arraysEqualOrdered(sel, q.answer);
+    return sel === q.answer;
+  }
+
   // ── スコア計算（answers 配列から都度算出）────────────────────────────
 
   function getCorrectCount() {
     var n = 0, qs = state.activeSet.questions;
     state.answers.forEach(function (sel, i) {
-      if (sel !== undefined && sel === qs[i].answer) n++;
+      if (sel !== undefined && isAnswerCorrect(qs[i], sel)) n++;
     });
     return n;
   }
@@ -69,7 +93,7 @@
   function getWrongCount() {
     var n = 0, qs = state.activeSet.questions;
     state.answers.forEach(function (sel, i) {
-      if (sel !== undefined && sel !== qs[i].answer) n++;
+      if (sel !== undefined && !isAnswerCorrect(qs[i], sel)) n++;
     });
     return n;
   }
@@ -171,17 +195,28 @@
     var isLast   = state.current === total - 1;
     var prevAns  = state.answers[state.current];  // undefined = 未回答
     var isAnswered = prevAns !== undefined;
+    var qType    = q.type || 'single';
 
-    // 選択肢 HTML
+    // 選択肢 HTML（single = ラジオ風 / multi = チェックボックス風 / order = クリックで順序指定）
+    var choiceClass = qType === 'multi' ? 'choice choice-multi' : (qType === 'order' ? 'choice choice-order' : 'choice');
     var choicesHtml = q.choices.map(function (text, i) {
+      var badgeContent = qType === 'order' ? '' : LABELS[i];
       return (
-        '<div class="choice" id="c' + i + '" onclick="selectChoice(' + i + ')">' +
-        '  <div class="choice-badge" id="badge' + i + '">' + LABELS[i] + '</div>' +
+        '<div class="' + choiceClass + '" id="c' + i + '" onclick="selectChoice(' + i + ')">' +
+        '  <div class="choice-badge" id="badge' + i + '">' + badgeContent + '</div>' +
         '  <div class="choice-text">' + text + '</div>' +
         '  <div class="choice-icon" id="icon' + i + '"></div>' +
         '</div>'
       );
     }).join('');
+
+    // 形式のヒント（複数選択・並び替え問題のみ表示）
+    var formatHint = '';
+    if (qType === 'multi') {
+      formatHint = '<div class="q-format-hint">&#9745; 該当するものを<strong>' + q.answer.length + 'つ</strong>選択してください（複数選択）</div>';
+    } else if (qType === 'order') {
+      formatHint = '<div class="q-format-hint">&#128472; 正しい順序でクリックしてください（並び替え問題／再クリックで選択解除）</div>';
+    }
 
     // 全体の HTML
     qs('quizArea').innerHTML =
@@ -208,6 +243,7 @@
 
       // ── 問い
       '<p class="q-text">' + q.question + '</p>' +
+      formatHint +
 
       // ── 選択肢
       '<div class="choices">' + choicesHtml + '</div>' +
@@ -250,18 +286,56 @@
   // ── 回答済み状態の適用（描画後に呼ぶ）──────────────────────────────────
 
   function applyAnsweredState(q, selected, isLast) {
-    var isCorrect = selected === q.answer;
+    var qType = q.type || 'single';
+    var isCorrect = isAnswerCorrect(q, selected);
+
+    // 正解文言の組み立て（種別ごと）
+    var correctText;
+    if (qType === 'multi') {
+      correctText = q.answer.slice().sort().map(function (i) {
+        return LABELS[i] + '：' + q.choices[i];
+      }).join('、');
+    } else if (qType === 'order') {
+      correctText = q.answer.map(function (i) { return LABELS[i]; }).join(' → ') +
+        '（' + q.answer.map(function (i) { return q.choices[i]; }).join(' → ') + '）';
+    } else {
+      correctText = LABELS[q.answer] + '：' + q.choices[q.answer];
+    }
 
     // 選択肢スタイル
     q.choices.forEach(function (_, i) {
       var el = qs('c' + i);
       el.classList.add('locked');
-      if (i === q.answer) {
-        el.classList.add('correct');
-        qs('icon' + i).textContent = '\u2705';
-      } else if (i === selected && !isCorrect) {
-        el.classList.add('wrong');
-        qs('icon' + i).textContent = '\u274C';
+
+      if (qType === 'multi') {
+        var wasSelected = selected.indexOf(i) !== -1;
+        var shouldBeSelected = q.answer.indexOf(i) !== -1;
+        if (shouldBeSelected) {
+          el.classList.add('correct');
+          qs('icon' + i).textContent = '✅';
+        } else if (wasSelected) {
+          el.classList.add('wrong');
+          qs('icon' + i).textContent = '❌';
+        }
+      } else if (qType === 'order') {
+        var correctPos = q.answer.indexOf(i);
+        var selectedPos = selected.indexOf(i);
+        qs('badge' + i).textContent = selectedPos === -1 ? '' : (selectedPos + 1);
+        if (selectedPos === correctPos) {
+          el.classList.add('correct');
+          qs('icon' + i).textContent = '✅';
+        } else {
+          el.classList.add('wrong');
+          qs('icon' + i).textContent = '❌';
+        }
+      } else {
+        if (i === q.answer) {
+          el.classList.add('correct');
+          qs('icon' + i).textContent = '✅';
+        } else if (i === selected && !isCorrect) {
+          el.classList.add('wrong');
+          qs('icon' + i).textContent = '❌';
+        }
       }
     });
 
@@ -278,7 +352,7 @@
       qs('bannerIcon').textContent  = '\u274C';
       qs('bannerTitle').textContent = '不正解';
       qs('bannerSub').innerHTML =
-        '正解は <strong>' + LABELS[q.answer] + '：' + q.choices[q.answer] + '</strong> です。';
+        '正解は <strong>' + correctText + '</strong> です。';
     }
 
     // 解説
@@ -295,14 +369,46 @@
     // 回答済みの問題は変更不可
     if (state.answers[state.current] !== undefined) return;
 
-    document.querySelectorAll('.choice').forEach(function (el) {
-      el.classList.remove('selected');
-    });
-    qs('c' + i).classList.add('selected');
-    qs('btnCheck').disabled = false;
+    var q = state.activeSet.questions[state.current];
+    var qType = q.type || 'single';
+    var btn = qs('btnCheck');
 
-    // 一時的に選択を保持（未確定）
-    qs('btnCheck')._pending = i;
+    if (qType === 'multi') {
+      // トグル式：クリックのたびに選択/解除
+      var pending = btn._pending || [];
+      var idx = pending.indexOf(i);
+      if (idx === -1) { pending.push(i); qs('c' + i).classList.add('selected'); }
+      else { pending.splice(idx, 1); qs('c' + i).classList.remove('selected'); }
+      btn._pending = pending;
+      btn.disabled = pending.length === 0;
+
+    } else if (qType === 'order') {
+      // クリック順に番号を割り当てる。選択済みを再クリックすると解除して番号を振り直す
+      var seq = btn._pending || [];
+      var pos = seq.indexOf(i);
+      if (pos === -1) { seq.push(i); }
+      else { seq.splice(pos, 1); }
+      btn._pending = seq;
+
+      // バッジを現在の順序で振り直す
+      q.choices.forEach(function (_, ci) {
+        var b = qs('badge' + ci);
+        var p = seq.indexOf(ci);
+        var el = qs('c' + ci);
+        if (p === -1) { b.textContent = ''; el.classList.remove('selected'); }
+        else { b.textContent = (p + 1); el.classList.add('selected'); }
+      });
+      btn.disabled = seq.length !== q.choices.length;
+
+    } else {
+      // 単一選択（従来どおり）
+      document.querySelectorAll('.choice').forEach(function (el) {
+        el.classList.remove('selected');
+      });
+      qs('c' + i).classList.add('selected');
+      btn.disabled = false;
+      btn._pending = i;
+    }
   };
 
   // ── 回答確定 ────────────────────────────────────────────────────────────
@@ -313,14 +419,14 @@
     var selected = qs('btnCheck')._pending;
     if (selected === undefined || selected === null) return;
 
-    // answers に記録
-    state.answers[state.current] = selected;
+    // answers に記録（配列の場合は複製して保存する）
+    state.answers[state.current] = Array.isArray(selected) ? selected.slice() : selected;
     updateProgress();
     saveProgress();
 
     var q      = state.activeSet.questions[state.current];
     var isLast = state.current === state.activeSet.questions.length - 1;
-    applyAnsweredState(q, selected, isLast);
+    applyAnsweredState(q, state.answers[state.current], isLast);
   };
 
   // ── ナビゲーション ──────────────────────────────────────────────────────
