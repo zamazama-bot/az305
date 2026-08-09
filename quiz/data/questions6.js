@@ -19,6 +19,32 @@ const QUESTIONS_SET6 = [
 },
 {
   domain: "インフラ",
+  scenario: "Northwind Traders社はAzure Kubernetes Service（AKS）の導入を初めて検討している。担当者はKubernetesに触れるのが初めてで、AKS上でアプリケーションを1つ動かすだけなのに、なぜDeploymentやServiceなど複数の異なる種類のリソースを作成する必要があるのか理解できていない。",
+  question: "Pod・ReplicaSet・Deployment・Serviceの役割の組み合わせとして正しいものはどれか。",
+  choices: [
+    "Podはノード自体を表す仮想マシンであり、Deploymentはネットワークルーティングのみを担当し、ServiceはPodのスケジューリング先ノードを決定する",
+    "Podは1つ以上のコンテナをまとめたKubernetes上の最小のデプロイ単位である。ReplicaSetは指定した数のPodのレプリカを常に維持するコントローラーである。Deploymentはこのプロセス（ReplicaSet）を宣言的に管理し、新バージョンへのロールアウトや問題発生時のロールバックを制御する。Serviceは、スケールやロールアウトのたびに入れ替わるPod群に対して安定したネットワークエンドポイント（仮想IPとDNS名）を提供する",
+    "ReplicaSetはPodの中に含まれる1つのコンテナを指す名称であり、DeploymentはPodと完全に同義の別名にすぎない",
+    "ServiceがPodのレプリカ数を維持する役割を担い、DeploymentはPodへの安定したアクセス経路（仮想IP）を提供する役割を担う"
+  ],
+  answer: 1,
+  explanation: "Kubernetesの階層構造は次のように整理すると理解しやすくなります。<strong>Pod</strong>は1つ以上のコンテナをまとめてAKS上で実行する最小のデプロイ単位です。<strong>ReplicaSet</strong>は「指定した数のPodのレプリカを常に維持する」ことだけを担当するコントローラーで、Podが異常終了すれば自動的に代わりのPodを起動します。<strong>Deployment</strong>はこのReplicaSetをさらに上位から管理し、新バージョンへのロールアウトや問題発生時のロールバックといった宣言的な更新制御を行います（実運用ではDeploymentを作成すると配下のReplicaSetは自動生成されるため、ReplicaSetを直接操作することは通常ありません）。<strong>Service</strong>は、スケールやロールアウトのたびにIPアドレスが変わってしまうPod群に対して変化しない仮想IPとDNS名を割り当て、クライアントが個々のPodのIPを意識せずアクセスできるようにします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>AKSの基本階層</div><div class='exp-flow'><div class='flow-box'>Deployment（更新制御）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>ReplicaSet（レプリカ数維持）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Pod（最小実行単位）</div></div><div class='flow-arrow' style='margin-top:8px'>&uarr; Serviceが安定したアクセス経路を提供</div></div><br>「Podをノード（仮想マシン）と同一視する」選択肢は誤りです。ノードはPodが乗る側の物理/仮想マシンであり、Pod自体ではありません。「ReplicaSet＝コンテナ、Deployment＝Podと同義」とする選択肢も、それぞれ別の階層の概念であることを見落としています。「ServiceとDeploymentの役割を入れ替えた」選択肢も誤りで、レプリカ数の維持はDeployment/ReplicaSetの役割、安定したアクセス経路の提供はServiceの役割です。"
+},
+{
+  domain: "インフラ",
+  scenario: "Contoso社のAKSクラスターでは、Webフロントエンドの負荷が時間帯によって大きく変動する。運用チームは「Podの台数を増やす」「Podのサイズ（CPU/メモリの割り当て量）を調整する」「クラスター全体のノード台数を増やす」という3種類の自動化について整理しようとしているが、ドキュメントに出てくる複数の「オートスケーラー」の違いを混同している。",
+  question: "AKSにおけるHorizontal Pod Autoscaler（HPA）、Vertical Pod Autoscaler（VPA）、Cluster Autoscalerの役割について正しい説明はどれか。",
+  choices: [
+    "HPAはノード数を、Cluster AutoscalerはPod数を、それぞれ増減させる。VPAは両者の上位互換であり単独で両方を代替できる",
+    "VPAはPodのレプリカ数を増減させる機能であり、HPAはPodに割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を変更する機能である",
+    "HPA（Horizontal Pod Autoscaler）はCPU使用率・メモリ使用率・カスタムメトリクスなどの観測値に基づいてPodの「台数」を増減させる。VPA（Vertical Pod Autoscaler）は個々のPodに割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を自動調整する。Cluster Autoscalerは、Podがリソース不足でスケジュールできない場合や逆にノードの利用率が低い場合に、ノードプールの「ノード数」を増減させる。3つはそれぞれ異なるレイヤー（Pod台数・Podサイズ・ノード台数）を対象とし、目的に応じて組み合わせて使う",
+    "HPA・VPA・Cluster Autoscalerはいずれも同じ「ノード数」を対象にしており、設定方法が異なるだけで実質的に同じ結果になる"
+  ],
+  answer: 2,
+  explanation: "この3つはAZ-305で最も混同されやすい概念のひとつなので、対象レイヤーで整理します。<strong>HPA（Horizontal Pod Autoscaler）</strong>は「横方向」の名前の通り、CPU使用率・メモリ使用率・KEDAなどによるカスタムメトリクスに基づいてPodの<u>台数</u>を増減させます。<strong>VPA（Vertical Pod Autoscaler）</strong>は「縦方向」の名前の通り、Pod数はそのままに、各Podへ割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を過去の使用実績から自動調整します。<strong>Cluster Autoscaler</strong>はさらに1段上のレイヤーで、Podがリソース不足で配置できない（Pending状態）場合にノードプールの<u>ノード台数</u>を増やし、逆に余剰があり他ノードに集約できる場合はノード数を減らします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>3つのオートスケーラーの対象レイヤー</div><div class='exp-compare'><div class='cmp-col'><div class='cmp-head'>HPA</div><div>対象: Podの台数</div><div>基準: CPU/メモリ/カスタムメトリクス</div></div><div class='cmp-col'><div class='cmp-head'>VPA</div><div>対象: Podのサイズ</div><div>基準: 過去のリソース使用実績</div></div><div class='cmp-col'><div class='cmp-head'>Cluster Autoscaler</div><div>対象: ノードの台数</div><div>基準: Podのスケジュール可否</div></div></div></div><br>「HPAがノード数、Cluster AutoscalerがPod数」とする選択肢は対象が入れ替わっており誤りです。「VPAがレプリカ数、HPAがサイズ」とする選択肢も同様に役割が逆です。3つすべてが同じノード数を対象にしているとする選択肢も誤りで、実際にはPod台数・Podサイズ・ノード台数という異なる3つのレイヤーを扱います。"
+},
+{
+  domain: "インフラ",
   type: "order",
   scenario: "Fabrikam社は、既存のAKSノードプールに対してCluster Autoscalerを新規に有効化し、負荷変動に応じて安全にノード数を自動調整できるようにしたいと考えている。",
   question: "この設定を行う際の一般的な手順として正しい順序を選んでください。",
@@ -166,7 +192,7 @@ const QUESTIONS_SET6 = [
 },
 {
   domain: "データストレージ",
-  scenario: "VanArsdel Ltd社は、オンプレミスのSQL Server 2016(Standard Edition)で稼働する在庫管理データベースをAzure SQL Managed Instanceへ移行する計画を立てている。移行中もできるだけダウンタイムを抑えたく、継続的なレプリケーションによる移行を希望している。",
+  scenario: "VanArsdel Ltd社は、オンプレミスのSQL Server 2016(Standard Edition、Service Pack 3適用済み)で稼働する在庫管理データベースをAzure SQL Managed Instanceへ移行する計画を立てている。移行中もできるだけダウンタイムを抑えたく、継続的なレプリケーションによる移行を希望している。また、移行が完了するまでの間、MI側を読み取り専用のレポート用レプリカとしても活用したい。",
   question: "この環境で採用すべき移行方式はどれか。",
   choices: [
     "Azure Database Migration Service のオンラインモードを使用し、継続的なデータ同期を行いながらMIへ移行する",
@@ -174,8 +200,8 @@ const QUESTIONS_SET6 = [
     "オフラインでのバックアップ/リストアのみで移行する",
     "トランザクションレプリケーションを個別に設計して移行する"
   ],
-  answer: 0,
-  explanation: "Managed Instance link は、オンプレミス側がSQL Server 2019(CU8以降)またはSQL Server 2022である必要があり、SQL Server 2016はサポート対象外(バージョン要件を満たさない)。継続的なレプリケーションによる低ダウンタイム移行を実現しつつ、MI link が使えないバージョンの場合は、Azure Database Migration Service(DMS)のオンラインモードが適切な代替手段となる。DMSのオンラインモードは対象データベースを完全バックアップ後、継続的にログを適用してターゲットと同期を取り続け、カットオーバー時のダウンタイムを最小化できる(SQL Server 2016のような幅広いバージョンに対応)。<br>- Managed Instance link はサポート対象外バージョンのため利用できない。<br>- オフラインでのバックアップ/リストアのみの移行は、リストア中は業務を停止する必要がありダウンタイム最小化の要件に反する。<br>- トランザクションレプリケーションは、パブリケーション/サブスクリプションのトポロジを個別に設計・保守する手間が大きく、DMSのオンラインモードのようなマネージドな移行ワークフロー(スキーマ移行・監視・カットオーバー管理を統合的に提供)には及ばない。"
+  answer: 1,
+  explanation: "Managed Instance link はSQL Server 2016(Service Pack 3以降、および対応するAzure Connect パック)にも対応しています。「MI linkは2019以降でないと使えない」と思い込みがちですが、実際にはSQL Server 2016(SP3+)から2025まで幅広いバージョンがサポートされており、2016の場合はSQL Server → MIへの一方向レプリケーション(フェールバック非対応)が利用できます。<br><br>MI linkは分散型可用性グループ技術を基盤に継続的なレプリケーションを行い、移行完了までの間MI側を読み取り可能なセカンダリとして活用できる点が、DMSのオンラインモードにはない利点です。カットオーバー時のダウンタイムもごくわずかで済みます。<br>- DMSのオンラインモードもダウンタイムを抑えた移行自体は可能ですが、移行完了までMI側を読み取り用レプリカとして活用することはできず、今回の要件を完全には満たしません。<br>- オフラインでのバックアップ/リストアのみの移行は、リストア中は業務を停止する必要がありダウンタイム最小化の要件に反します。<br>- トランザクションレプリケーションは、パブリケーション/サブスクリプションのトポロジを個別に設計・保守する手間が大きく、MI linkのようなマネージドな継続レプリケーション機能には及びません。"
 },
 {
   domain: "インフラ",
@@ -416,19 +442,6 @@ const QUESTIONS_SET6 = [
 },
 {
   domain: "インフラ",
-  scenario: "Northwind Traders社はAzure Kubernetes Service（AKS）の導入を初めて検討している。担当者はKubernetesに触れるのが初めてで、AKS上でアプリケーションを1つ動かすだけなのに、なぜDeploymentやServiceなど複数の異なる種類のリソースを作成する必要があるのか理解できていない。",
-  question: "Pod・ReplicaSet・Deployment・Serviceの役割の組み合わせとして正しいものはどれか。",
-  choices: [
-    "Podはノード自体を表す仮想マシンであり、Deploymentはネットワークルーティングのみを担当し、ServiceはPodのスケジューリング先ノードを決定する",
-    "Podは1つ以上のコンテナをまとめたKubernetes上の最小のデプロイ単位である。ReplicaSetは指定した数のPodのレプリカを常に維持するコントローラーである。Deploymentはこのプロセス（ReplicaSet）を宣言的に管理し、新バージョンへのロールアウトや問題発生時のロールバックを制御する。Serviceは、スケールやロールアウトのたびに入れ替わるPod群に対して安定したネットワークエンドポイント（仮想IPとDNS名）を提供する",
-    "ReplicaSetはPodの中に含まれる1つのコンテナを指す名称であり、DeploymentはPodと完全に同義の別名にすぎない",
-    "ServiceがPodのレプリカ数を維持する役割を担い、DeploymentはPodへの安定したアクセス経路（仮想IP）を提供する役割を担う"
-  ],
-  answer: 1,
-  explanation: "Kubernetesの階層構造は次のように整理すると理解しやすくなります。<strong>Pod</strong>は1つ以上のコンテナをまとめてAKS上で実行する最小のデプロイ単位です。<strong>ReplicaSet</strong>は「指定した数のPodのレプリカを常に維持する」ことだけを担当するコントローラーで、Podが異常終了すれば自動的に代わりのPodを起動します。<strong>Deployment</strong>はこのReplicaSetをさらに上位から管理し、新バージョンへのロールアウトや問題発生時のロールバックといった宣言的な更新制御を行います（実運用ではDeploymentを作成すると配下のReplicaSetは自動生成されるため、ReplicaSetを直接操作することは通常ありません）。<strong>Service</strong>は、スケールやロールアウトのたびにIPアドレスが変わってしまうPod群に対して変化しない仮想IPとDNS名を割り当て、クライアントが個々のPodのIPを意識せずアクセスできるようにします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>AKSの基本階層</div><div class='exp-flow'><div class='flow-box'>Deployment（更新制御）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box'>ReplicaSet（レプリカ数維持）</div><div class='flow-arrow'>&rarr;</div><div class='flow-box hl'>Pod（最小実行単位）</div></div><div class='flow-arrow' style='margin-top:8px'>&uarr; Serviceが安定したアクセス経路を提供</div></div><br>「Podをノード（仮想マシン）と同一視する」選択肢は誤りです。ノードはPodが乗る側の物理/仮想マシンであり、Pod自体ではありません。「ReplicaSet＝コンテナ、Deployment＝Podと同義」とする選択肢も、それぞれ別の階層の概念であることを見落としています。「ServiceとDeploymentの役割を入れ替えた」選択肢も誤りで、レプリカ数の維持はDeployment/ReplicaSetの役割、安定したアクセス経路の提供はServiceの役割です。"
-},
-{
-  domain: "インフラ",
   scenario: "Contoso社は、既存のVNet内の共有サブネットに接続するAKSクラスターを、従来モードのAzure CNI（オーバーレイではない）で構成する計画である。クラスターはシステムノードプールとユーザーノードプールを合わせて最大40ノードまでスケールする可能性があり、1ノードあたりの最大Pod数は30に設定する予定である。従来モードのAzure CNIでは、ノードとPodのそれぞれにVNetのサブネットからIPアドレスが個別に割り当てられる。",
   question: "ノードのアップグレード時に発生する一時的なサージノード分の余裕も考慮したうえで、このサブネットに最低限確保しておくべきアドレス空間（CIDR）はどれか。",
   choices: [
@@ -486,13 +499,13 @@ const QUESTIONS_SET6 = [
   scenario: "Tailwind Traders社は、複数の外部パートナー企業に対して、社内で開発した在庫照会APIをAzure API Managementを通じて公開したいと考えている。パートナーごとに個別のAPIキー（サブスクリプションキー）を発行してアクセスを制御し、利用量の上限（レート制限）もパートナーごとに設定したい。また、パートラン企業の開発者が自分でAPIキーを申請し、APIドキュメントを閲覧できるセルフサービスのポータルも提供したい。",
   question: "この要件を満たすためにAPI Managementで構成すべき一連の作業として正しい順序を選んでください。",
   choices: [
-    "APIごとに適用するレート制限などのポリシーを設定したうえで、各APIをProductにまとめる",
     "バックエンドの在庫照会APIをAPI ManagementにインポートしてAPIとして定義する",
-    "Developer Portalを有効化・公開し、パートナー企業の開発者が自身でProductへのSubscription（サブスクリプションキー発行）を申請できるようにする",
-    "パートナーごとのアクセス制御単位となるProductを作成し、そこにAPIを関連付けたうえで公開する"
+    "パートナーごとのアクセス制御単位となるProductを作成し、定義済みのAPIをそのProductへ追加する（この時点ではまだ非公開の状態）",
+    "作成したProductに対してレート制限などの利用ポリシーを設定したうえで、Productを公開（Published）状態に変更する",
+    "Developer Portalを有効化・公開し、パートナー企業の開発者が自身で公開済みのProductへのSubscription（サブスクリプションキー発行）を申請できるようにする"
   ],
-  answer: [1,0,3,2],
-  explanation: "API Managementでは、まずバックエンドAPIを<strong>API</strong>としてインポート・定義します（手順1）。次に、そのAPIに対してレート制限などのポリシーを設定し、公開単位となる<strong>Product</strong>（1つ以上のAPIをまとめてアクセス制御・利用量制限の単位とするグループ）にまとめます（手順2）。続けて、そのProductを実際に作成・公開し、APIと関連付けます（手順3。ポリシー設定とProductへの割り当ては密接に連動する作業のため、APIをインポートした直後に行います）。最後に、<strong>Developer Portal</strong>を有効化・公開し、パートナー企業の開発者がセルフサービスでProductへの<strong>Subscription</strong>（サブスクリプションキーの発行申請）を行えるようにします（手順4）。Developer PortalでSubscriptionを申請する対象のProductが存在しない状態では申請フロー自体が成立しないため、Product作成後に行う必要があります。パートナーごとの個別APIキーの発行や利用量上限の管理は、この「Product＋Subscription」の仕組みによって実現されます。"
+  answer: [0,1,2,3],
+  explanation: "API Managementでは、まずバックエンドAPIを<strong>API</strong>としてインポート・定義します（手順1）。次に、パートナーごとのアクセス制御単位となる<strong>Product</strong>（1つ以上のAPIをまとめてアクセス制御・利用量制限の単位とするグループ）を作成し、そのAPIをProductへ追加します（手順2。この時点ではProductはまだ非公開のNot Publishedの状態です）。続けて、そのProductに対してレート制限などのポリシーを設定したうえで、Productを公開（Published）状態に変更します（手順3）。最後に、<strong>Developer Portal</strong>を有効化・公開し、パートナー企業の開発者がセルフサービスで公開済みProductへの<strong>Subscription</strong>（サブスクリプションキーの発行申請）を行えるようにします（手順4）。Developer PortalでSubscriptionを申請する対象のProductが未公開のままでは申請フロー自体が成立しないため、Productの公開後に行う必要があります。パートナーごとの個別APIキーの発行や利用量上限の管理は、この「Product＋Subscription」の仕組みによって実現されます。"
 },
 {
   domain: "データストレージ",
@@ -734,16 +747,16 @@ const QUESTIONS_SET6 = [
 },
 {
   domain: "インフラ",
-  scenario: "Contoso社の本番AKSクラスターでは、Kubernetesバージョンやノードイメージのアップグレード中にアプリケーションの処理能力が一時的に低下し、応答遅延が発生する問題が繰り返し起きている。次回以降のアップグレードでは、既存のキャパシティを落とさずに新しいノードへ切り替えたいと考えている。",
+  scenario: "Contoso社の本番AKSクラスターでは、ノードプールのMax Surgeが明示的に0%に設定されており、Kubernetesバージョンやノードイメージのアップグレード中にアプリケーションの処理能力が一時的に低下し、応答遅延が発生する問題が繰り返し起きている。次回以降のアップグレードでは、既存のキャパシティを落とさずに新しいノードへ切り替えたいと考えている。",
   question: "この要件を満たすために構成すべき設定はどれか。",
   choices: [
-    "ノードプールにMax Surge（例: 1ノード分や33%など）を設定する。アップグレード時にはまず指定した分の追加（サージ）ノードを新しいバージョンで先に用意し、そこへPodを退避させたうえで既存の古いノードを削除していくため、アップグレード中も処理能力が減少しにくい",
-    "アップグレードは常に全ノードを同時に一括で置き換える仕組みであり、事前の設定は不要である",
-    "Max Surgeを0%に設定するのが最も安全である",
+    "ノードプールのMax Surgeを0%より大きい値（例: 1ノード分や33%など）に変更する。アップグレード時にはまず指定した分の追加（サージ）ノードを新しいバージョンで先に用意し、そこへPodを退避させたうえで既存の古いノードを削除していくため、アップグレード中も処理能力が減少しにくい",
+    "アップグレードは常に全ノードを同時に一括で置き換える仕組みであり、Max Surgeの値を変更しても挙動は変わらない",
+    "Max Surgeを0%のままにしておくのが最も安全である",
     "ノードイメージのみの更新（セキュリティパッチなど）とKubernetesバージョン自体のアップグレードは、常に同時にしか実行できない"
   ],
   answer: 0,
-  explanation: "AKSのノードプールのアップグレードは既定では1台ずつ「古いノードを削除してから新しいノードを追加する」動作になりやすく、これによりアップグレード中のキャパシティが一時的に減少することがあります。<strong>Max Surge</strong>を設定しておくと、既存ノードを削除する前に指定した台数（または割合）分の追加ノードを新バージョンで先に用意し、そこへPodを退避（コルドン＆ドレイン）させてから古いノードを削除する動きになるため、アップグレード中も全体の処理能力を維持しやすくなります。またAKSでは、OSレベルのセキュリティパッチ適用などを目的とした「ノードイメージのみの更新」と「Kubernetesバージョン自体のアップグレード」は、それぞれ別々にスケジュール・実行することができます。<br><br>「全ノードが常に一括で置き換わる」という説明は誤りで、既定の挙動もMax Surgeの設定次第で変わります。「Max Surgeを0%に設定するのが最も安全」という選択肢は誤りで、Max Surge 0%は追加ノードを用意せず先に既存ノードを削除する動きになるため、むしろ一時的なキャパシティ低下が起きやすくなります。「ノードイメージ更新とバージョンアップグレードは常に同時にしか実行できない」という説明も誤りで、両者は独立してスケジュール可能です。"
+  explanation: "AKSのノードプールのアップグレードには<strong>Max Surge</strong>という設定があり、既定値は1ノード（追加のサージノードを1台先に用意してから古いノードを削除する動き）です。Max Surgeを0%に設定すると、この既定の動きとは異なり、追加ノードを用意せずに先に既存の古いノードを削除してから新しいノードを追加する動作になり、アップグレード中のキャパシティが一時的に減少しやすくなります。今回のシナリオではMax Surgeが明示的に0%へ変更されていたため、この問題が起きていました。Max Surgeを0%より大きい値（既定の1、または33%などの割合）に変更しておくと、既存ノードを削除する前に指定した台数（または割合）分の追加ノードを新バージョンで先に用意し、そこへPodを退避（コルドン＆ドレイン）させてから古いノードを削除する動きになるため、アップグレード中も全体の処理能力を維持しやすくなります。またAKSでは、OSレベルのセキュリティパッチ適用などを目的とした「ノードイメージのみの更新」と「Kubernetesバージョン自体のアップグレード」は、それぞれ別々にスケジュール・実行することができます。<br><br>「Max Surgeの値を変更しても挙動は変わらない」という説明は誤りで、Max Surgeの値によってアップグレード中のキャパシティ挙動は明確に変わります。「Max Surgeを0%のままにしておくのが最も安全」という選択肢は誤りで、Max Surge 0%はむしろ一時的なキャパシティ低下を招きやすい設定です。「ノードイメージ更新とバージョンアップグレードは常に同時にしか実行できない」という説明も誤りで、両者は独立してスケジュール可能です。"
 },
 {
   domain: "ID・ガバナンス・監視",
@@ -771,19 +784,6 @@ const QUESTIONS_SET6 = [
   ],
   answer: 3,
   explanation: "AKSとMicrosoft Entra IDの統合には2つの側面があります。1つは「人（管理者）がkubectlを使う際の認証・認可」で、Entra ID統合クラスターにしたうえでAzure RBAC for Kubernetes Authorization（AzureのRBACロールでKubernetesリソースへのアクセスを制御する仕組み）またはEntra ID統合のKubernetes RBACを使うことで、Entra IDのユーザー/グループをそのままクラスターの認可に利用できます。もう1つは「Pod（アプリケーション）がAzureリソースへアクセスする際の認証」で、これには<strong>Azure AD Workload Identity</strong>を使います。これはPodのKubernetesサービスアカウントとMicrosoft Entra IDのアプリ登録をOIDCフェデレーションで関連付け、Pod内のコードがトークンを要求するとEntra IDのトークンが発行される仕組みで、シークレットの永続的な保存が不要になります。以前使われていたAAD Pod Identityはこの用途の旧方式で、現在は非推奨（廃止方向）とされているため新規導入すべきではありません。<br><br>「AAD Pod Identityが第一推奨」とする選択肢は誤りで、実際には廃止が案内されている旧方式です。「kubeconfig証明書をPodに配布する」方式はシークレットの管理・失効が煩雑でセキュリティ上も推奨されません。「Entra IDと統合しない」構成は、要件で明示されている「Entra IDのIDを利用したい」に反します。"
-},
-{
-  domain: "インフラ",
-  scenario: "Contoso社のAKSクラスターでは、Webフロントエンドの負荷が時間帯によって大きく変動する。運用チームは「Podの台数を増やす」「Podのサイズ（CPU/メモリの割り当て量）を調整する」「クラスター全体のノード台数を増やす」という3種類の自動化について整理しようとしているが、ドキュメントに出てくる複数の「オートスケーラー」の違いを混同している。",
-  question: "AKSにおけるHorizontal Pod Autoscaler（HPA）、Vertical Pod Autoscaler（VPA）、Cluster Autoscalerの役割について正しい説明はどれか。",
-  choices: [
-    "HPAはノード数を、Cluster AutoscalerはPod数を、それぞれ増減させる。VPAは両者の上位互換であり単独で両方を代替できる",
-    "VPAはPodのレプリカ数を増減させる機能であり、HPAはPodに割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を変更する機能である",
-    "HPA（Horizontal Pod Autoscaler）はCPU使用率・メモリ使用率・カスタムメトリクスなどの観測値に基づいてPodの「台数」を増減させる。VPA（Vertical Pod Autoscaler）は個々のPodに割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を自動調整する。Cluster Autoscalerは、Podがリソース不足でスケジュールできない場合や逆にノードの利用率が低い場合に、ノードプールの「ノード数」を増減させる。3つはそれぞれ異なるレイヤー（Pod台数・Podサイズ・ノード台数）を対象とし、目的に応じて組み合わせて使う",
-    "HPA・VPA・Cluster Autoscalerはいずれも同じ「ノード数」を対象にしており、設定方法が異なるだけで実質的に同じ結果になる"
-  ],
-  answer: 2,
-  explanation: "この3つはAZ-305で最も混同されやすい概念のひとつなので、対象レイヤーで整理します。<strong>HPA（Horizontal Pod Autoscaler）</strong>は「横方向」の名前の通り、CPU使用率・メモリ使用率・KEDAなどによるカスタムメトリクスに基づいてPodの<u>台数</u>を増減させます。<strong>VPA（Vertical Pod Autoscaler）</strong>は「縦方向」の名前の通り、Pod数はそのままに、各Podへ割り当てるCPU/メモリのリクエスト・リミット値（サイズ）を過去の使用実績から自動調整します。<strong>Cluster Autoscaler</strong>はさらに1段上のレイヤーで、Podがリソース不足で配置できない（Pending状態）場合にノードプールの<u>ノード台数</u>を増やし、逆に余剰があり他ノードに集約できる場合はノード数を減らします。<br><br><div class='exp-diagram'><div class='exp-diagram-title'>3つのオートスケーラーの対象レイヤー</div><div class='exp-compare'><div class='cmp-col'><div class='cmp-head'>HPA</div><div>対象: Podの台数</div><div>基準: CPU/メモリ/カスタムメトリクス</div></div><div class='cmp-col'><div class='cmp-head'>VPA</div><div>対象: Podのサイズ</div><div>基準: 過去のリソース使用実績</div></div><div class='cmp-col'><div class='cmp-head'>Cluster Autoscaler</div><div>対象: ノードの台数</div><div>基準: Podのスケジュール可否</div></div></div></div><br>「HPAがノード数、Cluster AutoscalerがPod数」とする選択肢は対象が入れ替わっており誤りです。「VPAがレプリカ数、HPAがサイズ」とする選択肢も同様に役割が逆です。3つすべてが同じノード数を対象にしているとする選択肢も誤りで、実際にはPod台数・Podサイズ・ノード台数という異なる3つのレイヤーを扱います。"
 },
 {
   domain: "データストレージ",
