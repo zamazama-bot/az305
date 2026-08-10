@@ -9,6 +9,7 @@
 // QUESTIONS_SET8  は data/questions8.js  (MS形式 実戦B: 高可用性・事業継続性)
 // QUESTIONS_SET9  は data/questions9.js  (MS形式 実戦C: ID・ガバナンス・監視)
 // QUESTIONS_SET10 は data/questions10.js (MS形式 実戦D: AKS・ネットワーク)
+// QUESTIONS_SET11 は data/questions11.js (MS形式 実戦E: 補完・出題範囲全体)
 
 (function () {
   'use strict';
@@ -29,7 +30,8 @@
     { id: 7,  label: 'MS形式 実戦 A', questions: safeSet(typeof QUESTIONS_SET7  !== 'undefined' ? QUESTIONS_SET7  : null), desc: 'データストレージ中心／MS公式プラクティス評価と同じ簡潔な文体＋ケーススタディ7問' },
     { id: 8,  label: 'MS形式 実戦 B', questions: safeSet(typeof QUESTIONS_SET8  !== 'undefined' ? QUESTIONS_SET8  : null), desc: '高可用性・事業継続性中心／MS公式プラクティス評価と同じ簡潔な文体＋ケーススタディ7問' },
     { id: 9,  label: 'MS形式 実戦 C', questions: safeSet(typeof QUESTIONS_SET9  !== 'undefined' ? QUESTIONS_SET9  : null), desc: 'ID・ガバナンス・監視中心／MS公式プラクティス評価と同じ簡潔な文体＋ケーススタディ7問' },
-    { id: 10, label: 'MS形式 実戦 D', questions: safeSet(typeof QUESTIONS_SET10 !== 'undefined' ? QUESTIONS_SET10 : null), desc: 'AKS・ネットワーク中心／MS公式プラクティス評価と同じ簡潔な文体＋ケーススタディ7問' }
+    { id: 10, label: 'MS形式 実戦 D', questions: safeSet(typeof QUESTIONS_SET10 !== 'undefined' ? QUESTIONS_SET10 : null), desc: 'AKS・ネットワーク中心／MS公式プラクティス評価と同じ簡潔な文体＋ケーススタディ7問' },
+    { id: 11, label: 'MS形式 実戦 E', questions: safeSet(typeof QUESTIONS_SET11 !== 'undefined' ? QUESTIONS_SET11 : null), desc: '出題範囲全体を補完／Front Door・Key Vault・メッセージング比較・コスト管理 等' }
   ].filter(function (s) { return s.questions !== null; });
 
   // answers[i] = 選択した選択肢インデックス。未回答は undefined。
