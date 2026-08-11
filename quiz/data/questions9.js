@@ -1,5 +1,5 @@
 // AZ-305: Azure Solutions Architect Expert
-// MS形式 実戦 C（ID・ガバナンス・監視）（67問） - 再受験対策
+// MS形式 実戦 C（ID・ガバナンス・監視）（71問） - 再受験対策
 // MS公式プラクティス評価と同じ簡潔な文体（選択肢はサービス名/設定名/SKU名/数値のみ）。
 // 冒頭7問はケーススタディ形式。弱点3分野（データストレージ／高可用性／ログ監視）を重点的に、
 // AZ-305出題範囲全体をカバー。解説は基礎から詳しく記載。
@@ -167,6 +167,19 @@ const QUESTIONS_SET9 = [
 },
 {
   domain: "ID・ガバナンス・監視",
+  scenario: "Fabrikam社のAzureサブスクリプションには、Log Analyticsワークスペース「WorkspaceA」と「WorkspaceB」があります。<br>・WorkspaceAは、ExpressRoute経由で接続されたオンプレミスのネットワークからのみアクセスできるようにし、インターネットからのアクセスは完全に遮断したい<br>・WorkspaceBは、これまでどおりインターネット経由でもアクセスできる状態を維持したい",
+  question: "両方の要件を満たすために取るべき対応はどれですか?",
+  choices: [
+    "WorkspaceAのみをAMPLSのスコープに登録してPrivate Endpointを構成し、WorkspaceAのパブリックネットワークアクセスを無効にする。WorkspaceBはAMPLSに登録しない",
+    "2つのワークスペースを1つに統合したうえでAMPLSを構成する",
+    "WorkspaceBを削除し、WorkspaceAのみを残す",
+    "WorkspaceAとWorkspaceBの両方を同じAMPLSのスコープに登録し、AMPLS全体でパブリックアクセスを無効にする"
+  ],
+  answer: 0,
+  explanation: "AMPLSは、明示的にスコープとして登録したリソースにのみ影響します。<strong>WorkspaceAだけをAMPLSのスコープに登録</strong>してPrivate Endpointを構成し、WorkspaceA自体のパブリックネットワークアクセスを無効にすれば、WorkspaceAはオンプレミスからのプライベート経路のみでアクセス可能になります。一方、<strong>WorkspaceBはAMPLSに登録しない</strong>ため何の影響も受けず、既存どおりインターネット経由のアクセスを維持できます。<br><br>両方を同じAMPLSに登録してAMPLS全体でパブリックアクセスを無効にすると、WorkspaceBもインターネットからアクセスできなくなり、WorkspaceBの要件に反します。2つのワークスペースを統合する方法は、要件で求められていない不要なデータ移行・アプリケーション側の変更を伴い、過剰な対応です。WorkspaceBを削除する方法は、WorkspaceBのデータ・機能そのものを失うため要件を満たしません。"
+},
+{
+  domain: "ID・ガバナンス・監視",
   type: "multi",
   scenario: "本番仮想マシンについて、次の両方を実現したいと考えています。<br>・削除された場合にすぐに通知を受け取る。<br>・後から、誰がいつ削除操作を実行したかを調査できるようにする。",
   question: "実装すべき項目を2つ選択してください。",
@@ -178,6 +191,20 @@ const QUESTIONS_SET9 = [
   ],
   answer: [1,2],
   explanation: "「仮想マシンの削除」操作を対象としたアクティビティログアラートは、削除発生時にほぼリアルタイムで通知します。一方、アラート通知自体は長期的に検索可能な記録を提供しないため、後から誰がいつ削除したかを調査できるようにするには、アクティビティログをLog Analyticsワークスペースへ送信する診断設定を構成し、KQLで検索可能な形で保持しておく必要があります。Azure Backupはデータの復元用でありVMリソース自体の削除イベントの検知・監査とは異なります。Traffic Managerはトラフィックルーティングのサービスであり、この要件とは無関係です。"
+},
+{
+  domain: "ID・ガバナンス・監視",
+  type: "multi",
+  scenario: "AMPLS(Azure Monitor プライベートリンクスコープ)の仕組みについて確認しています。",
+  question: "正しい説明を2つ選択してください。",
+  choices: [
+    "AMPLSを利用するには、スコープに含めるLog Analyticsワークスペースごとに個別のPrivate Endpointを作成する必要がある",
+    "1つのAMPLSに、複数のLog AnalyticsワークスペースやApplication Insightsリソースをスコープとして関連付けられる",
+    "AMPLSはAzure Kubernetes Service (AKS) の監視データにのみ使用できる専用リソースである",
+    "AMPLSに対して作成した1つのPrivate Endpointは、そのAMPLSにスコープとして登録された全てのリソースへのプライベート接続を提供する"
+  ],
+  answer: [1,3],
+  explanation: "AMPLSは、複数の監視リソース(Log Analyticsワークスペース・Application Insights)を1つの「スコープ」としてまとめて登録できる点が最大の特徴です。VNetごとに作成する1つのPrivate Endpointは、個々のワークスペースに紐づくのではなく<strong>AMPLS(スコープ)に紐づく</strong>ため、そのAMPLSにスコープ登録された全てのリソースへ、追加のPrivate Endpointを作らずにプライベート接続できます。<br><br>「ワークスペースごとに個別のPrivate Endpointが必要」という説明は、AMPLSの目的(Private Endpointの数を減らし運用負荷を抑えること)そのものと矛盾するため誤りです。AMPLSはAKS専用の機能ではなく、Log AnalyticsワークスペースやApplication Insightsを使うあらゆるシナリオで利用できる汎用のリソースです。"
 },
 {
   domain: "ID・ガバナンス・監視",
@@ -245,6 +272,19 @@ const QUESTIONS_SET9 = [
   ],
   answer: 2,
   explanation: "アクショングループの通知の種類には音声・SMS・メール・Azureアプリへのプッシュ通知などがあります。「音声通話で即座に」という要件には音声(Voice)通知が直接対応します。メールは確認が遅れる可能性があり即時性に欠けます。SMSはテキストのみで通話ではありません。プッシュ通知はAzureモバイルアプリがインストールされ、サインインしている場合にのみ有効です。"
+},
+{
+  domain: "ID・ガバナンス・監視",
+  scenario: "Contoso社は、複数のAzureリージョンにまたがる10個のLog Analyticsワークスペースと5個のApplication Insightsリソースを運用しています。<br>・すべてのワークスペースとApplication Insightsへのアクセスをプライベートネットワーク経由に限定したい<br>・ワークスペースごとに個別のPrivate Endpointを作成・管理する運用負荷は避けたい",
+  question: "この要件を満たすために使用すべきリソースはどれですか?",
+  choices: [
+    "Azure Firewall",
+    "Azure Bastion",
+    "Network Security Group (NSG)",
+    "Azure Monitor プライベートリンクスコープ (AMPLS)"
+  ],
+  answer: 3,
+  explanation: "<strong>Azure Monitor プライベートリンクスコープ(AMPLS)</strong>は、複数のLog AnalyticsワークスペースやApplication Insightsリソースを1つの「スコープ」としてまとめて登録できるリソースです。AMPLSに対して(VNetごとに)1つのPrivate Endpointを作成するだけで、そのAMPLSにスコープとして登録した全てのワークスペース・Application Insightsへプライベートに接続できるようになります。ワークスペースの数だけPrivate Endpointを個別に作る必要がないため、多数の監視リソースを扱う環境でも運用負荷を抑えられます。<br><br>NSGはサブネット/NIC単位の通信許可・拒否ルールであり、Log AnalyticsやApplication Insightsへの経路そのものをプライベート化する機能ではありません。Azure BastionはVMへの安全なリモート接続用のサービス、Azure Firewallはネットワーク全体の送受信トラフィックを検査・制御するファイアウォールサービスであり、いずれも今回の要件(監視リソースへのプライベートアクセスの一元化)には直接関係しません。"
 },
 {
   domain: "ID・ガバナンス・監視",
@@ -468,6 +508,19 @@ const QUESTIONS_SET9 = [
   ],
   answer: [2,3],
   explanation: "Storageアカウントは低コストでの長期アーカイブに適しており、複数年にわたる監査保持要件を満たせます。Event Hubはデータをほぼリアルタイムにストリーム配信する送信先で、非Azure製SIEMなど外部ツールが取り込むのに使われます。Log Analyticsワークスペースは主にAzureネイティブなクエリ/分析・アラート用途に最適化されており、低コストな7年保持や外部SIEMへのストリーミングという2つの要件には最適な選択ではありません。Application Insightsはアプリケーションテレメトリ専用の製品で、汎用的な診断設定の送信先ではありません。"
+},
+{
+  domain: "ID・ガバナンス・監視",
+  scenario: "AMPLS(Azure Monitor プライベートリンクスコープ)とPrivate Endpointを使用して、Log Analyticsワークスペース「Workspace1」へのアクセス経路をプライベートネットワーク経由に構成しました。<br>この状態を確認したところ、インターネット経由でもWorkspace1へのログ取り込み・クエリが引き続き可能であることが分かりました。",
+  question: "インターネット経由のアクセスを完全に遮断するために、Workspace1側で追加設定すべき項目はどれですか?",
+  choices: [
+    "診断設定を削除する",
+    "パブリックネットワークアクセスを無効にする(取り込み・クエリとも)",
+    "コミットメント階層(容量予約)を有効にする",
+    "ワークスペースのリソースロックを「削除の防止」に設定する"
+  ],
+  answer: 1,
+  explanation: "AMPLSとPrivate Endpointを作成しただけでは、ワークスペース自体のパブリックエンドポイントが自動的に無効になるわけではありません。プライベート経路が「使えるようになる」ことと、パブリック経路が「使えなくなる」ことは別々の設定です。インターネット経由のアクセスを完全に遮断するには、ワークスペースのネットワーク分離設定で、<strong>取り込み(ログの受信)とクエリ(検索)の両方についてパブリックネットワークアクセスを無効</strong>にする必要があります。これにより、Private Endpoint経由(プライベートリンク)以外の経路からのアクセスができなくなります。<br><br>コミットメント階層は取り込みデータ量に応じた単価を下げる課金設定、診断設定はAzureリソースのログ・メトリックの送信先を定義する設定、リソースロックはリソースの誤削除・誤変更を防ぐガバナンス機能であり、いずれもネットワークアクセス経路の制御(パブリック/プライベート)とは直接関係しません。"
 },
 {
   domain: "ID・ガバナンス・監視",
