@@ -1,5 +1,5 @@
 // AZ-305: Azure Solutions Architect Expert
-// MS形式 実戦 E（補完・50問） - 再受験対策
+// MS形式 実戦 E（補完・56問） - 再受験対策
 // MS公式プラクティス評価と同じ簡潔な文体。Set7〜10で手薄だったAZ-305出題範囲を補完。
 // Front Door/CDN、Key Vault、メッセージング選定、汎用コンピュート選定、NSG/DDoS、
 // コスト管理、APIM一般、Azure Migrate、ネットワーク基礎、Storageサービス選定 等。
@@ -135,6 +135,19 @@ const QUESTIONS_SET11 = [
   ],
   answer: 2,
   explanation: "Azure Database Migration Service(DMS)のオンラインモード(継続的な移行)は、移行元のSQL Serverと移行先のAzure SQL Managed Instance間でデータを継続的に同期し続け、準備が整った時点で短時間のカットオーバーを行うことで、ダウンタイムを最小限に抑えた移行を実現します。<br>Azure Migrateの検出と評価は移行前のアセスメント(右サイジングやコスト見積もり)を行うツールであり、実際のデータ同期・移行は行いません。Data Migration Assistant(DMA)は、移行先での互換性の問題やブロッキングの問題を事前に検出するアセスメントツールであり、継続的なデータ同期機能は持ちません。Azure Backupはバックアップ/リストア用のサービスであり、継続的な同期を伴うオンライン移行には使用しません。"
+},
+{
+  domain: "データストレージ",
+  scenario: "複数の分析ワークロード(データエンジニアリング、データウェアハウス、BIレポーティング、リアルタイム分析)を、個別にコンピューティングリソースをプロビジョニングすることなく、単一の共有ストレージ層を基盤とした1つのSaaS環境でまとめて扱いたいと考えています。<br>・容量ベースの単一の課金モデルにまとめたい<br>・複数チーム間でのデータ重複コピーを避けたい",
+  question: "何を推奨しますか?",
+  choices: [
+    "Azure Synapse Analytics(専用SQLプール)単体",
+    "Azure Databricks単体",
+    "Microsoft Fabric",
+    "Azure Data Factory単体"
+  ],
+  answer: 2,
+  explanation: "<strong>Microsoft Fabric</strong>は、データエンジニアリング・データウェアハウス・データサイエンス・リアルタイム分析・Power BIによるBIレポーティングまでを1つのSaaS環境に統合したプラットフォームです。全てのワークロードは<strong>OneLake</strong>という単一の論理ストレージ層(Delta Lake形式)を共有するため、チーム間でデータをコピーし直す必要がなく、単一の容量ベースのSKU(F SKU)でまとめて課金されます。個別にSparkプールやSQLプール、Databricksワークスペースを別々にプロビジョニング・管理する必要がありません。<br><br>Databricks単体、Synapse専用SQLプール単体、Data Factory単体は、いずれも分析パイプラインの一部分(処理エンジンやETLなど)を担うサービスであり、単体では「複数ワークロードを1つの共有ストレージ層でまとめて扱う」という要件を満たしません。"
 },
 {
   domain: "インフラ",
@@ -283,6 +296,19 @@ const QUESTIONS_SET11 = [
   explanation: "Azure Migrateを用いた標準的な移行プロセスは、大きく「検出」「評価」「移行」の段階で進みます。まずAzure Migrateアプライアンスをオンプレミス環境にデプロイし、対象サーバーの構成やパフォーマンスデータを検出(Discover)します。次に、検出したデータをもとにAzureでの適合性評価(右サイジング、月額コスト見積もりなど)を行います。評価結果をもとに移行対象を決定したら、サーバーのディスクデータのレプリケーションを開始し、Azure側に継続的にデータを複製します。最後に、レプリケーションが十分に追いついた段階でカットオーバー(移行の切り替え)を実行し、Azure上での稼働に切り替えて移行を完了します。<br>この順序(検出→評価→レプリケーション→カットオーバー)を踏まずにレプリケーションやカットオーバーを先に行うことはできません。"
 },
 {
+  domain: "データストレージ",
+  scenario: "Power BIで配布するダッシュボードについて、部門ごとに閲覧できるデータの行を制限したいと考えています。<br>・営業担当者は自分の担当地域のデータのみを閲覧できるようにする<br>・同一のレポート(1つの.pbixファイル)を全部門で共有したい",
+  question: "何を使用しますか?",
+  choices: [
+    "Microsoft Purviewの機密ラベル",
+    "Azure RBACのロール割り当て",
+    "行レベルのセキュリティ (RLS)",
+    "Power BI Premiumキャパシティの追加"
+  ],
+  answer: 2,
+  explanation: "Power BIの<strong>行レベルセキュリティ(RLS)</strong>は、同一のレポート(1つの.pbixファイル/セマンティックモデル)を共有しながら、閲覧するユーザーの属性(所属部門・担当地域など)に応じて表示されるデータ行を動的に絞り込む機能です。DAXで定義したフィルター条件をユーザーやロールに割り当てることで、レポートを複製せずに部門ごとの閲覧範囲を制御できます。<br><br>Microsoft Purviewの機密ラベルはデータの分類・保護(暗号化や利用制限)のための機能で、行単位のデータフィルタリングとは異なります。Azure RBACのロール割り当ては、Azureリソース(Power BIワークスペースなど)への管理操作の権限を制御するもので、レポート内のデータ行単位の絞り込みはできません。Power BI Premiumキャパシティの追加はパフォーマンス・スケールのための機能であり、行単位のアクセス制御とは無関係です。"
+},
+{
   domain: "インフラ",
   type: "order",
   scenario: "あるサブネットのNSGには、次の受信規則が設定されています。<br>・カスタム規則(優先度100)<br>・カスタム規則(優先度300)<br>・既定の規則 AllowVnetInBound(優先度65000)<br>・既定の規則 DenyAllInBound(優先度65500)",
@@ -321,6 +347,19 @@ const QUESTIONS_SET11 = [
   ],
   answer: 0,
   explanation: "Azure Event Hubsは、パーティション分割されたログベースのアーキテクチャにより、毎秒数百万件規模の高スループットなイベントストリームの取り込みに最適化されたビッグデータストリーミングサービスです。コンシューマーグループを使うことで、複数の独立したコンシューマーがそれぞれ自分のペースで同じストリームを並行して読み取れます。また、指定した保持期間内であればストリームを再生(リプレイ)できます。<br>Event Gridは離散的な反応型イベントのプッシュ通知に向いており、大量のテレメトリストリーム取り込みには適していません。Service Busはエンタープライズメッセージング(順序保証・トランザクション)向けであり、この規模のストリーミング取り込みを想定した設計ではありません。Logic Appsはワークフローオーケストレーションサービスであり、データ取り込み基盤そのものではありません。"
+},
+{
+  domain: "データストレージ",
+  scenario: "データエンジニアリングチームが、Apache Sparkベースのノートブックで大規模データを処理し、Delta Lake上に機械学習モデルを構築します。<br>・将来的にAWSやGoogle Cloud上のワークロードとも同一のプラットフォーム・操作性を維持したい(マルチクラウド)<br>・Unity Catalogによる統一的なデータガバナンスを利用したい",
+  question: "何を推奨しますか?",
+  choices: [
+    "Microsoft Power BI",
+    "Azure Databricks",
+    "Microsoft Fabric",
+    "Azure Synapse Analytics(Sparkプール)"
+  ],
+  answer: 1,
+  explanation: "<strong>Azure Databricks</strong>は、Apache Sparkの原開発元であるDatabricks社とMicrosoftが共同提供するサービスで、Delta LakeやUnity Catalog、MLflowといった機能を、Azure/AWS/Google Cloudのいずれでもほぼ同じ操作性で利用できる点が特徴です。マルチクラウドで一貫したプラットフォームを維持したいという要件には、単一クラウド専用のサービスよりもAzure Databricksが適しています。<br><br>Microsoft FabricとAzure Synapse Analytics(Sparkプール)は、いずれもAzure専用のSaaS/PaaSサービスであり、他クラウドでは利用できません。Microsoft Power BIはBIレポーティングツールであり、Sparkベースのデータエンジニアリング基盤ではありません。"
 },
 {
   domain: "インフラ",
@@ -493,6 +532,20 @@ const QUESTIONS_SET11 = [
   explanation: "Key VaultのStandardレベルは、キーやシークレットをソフトウェアで暗号化して保護しますが、HSM保護のキーは作成できません。HSM(ハードウェアセキュリティモジュール)によって保護されたキーを使用するには、Premiumレベルを選択する必要があります。Premiumレベルでは、マルチテナントのFIPS 140-3 Level 3検証済みHSMを背後で使用してキーを保護します。<br>なお、Key VaultにはFree/Basicといった価格レベルは存在しないため、これらは明確な誤答です。"
 },
 {
+  domain: "データストレージ",
+  type: "multi",
+  scenario: "Microsoft Fabricの特徴について確認しています。",
+  question: "正しい説明を2つ選択してください。",
+  choices: [
+    "FabricにはPower BIによるレポーティング機能が一切含まれない",
+    "Fabricを利用するには、必ず個別にAzure Databricksワークスペースを作成し連携させる必要がある",
+    "Fabricは容量ベース(F SKU)のSaaSサービスであり、コンピューティングリソースを個別にプロビジョニングする必要がない",
+    "Fabricの全ワークロードは、OneLakeという単一の論理ストレージ層を共有する"
+  ],
+  answer: [2,3],
+  explanation: "Microsoft Fabricの中核的な特徴は、(1)全ワークロード(データエンジニアリング、データウェアハウス、リアルタイム分析、BIなど)が<strong>OneLake</strong>という単一の論理ストレージ層を共有すること、(2)<strong>容量ベース(F SKU)</strong>のSaaSサービスとして提供され、Sparkプールや専用SQLプールのようなコンピューティングリソースを利用者が個別にプロビジョニング・管理する必要がないこと、の2点です。<br><br>「必ずAzure Databricksワークスペースが必要」という説明は誤りです。FabricはDatabricksとは独立したSaaSサービスで、外部のDatabricksとショートカット連携することは可能ですが、利用の必須条件ではありません。「Power BI機能が一切含まれない」という説明も誤りで、Power BIによるレポーティングはFabricの主要なワークロードの1つとして統合されています。"
+},
+{
   domain: "インフラ",
   scenario: "社内の複数の独立したアプリケーションが、同一の注文イベントメッセージをそれぞれ異なるフィルター条件で受信する必要があるエンタープライズメッセージングシステムを設計しています。<br>・各購読者は自分に関連するメッセージのみをフィルターで受信する<br>・メッセージの順序保証とトランザクションが必要である",
   question: "何を使用することを推奨しますか?",
@@ -504,6 +557,19 @@ const QUESTIONS_SET11 = [
   ],
   answer: 3,
   explanation: "Azure Service Busのトピックとサブスクリプションは、パブリッシュ/サブスクライブ(pub/sub)モデルを実現する機能です。1つのトピックに送信されたメッセージのコピーが、条件に合致する各サブスクリプションへ配信されます。SQLフィルターや相関フィルターにより、サブスクリプションごとに受信するメッセージを絞り込めます。さらにメッセージセッションによる順序保証やトランザクションもサポートしており、エンタープライズ要件に合致します。<br>Event Gridは反応型のイベント通知に強みがありますが、順序保証やトランザクションといったエンタープライズメッセージング機能は前提としていません。Event Hubsのコンシューマーグループは、同一ストリームを複数の読み取り側が独立して読むための仕組みであり、サブスクライバーごとの条件フィルタリングには向きません。Storageキューはpub/subのトポロジ自体をサポートしていません。"
+},
+{
+  domain: "データストレージ",
+  scenario: "オンプレミスの大規模データウェアハウス(DWH)をAzureへ移行しようとしています。<br>・既存のT-SQLクエリやストアドプロシージャの資産をできるだけそのまま活用したい<br>・MPP(大規模並列処理)アーキテクチャによる高速な集計クエリが必要",
+  question: "何を推奨しますか?",
+  choices: [
+    "Microsoft Power BI",
+    "Azure Synapse Analytics(専用SQLプール)",
+    "Azure Cosmos DB",
+    "Azure Databricks"
+  ],
+  answer: 1,
+  explanation: "<strong>Azure Synapse Analytics の専用SQLプール</strong>は、T-SQLベースのMPP(大規模並列処理)アーキテクチャを採用したデータウェアハウス向けのクエリエンジンで、オンプレミスのSQL Serverベースの DWH(旧SQL Data Warehouseを含む)からの移行先として設計されています。既存のT-SQL資産をそのまま活かしながら、大量データに対する高速な集計クエリを実現できます。<br><br>Azure Databricksは主にSparkベースのコード(Python/Scala/SQL)でのデータ処理基盤であり、既存T-SQL資産をそのまま使う移行には向きません。Azure Cosmos DBはNoSQL/マルチモデルのOLTP向けデータベースであり、DWH用途ではありません。Microsoft Power BIはレポーティングツールで、DWHエンジンそのものではありません。"
 },
 {
   domain: "インフラ",
@@ -612,6 +678,19 @@ const QUESTIONS_SET11 = [
   ],
   answer: 0,
   explanation: "Azure DDoS Protection Standard(Network Protection)は、仮想ネットワーク単位で明示的に有効化する追加の保護レベルで、アプリケーション固有のトラフィックパターンに基づいてチューニングされた緩和ポリシー、Azure Monitorと統合された詳細な攻撃分析・ミティゲーションレポート、そして文書化された攻撃時にスケールアウトによって発生した追加コストを補填するコスト保護(コストクレジット)を提供します。<br>常時無料で有効なDDoSインフラストラクチャ保護(旧Basic)はこれらの高度な機能(チューニング、詳細レポート、コスト保護)を提供しません。WAFはレイヤー7のWebアプリケーション攻撃(SQLインジェクションなど)対策であり、ネットワーク層のDDoS対策とは目的が異なります。Azure Bastionは安全なVM管理接続のためのサービスであり、DDoS対策とは無関係です。"
+},
+{
+  domain: "データストレージ",
+  scenario: "営業部門の担当者向けに、対話型のダッシュボードとレポートを作成・配布したいと考えています。<br>・コーディング作業は最小限に抑えたい<br>・ドラッグ&ドロップの操作でグラフやテーブルを作成したい",
+  question: "何を推奨しますか?",
+  choices: [
+    "Azure Databricks",
+    "Azure Synapse Analytics(専用SQLプール)",
+    "Azure Data Factory",
+    "Microsoft Power BI"
+  ],
+  answer: 3,
+  explanation: "<strong>Microsoft Power BI</strong>は、ビジネスユーザー向けのセルフサービスBI(ビジネスインテリジェンス)ツールで、コーディングなしにドラッグ&ドロップで対話型のダッシュボード・レポートを作成し、組織内で共有できます。<br><br>Azure Databricksは、データエンジニアやデータサイエンティストがApache Sparkベースのノートブックでコードを書いて大規模データ処理・機械学習を行うためのプラットフォームで、ビジネスユーザー向けの完成されたBIツールではありません。Azure Synapse Analytics(専用SQLプール)は大規模なデータウェアハウス向けのクエリエンジンです。Azure Data Factoryはデータ統合・ETL/ELTパイプラインを構築するサービスであり、ダッシュボード作成機能は持ちません。"
 },
 {
   domain: "ID・ガバナンス・監視",
