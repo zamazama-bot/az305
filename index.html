@@ -2458,6 +2458,36 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AKSに追加できる代表的な拡張機能（Dapr・サービスメッシュ・GitOps）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Dapr拡張機能／Istioベースのサービスメッシュアドオン／Flux（GitOps）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Dapr（Distributed Application Runtime）</strong>：分散アプリケーションでよく使うパターンを、言語非依存のサイドカーとして「ビルディングブロック」形式で提供するランタイム。アプリコードを大きく変えずにこれらの分散システムパターンを利用できる。AKSには「Dapr拡張機能」として追加でき、KEDAと組み合わせたイベント駆動スケーリングも可能。<strong>Azure Container Appsには標準で統合済み</strong>（AKSでは拡張機能として別途有効化が必要）。
+          <div class="viz-wrap">
+            <div class="viz-title">Daprの主なビルディングブロック</div>
+            <table>
+              <tr><th>ビルディングブロック</th><th>用途</th></tr>
+              <tr><td>状態管理（State management）</td><td>Redis/Cosmos DB等のバックエンドに、キー・バリュー形式で分散状態を保存・取得する</td></tr>
+              <tr><td>Pub/Sub（発行/購読）メッセージング</td><td>Service Bus/Event Hubs/Redis等のメッセージブローカーとの連携を抽象化し、統一APIでメッセージの発行・購読を行う</td></tr>
+              <tr><td>サービス呼び出し（Service invocation）</td><td>サービス間のディスカバリー・mTLS暗号化・リトライを組み込んだ、信頼性の高いサービス間呼び出しを実現する</td></tr>
+              <tr><td>バインディング（Bindings）</td><td>外部システム（Blob StorageやCosmos DB等）とのイベント連携をトリガー/出力バインディングとして抽象化する</td></tr>
+              <tr><td>シークレット管理</td><td>Key Vault等のシークレットストアへ統一APIでアクセスする</td></tr>
+              <tr><td>アクター（Actors）</td><td>ステートフルな小さい処理単位（アクターモデル）を分散環境で実行する</td></tr>
+            </table>
+          </div>
+        </li>
+        <li><strong>Istioベースのサービスメッシュアドオン</strong>：マイクロサービス間の通信を、アプリコードを変更せずにサイドカー経由で暗号化（mTLS）・<strong>トラフィックのルーティングと分割</strong>（カナリアデプロイ＝新バージョンへ〇%だけトラフィックを流す、A/Bテスト、リトライ、サーキットブレーカー等の高度なルーティング制御）・可観測性（分散トレース）を実現するマネージドアドオン。旧「Open Service Mesh（OSM）」アドオンはMicrosoftにより非推奨・廃止が進められているため、<strong>新規構成ではIstioベースのアドオンを採用</strong>する（AKSの拡張機能として提供され、運用・管理作業を最小限に抑えられる）。</li>
+        <li><strong>Flux（GitOps）</strong>：Gitリポジトリの内容を、Kubernetesクラスターが目指すべき状態（Desired State）として自動的に同期し続けるツール。AKSではAzure Arcの拡張機能として構成し、<code>kubectl apply</code>を手動実行する代わりに、<strong>Gitへのコミットをトリガーにクラスター状態を自動反映</strong>できる。変更履歴・監査証跡・ロールバックがすべてGitの履歴で追跡できる点が利点。</li>
+      </ul>
+      <div class="tip">3つはいずれも「AKSクラスター拡張機能（Extensions）」または「アドオン」として個別に有効化するオプション機能であり、AKSクラスター自体に既定で組み込まれているわけではない。「サイドカー経由でmTLS・カナリアリリースをコード変更なしに実現したい」→ Istioベースのサービスメッシュアドオン。「Gitへのpushだけでクラスターへ自動デプロイしたい（宣言的CD）」→ Flux（GitOps）。「マイクロサービス間の状態管理・Pub/Subを言語非依存で実装したい」→ Dapr。</div>
+    </div>
+  </div>
+
   <div class="group-title">ネットワーク</div>
 
   <div class="card">
