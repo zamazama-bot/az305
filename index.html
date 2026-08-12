@@ -785,6 +785,39 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">Log Analyticsのテーブルプラン（Basic Logs / Analytics Logs）でコストがどう変わるか理解したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">取り込みとクエリ、どちらの課金モデルが逆転するかで判断</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="viz-wrap">
+        <div class="viz-title">Analytics Logs vs Basic Logs の課金モデル比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">Analytics Logs（標準プラン）</div>
+            <div class="tier-spec">データ取り込み料金：<b>比較的高額</b></div>
+            <div class="tier-spec">クエリ料金：<b>無料（含まれる）</b></div>
+            <div class="tier-spec">機能：<b>全KQL機能・アラート・ダッシュボード等フル活用可</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Basic Logs（低コストプラン）</div>
+            <div class="tier-spec">データ取り込み料金：<b>非常に安価（Analyticsの目安1/5程度）</b></div>
+            <div class="tier-spec">クエリ料金：<b>実行のたびにスキャンしたデータ量（GB）に応じて課金（有料）</b></div>
+            <div class="tier-spec">機能：<b>制限あり（アラート不可・複雑な結合クエリ不可等）</b></div>
+          </div>
+        </div>
+      </div>
+      <ul>
+        <li><strong>Basic Logsに変更すると増加するコスト</strong>：ログクエリ（Log queries）。Analyticsではクエリ実行が無料だが、Basicではクエリのたびにデータ量課金が発生するため。</li>
+        <li><strong>Basic Logsに変更すると削減されるコスト</strong>：データ取り込み（Ingestion）。大量に収集するが普段はほとんど検索しないデバッグ用ログ・セキュリティログの取り込み単価を大幅に下げられる。</li>
+      </ul>
+      <div class="tip">⚠ 「取り込み量は多いが検索頻度は低いテーブル」→ Basic Logsで取り込みコストを削減。逆に「検索・アラート・ダッシュボードを頻繁に使うテーブル」→ Basic Logsに変えるとクエリ課金が積み重なり、かえって高くつく場合がある。Basic/Analyticsはテーブル単位で切り替え可能なテーブルプラン（table plan）であり、ワークスペース全体を一括で変更する設定ではない。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">Azureリソースの設定ミス・セキュリティリスクを継続的に評価したい</span>
       <span class="arrow">→</span>
       <span class="answer">Microsoft Defender for Cloud（旧 Security Center）</span>
