@@ -48,7 +48,7 @@
     .badge-hot { background: #fdecea; color: var(--hot); border: 1.5px solid #f4a7a2; }
 
     .card-body { padding: 14px 18px; font-size: 0.88rem; color: var(--muted); }
-    .card-body ul { padding-left: 18px; }
+    .card-body ul, .card-body ol { padding-left: 18px; }
     .card-body li { margin-bottom: 5px; }
     .card-body strong { color: var(--text); }
     .card-body .tip { display: block; background: var(--yellow-bg); color: var(--yellow); border-left: 4px solid #f0a030; padding: 8px 12px; margin-top: 10px; border-radius: 0 6px 6px 0; font-size: 0.84rem; }
@@ -770,6 +770,21 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">多数のLog Analyticsワークスペース／Application InsightsをPrivate Endpoint経由に限定したいが、リソースごとに個別のPrivate Endpointは作りたくない</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Monitor プライベートリンクスコープ（AMPLS）</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>AMPLSは、複数のLog AnalyticsワークスペースやApplication Insightsリソースを1つの「スコープ」としてまとめて登録できるリソース。VNetごとに<strong>1つのPrivate Endpoint</strong>をAMPLSに対して作成すれば、スコープに登録した全リソースへプライベートに接続できる（リソースの数だけPrivate Endpointを作る必要がない）。</li>
+        <li>AMPLSにリソースをスコープ登録しても、そのリソース自体のパブリックネットワークアクセスは自動的には無効化されない。インターネット経由のアクセスを完全に遮断するには、<strong>各ワークスペース／Application Insights側でパブリックネットワークアクセス（取り込み・クエリとも）を個別に無効化</strong>する必要がある。</li>
+        <li>AMPLSはリソースを明示的にスコープ登録した場合にのみ影響する。スコープに含めていないワークスペースは、既存のパブリックアクセス設定のまま維持される（一部だけプライベート化する構成も可能）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">Azureリソースの設定ミス・セキュリティリスクを継続的に評価したい</span>
       <span class="arrow">→</span>
       <span class="answer">Microsoft Defender for Cloud（旧 Security Center）</span>
@@ -1388,6 +1403,71 @@
         </div>
       </div>
       <div class="tip">Azure-SSIS統合ランタイムがオンプレSQL Serverに到達する必要がある場合は、ExpressRoute/VPNで接続されたVNetにIRを参加させる。DMSはオンライン移行なら継続レプリケーションで最小ダウンタイム、Storage Migration ServiceはWindows Admin Center経由で実行。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure Migrateでオンプレミス VM（VMware/Hyper-V）をAzureへ移行する手順</span>
+      <span class="arrow">→</span>
+      <span class="answer">探索 → アセスメント → レプリケーション → 移行（カットオーバー）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ol>
+        <li>Azure Migrateプロジェクトを作成し、「探索とアセスメント」ツール（Azure Migrate: Discovery and assessment）を追加する。</li>
+        <li>ポータルから<strong>移行アプライアンス（OVAテンプレート等）をダウンロード</strong>し、オンプレミスの仮想化基盤（vCenter配下など）にデプロイする。</li>
+        <li>アプライアンスの構成用URLを開き、<strong>プロジェクトキーで登録</strong>し、vCenter/Hyper-Vホストへの接続情報を入力する。</li>
+        <li>アプライアンスが対象VM群を継続的に<strong>探索</strong>し、パフォーマンスデータを収集する。</li>
+        <li>収集データをもとに<strong>アセスメント</strong>（Azure推奨サイズ・月額コスト見積り・互換性チェック）を実行する。</li>
+        <li>「サーバー移行」ツール（Azure Migrate: Server Migration）を追加し、対象VMの<strong>レプリケーションを有効化</strong>する（初回フルレプリケーション後、継続的な差分同期）。</li>
+        <li>隔離されたネットワークで<strong>テスト移行</strong>を実施し、起動・動作を検証する。</li>
+        <li>準備が整ったら<strong>カットオーバー（移行）</strong>を実行。最終差分同期後にレプリケーションを終了し、Azure VMとして起動する。</li>
+      </ol>
+      <div class="tip">VMwareはエージェントレス（アプライアンスが探索・レプリケーションを代行）。Hyper-V／物理サーバーは対象VM内に<strong>Mobility Serviceエージェント</strong>をインストールするエージェントベースの構成になる点に注意（試験ではこの違いが問われやすい）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Azure Data Factoryでデータ移行／ETLパイプラインを構築する手順</span>
+      <span class="arrow">→</span>
+      <span class="answer">リンクサービス → （統合ランタイム）→ データセット → パイプライン → トリガー</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ol>
+        <li>Data Factoryインスタンスを作成する。</li>
+        <li><strong>リンクサービス（Linked Service）</strong>を作成し、ソース／シンクへの接続情報（認証情報を含む）を定義する。</li>
+        <li>オンプレミスのデータストアに接続する場合、対象サーバーに<strong>セルフホステッド統合ランタイム（Self-hosted IR）</strong>をインストールし、Data Factoryに登録する。</li>
+        <li><strong>データセット（Dataset）</strong>を作成し、リンクサービス上の具体的なデータ構造（テーブル・ファイルパス等）を指定する。</li>
+        <li><strong>パイプライン</strong>を作成し、Copyアクティビティ（単純コピー）またはMapping Data Flow（変換を伴うETL）を追加する。</li>
+        <li><strong>トリガー</strong>（スケジュール実行・イベントベース・手動）を設定し、パイプラインを実行する。</li>
+        <li>「監視」タブでパイプラインの実行状況・失敗の原因を確認する。</li>
+      </ol>
+      <div class="tip">増分ロード（毎回全件でなく差分のみ取り込む）には、前回実行時のウォーターマーク値（最終更新日時等）をコントロールテーブルに保存し、Lookupアクティビティで取得 → Copyアクティビティでフィルタ → 実行後に最大値へ更新、という「ウォーターマーク方式」が定番パターン。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Database Migration Service（DMS）でオンプレミスDBをAzureへ移行する手順</span>
+      <span class="arrow">→</span>
+      <span class="answer">移行プロジェクト作成 → 接続情報入力 → （継続）レプリケーション → カットオーバー</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ol>
+        <li>ソースDBに到達できるVNet内に<strong>Database Migration Serviceインスタンス</strong>を作成する。</li>
+        <li>移行プロジェクトを作成し、<strong>ソースDBの種類・ターゲットの種類・移行モード（オフライン／オンライン）</strong>を選択する。</li>
+        <li>ソースDBサーバーへの接続情報（認証情報）を入力する。</li>
+        <li>ターゲット（Azure SQL Database／Managed Instance／VM上のSQL Server等）への接続情報を入力する。</li>
+        <li>移行対象のデータベース・スキーマを選択する。</li>
+        <li>（オンラインモードの場合）完全バックアップの復元後、<strong>継続的なレプリケーション</strong>によりトランザクションログを適用し続け、ソースとターゲットの差分を最小化する。</li>
+        <li>準備が整ったらアプリケーションを一時停止し、最終同期の完了を待って<strong>カットオーバー</strong>を実行する。</li>
+        <li>アプリケーションの接続文字列をターゲットに切り替える。</li>
+      </ol>
+      <div class="tip">オフラインモードはダウンタイムが大きいがシンプル、オンラインモードは継続レプリケーションでダウンタイムを最小化できるが構成がやや複雑。SQL Server→Azure SQL MIの移行で対応バージョン（SQL Server 2016 SP3以降／2017／2019 CU20以降／2022）であれば、<strong>Managed Instance link</strong>による継続レプリケーションも選択肢になる。</div>
     </div>
   </div>
 
@@ -2250,6 +2330,131 @@
         <li>Uniform：同一構成のVMを大量にデプロイする従来モデル。すべて同一VMサイズ。</li>
       </ul>
       <div class="tip">「異なるVMサイズを混在させたい」「可用性セットとゾーンを併用したい」→ Flexibleモードが正解。</div>
+    </div>
+  </div>
+
+  <div class="group-title">Kubernetes / AKS基礎</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">Kubernetes/AKSの基本オブジェクト（Pod・Node・Deployment等）の役割が分からない</span>
+      <span class="arrow">→</span>
+      <span class="answer">Node→Pod、Deployment→ReplicaSet→Pod、Serviceは安定した入口</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <tr><th>オブジェクト</th><th>役割</th></tr>
+        <tr><td>Node</td><td>Podを実行する仮想マシン（AKSではAzure VM）。複数のNodeが集まって「ノードプール」を構成する</td></tr>
+        <tr><td>Pod</td><td>1つ以上のコンテナーをまとめた、Kubernetesにおける最小のデプロイ単位。同じPod内のコンテナーはIPアドレス・ストレージボリュームを共有する</td></tr>
+        <tr><td>ReplicaSet</td><td>指定した数のPodレプリカが常に起動している状態を維持する（Podが落ちたら自動的に再作成）</td></tr>
+        <tr><td>Deployment</td><td>ReplicaSetを管理する上位リソース。ローリングアップデートやロールバックなど、Podの世代管理を担う</td></tr>
+        <tr><td>Service</td><td>再作成のたびにIPアドレスが変わるPodに対して、安定した1つのアクセス経路（仮想IP／DNS名）を提供する</td></tr>
+      </table>
+      <div class="tip">通常はPodやReplicaSetを直接操作せず<strong>Deploymentを作成</strong>する。Deployment→ReplicaSet→Podという3層構造で、DeploymentがReplicaSetを作り、ReplicaSetがPodを必要数維持する。Podは再作成されるとIPアドレスが変わるため、Podへ安定してアクセスするには必ずServiceを経由させる。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AKSでPod/Nodeの数やサイズを負荷に応じて自動的に増減させたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">HPA（水平）／VPA（垂直）／Cluster Autoscaler（Node数）／Virtual Nodesを使い分ける</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="viz-wrap">
+        <div class="viz-title">4つの自動スケール機能の違い</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">HPA（水平Pod自動スケーラー）</div>
+            <div class="tier-spec">対象：<b>Podの数</b></div>
+            <div class="tier-spec">仕組み：<b>CPU使用率など指定メトリクスに応じてPodレプリカ数を増減。「水平」＝同じ大きさのPodを横に増減</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">VPA（垂直Pod自動スケーラー）</div>
+            <div class="tier-spec">対象：<b>Pod1つのサイズ</b></div>
+            <div class="tier-spec">仕組み：<b>個々のPodのCPU/メモリのリクエスト・リミット値を自動調整。「垂直」＝Pod自体を大きく/小さく</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Cluster Autoscaler</div>
+            <div class="tier-spec">対象：<b>Nodeの数</b></div>
+            <div class="tier-spec">仕組み：<b>Podをスケジュールできない（リソース不足）場合にNodeを追加。余剰Nodeは自動削除</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Virtual Nodes</div>
+            <div class="tier-spec">対象：<b>バーストキャパシティ</b></div>
+            <div class="tier-spec">仕組み：<b>ACI（サーバーレスコンテナー）を仮想的なNodeとして連携。通常のNode追加より数秒単位で高速にバースト対応</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">HPAとCluster Autoscalerは連動して使われることが多い（HPAがPodを増やす→既存Nodeに乗り切らない→Cluster AutoscalerがNodeを追加）。<strong>KEDA</strong>はHPAを拡張し、CPU/メモリ以外の外部イベントソース（Service Busキューの滞留数など）をスケーリングのトリガーにできる仕組み。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AKSのネットワークモデル（kubenet / Azure CNI）をどう選ぶか</span>
+      <span class="arrow">→</span>
+      <span class="answer">IPアドレス消費量とWindowsノードプール対応で選ぶ</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="viz-wrap">
+        <div class="viz-title">AKSネットワークモデルの比較</div>
+        <div class="tier-grid">
+          <div class="tier-card">
+            <div class="tier-name">kubenet</div>
+            <div class="tier-spec">IP消費：<b>少ない（NodeのみVNet IPを消費、Pod間はNode内でNAT）</b></div>
+            <div class="tier-spec">Windowsノードプール：<b>非対応</b></div>
+            <div class="tier-spec">備考：<b>2028年3月31日に廃止予定。新規構築では非推奨</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Azure CNI（従来モード）</div>
+            <div class="tier-spec">IP消費：<b>多い（Pod単位でVNet IPを事前予約）</b></div>
+            <div class="tier-spec">Windowsノードプール：<b>対応</b></div>
+          </div>
+          <div class="tier-card best">
+            <div class="tier-name">Azure CNI Overlay</div>
+            <div class="tier-spec">IP消費：<b>少ない（独自のオーバーレイアドレス空間からPodへ割当）</b></div>
+            <div class="tier-spec">Windowsノードプール：<b>対応</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">現在Microsoftは多くのシナリオで<strong>Azure CNI Overlay</strong>を既定の推奨としている（kubenetは廃止予定のため新規構築では避ける）。「限られたVNetアドレス空間でWindowsノードプールも使いたい」→ Azure CNI Overlayの一択。ピアリング先のVNetからPodへ直接到達する必要がある場合はAzure CNI（従来）を検討。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AKSのノードプール設計とアップグレード時の注意点</span>
+      <span class="arrow">→</span>
+      <span class="answer">システム／ユーザーノードプールを分離、Max Surgeでダウンタイムを回避</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>システムノードプール</strong>：CoreDNS/metrics-server等、クラスター基盤に必須のPodを実行する専用プール（CriticalAddonsOnlyのtaintで分離するのが推奨）。</li>
+        <li><strong>ユーザーノードプール</strong>：アプリケーションのワークロードを実行する。システムPodと分離することでリソース競合を防ぐ。</li>
+        <li>ノードプールのアップグレード時、既定の<strong>Max Surge</strong>は1。追加のサージNodeを新バージョンで先に用意し、そこへPodを退避（コルドン＆ドレイン）させてから古いNodeを削除するため、アップグレード中も処理能力を維持しやすい。</li>
+        <li>ノードイメージのみの更新（OSセキュリティパッチ）とKubernetesバージョン自体のアップグレードは、それぞれ独立してスケジュール・実行できる。</li>
+      </ul>
+      <div class="tip">「アップグレード中もキャパシティを落としたくない」→ Max Surgeを既定の1よりさらに大きい値（例：33%）に設定する。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">AKSクラスターの可用性とAPIサーバーへのアクセス制御</span>
+      <span class="arrow">→</span>
+      <span class="answer">可用性ゾーン＋プライベートクラスター／Authorized IP ranges</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>可用性ゾーンを有効にすると、Nodeが単一リージョン内の複数ゾーンに分散配置され、ゾーン障害への耐性が上がる（複数ゾーンへの分散に追加コストはかからない）。</li>
+        <li>APIサーバー（コントロールプレーン）へのアクセス制限には2つの方法がある：①<strong>プライベートクラスター</strong> - APIサーバーのエンドポイントをプライベートIPのみにし、インターネットから到達不可にする。②<strong>Authorized IP ranges</strong> - パブリックエンドポイントは維持しつつ、許可したIP範囲からのみアクセスを受け付ける。</li>
+        <li>Microsoft Entra ID統合により、ユーザー/グループ単位でAzure RBACベースのKubernetes認可（kubectl操作の権限）を構成できる。</li>
+      </ul>
+      <div class="tip">「既存のパブリックFQDNを維持したまま特定IPだけに絞りたい」→ Authorized IP ranges。「パブリックIPアドレス自体を完全に無くしたい」→ プライベートクラスター。</div>
     </div>
   </div>
 
