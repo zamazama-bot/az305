@@ -2575,6 +2575,7 @@
         <li>モード：<strong>検出（Detection）</strong>＝ログのみで遮断しない。<strong>防止（Prevention）</strong>＝一致したリクエストをブロックする。</li>
         <li>ルール：マネージドルールセット（OWASP CRS等のMicrosoft管理シグネチャ）とカスタムルール（IP制限・レート制限・地理フィルタ等を自前定義）を組み合わせ可能。</li>
         <li>WAFはApplication Gateway（WAF SKU）とFront Door（Standard/Premium）の双方に構成できる。</li>
+        <li><strong>単一リージョンのアプリでWAFが必要なだけ</strong>なら、Application Gateway（WAF v2）の方がコスト効率が良い。Front Doorはグローバル（複数リージョン）向けのL7ロードバランサー＋CDN機能を持つため、単一リージョンだけの要件に対しては過剰でコストも高くなりやすい。</li>
       </ul>
       <div class="viz-wrap">
         <div class="viz-title">Front Door: Standard vs Premium（WAF関連機能）</div>
@@ -2902,6 +2903,30 @@
         <li>Private Endpoint for App Service：App ServiceへのインバウンドをVNet内に限定。</li>
         <li>ASE（App Service Environment）：完全にVNet内に配置する専用環境（高コスト・高セキュリティ）。</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">VNet統合とPrivate Endpointのどちらを使うべきか混同しやすい</span>
+      <span class="arrow">→</span>
+      <span class="answer">向きが逆：VNet統合＝送信（出ていく通信）、Private Endpoint＝受信（入ってくる通信）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">VNet統合 vs Private Endpoint（通信の向き）</div>
+        VNet統合　＝　App Serviceなど<strong>PaaSリソースから外へ出ていく</strong>通信（送信）をVNet経由にする機能<br>
+        Private Endpoint　＝　<strong>外部の利用者からPaaSリソースへ入ってくる</strong>通信（受信）をVNet内のプライベートIP経由にする機能
+      </div>
+      <table>
+        <tr><th>実現したい通信</th><th>使う機能</th></tr>
+        <tr><td>App Service（PaaS）→ VM上のDB・別VNet内のリソースへアクセス</td><td>VNet統合</td></tr>
+        <tr><td>App Service（PaaS）→ Azure SQL DB・Storage・Key Vault等の他PaaSへアクセス</td><td>VNet統合（＋接続先PaaS側にもPrivate Endpointがあれば経路全体が非公開）</td></tr>
+        <tr><td>VNet内の利用者 → App Service（PaaS）へ完全非公開でアクセス</td><td>App ServiceのPrivate Endpoint</td></tr>
+        <tr><td>VNet内のクライアント → Azure SQL DB・Storage・Key Vault等へ非公開アクセス</td><td>対象PaaSのPrivate Endpoint</td></tr>
+      </table>
+      <div class="tip">⚠ よくある間違い：「App1（PaaS）からVM上のDBへアクセスをプライベート化したい」→ 送信側の話なので<strong>VNet統合</strong>が正解。VM自体は既にVNet内のプライベートIPを持っているため、App1はVNet統合を通じてそのIPへ直接到達できる（VM側にPrivate Endpointは不要。Private Endpointは主にPaaS側リソースを非公開化する際に使う機能）。逆に「外部からApp Serviceへの受信だけを非公開にしたい」場合はPrivate Endpointを使い、App Service側のパブリックアクセスを無効化する。</div>
     </div>
   </div>
 </div>
