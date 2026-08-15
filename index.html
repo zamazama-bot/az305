@@ -1634,39 +1634,45 @@
     <div class="card-header">
       <span class="keyword">複数ソースのデータを統合してビッグデータ分析・DWHを構築したい</span>
       <span class="arrow">→</span>
-      <span class="answer">用途に応じてSynapse / Fabric / Databricks / Stream Analyticsを使い分ける</span>
+      <span class="answer">用途に応じてPower BI / Databricks / Fabric / Synapse Analytics / Stream Analyticsを使い分ける</span>
       <span class="badge badge-hot">頻出！</span>
     </div>
     <div class="card-body">
       <ul>
+        <li><strong>Microsoft Power BI</strong>：ビジネスユーザー向けのセルフサービスBI（ビジネスインテリジェンス）ツール。コーディングなしにドラッグ&ドロップで対話型ダッシュボード・レポートを作成・共有できる。行レベルセキュリティ（RLS）で、同一レポートを共有しながら閲覧者ごとに見えるデータ行を絞り込める。</li>
         <li><strong>Azure Synapse Analytics</strong>：DWH（専用SQLプール）とビッグデータ処理（Sparkプール）、パイプライン（Data Factory相当）を1つのワークスペースに統合した分析プラットフォーム。大規模構造化データのバッチ分析・レポーティングが中心。</li>
-        <li><strong>Microsoft Fabric</strong>：Synapse・Power BI・Data Factoryなどを単一SaaSに統合した次世代分析基盤。<strong>OneLake</strong>（全ワークロード共通の単一データレイク）を中核に、取り込みから可視化までEnd-to-Endを1製品で完結させる。新規の全社統合分析基盤として推奨される方向性。</li>
-        <li><strong>Azure Databricks</strong>：Apache Spark基盤のデータ処理・機械学習プラットフォーム。Notebook中心のデータエンジニアリング・データサイエンス・MLOpsに強い。Spark専門チームがいる場合や高度なML/AIパイプラインに向く。</li>
+        <li><strong>Microsoft Fabric</strong>：Synapse・Power BI・Data Factoryなどを単一SaaSに統合した次世代分析基盤。<strong>OneLake</strong>（全ワークロード共通の単一データレイク）を中核に、取り込みから可視化までEnd-to-Endを1製品で完結させる。容量ベース（F SKU）の単一課金モデルで、個別にコンピューティングをプロビジョニングする必要がない。新規の全社統合分析基盤として推奨される方向性。</li>
+        <li><strong>Azure Databricks</strong>：Apache Spark基盤のデータ処理・機械学習プラットフォーム。Notebook中心のデータエンジニアリング・データサイエンス・MLOpsに強い。<strong>Azure/AWS/Google Cloudいずれでもほぼ同じ操作性</strong>で使えるため、マルチクラウドで一貫したプラットフォームを維持したい場合にも適する。Spark専門チームがいる場合や高度なML/AIパイプラインに向く。</li>
         <li><strong>Azure Stream Analytics</strong>：IoT Hub/Event Hubs等からのリアルタイムストリームデータをSQL風クエリで処理。バッチではなく<strong>低レイテンシのリアルタイム処理</strong>に特化。</li>
       </ul>
       <div class="decision-ladder">
+        <div class="decision-step">
+          <span class="cond">コーディング不要で対話型ダッシュボード・レポートをビジネスユーザーに配布したい</span>
+          <span class="arrow">→</span>
+          <span class="result">Power BI</span>
+        </div>
         <div class="decision-step">
           <span class="cond">リアルタイムストリーム処理（秒〜ミリ秒単位）が主目的</span>
           <span class="arrow">→</span>
           <span class="result">Stream Analytics</span>
         </div>
         <div class="decision-step">
-          <span class="cond">Spark/Notebookベースの大規模データエンジニアリング・ML/AIが中心</span>
+          <span class="cond">Spark/Notebookベースの大規模データエンジニアリング・ML/AIが中心（マルチクラウドでも一貫させたい）</span>
           <span class="arrow">→</span>
           <span class="result">Databricks</span>
         </div>
         <div class="decision-step">
-          <span class="cond">BI・可視化まで含めた全社統合SaaS基盤を新規構築したい</span>
+          <span class="cond">BI・可視化まで含めた全社統合SaaS基盤を、個別プロビジョニングなしで新規構築したい</span>
           <span class="arrow">→</span>
           <span class="result">Microsoft Fabric</span>
         </div>
         <div class="decision-step">
-          <span class="cond">DWH中心のバッチ分析・大規模SQL集計が中心</span>
+          <span class="cond">既存のT-SQL資産を活かしたDWH中心のバッチ分析・大規模SQL集計が中心</span>
           <span class="arrow">→</span>
-          <span class="result">Synapse Analytics</span>
+          <span class="result">Synapse Analytics（専用SQLプール）</span>
         </div>
       </div>
-      <div class="tip">「バッチ vs リアルタイム」「DWH/SQL中心 vs Spark/ML中心」「個別サービス vs 統合SaaS」の軸で整理して覚える。試験ではキーワード（OneLake→Fabric、Spark/Notebook→Databricks、リアルタイムストリーム→Stream Analytics）から逆引きされることが多い。</div>
+      <div class="tip">「バッチ vs リアルタイム」「DWH/SQL中心 vs Spark/ML中心」「BI/可視化中心」「個別サービス vs 統合SaaS」の軸で整理して覚える。試験ではキーワード（OneLake→Fabric、Spark/Notebook→Databricks、リアルタイムストリーム→Stream Analytics、ダッシュボード/RLS→Power BI）から逆引きされることが多い。Power BIはFabricにも統合されているが、単体サービスとしても利用可能な点に注意（「Fabricの一部の機能だけを使いたい」＝Power BI単体という設問パターンもある）。</div>
     </div>
   </div>
 </div>
@@ -3443,6 +3449,42 @@
   </div>
 
   <div class="group-title">マイクロサービス・コンテナ</div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">コンテナイメージのビルド・格納・自動更新をマネージドに行いたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Container Registry（ACR）＋ ACR Tasks</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Azure Container Registry（ACR）</strong>：Dockerコンテナイメージ・Helmチャート等を格納するプライベートなマネージドレジストリ。AKS/Container Apps/App Serviceなど各種コンピューティングサービスから直接イメージをpullできる。</li>
+        <li><strong>ACR Tasks</strong>：ACR上でコンテナイメージのビルド・プッシュ・テストをクラウド側で自動実行する機能群。ローカルにDockerデーモンを用意しなくても<code>docker build</code>相当の処理をAzure側で実行できる（Quick Task）。</li>
+      </ul>
+      <div class="viz-wrap">
+        <div class="viz-title">ACR Tasksの3つの自動トリガー</div>
+        <div class="tier-grid">
+          <div class="tier-card best">
+            <div class="tier-name">ベースイメージ更新トリガー</div>
+            <div class="tier-spec">きっかけ：<b>参照しているベースイメージ（OSパッチ等）が更新された時</b></div>
+            <div class="tier-spec">用途：<b>依存する全イメージを自動的に再ビルドし、パッチ適用漏れを防ぐ</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">ソースコードコミットトリガー</div>
+            <div class="tier-spec">きっかけ：<b>GitHub/Azure Reposへのコミット</b></div>
+            <div class="tier-spec">用途：<b>アプリコードの変更を検知して自動的にイメージを再ビルド</b></div>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">スケジュールトリガー</div>
+            <div class="tier-spec">きっかけ：<b>cron形式で指定した時刻</b></div>
+            <div class="tier-spec">用途：<b>定期的な再ビルド・メンテナンスタスクの実行</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="tip">⚠ 「Docker Hub等のベースイメージが更新されたら、それに依存するカスタムイメージを自動的に再ビルドしたい」→ ACR Tasksの<strong>ベースイメージ更新トリガー</strong>が正解（Azure DevOpsパイプラインを都度手動トリガーする必要がない）。複数ステップ（ビルド→テスト→プッシュ）を1つのワークフローにまとめたい場合はYAMLで定義する<strong>マルチステップタスク</strong>を使う。</div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="card-header">
