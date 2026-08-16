@@ -1692,6 +1692,28 @@
       <div class="tip">「バッチ vs リアルタイム」「DWH/SQL中心 vs Spark/ML中心」「BI/可視化中心」「個別サービス vs 統合SaaS」の軸で整理して覚える。試験ではキーワード（OneLake→Fabric、Spark/Notebook→Databricks、リアルタイムストリーム→Stream Analytics、ダッシュボード/RLS→Power BI）から逆引きされることが多い。Power BIはFabricにも統合されているが、単体サービスとしても利用可能な点に注意（「Fabricの一部の機能だけを使いたい」＝Power BI単体という設問パターンもある）。</div>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">オンプレ・複数クラウド・複数DBにまたがるデータを1つの検索可能なカタログで管理したい（ストレージ最小限）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Microsoft Purview（データマップ）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Microsoft Purview</strong>は、ハイブリッド／マルチクラウド環境に存在するデータソース（Azure SQL DB、Cosmos DB、Synapse、SQL Server、Oracle、MySQL等）を自動スキャンし、<strong>データそのものではなくメタデータ（スキーマ・分類・機密度・系統情報等）だけを収集して1つの検索可能なカタログ（データマップ）を構築する</strong>データガバナンスサービス。実データは複製・移動しないため、ストレージ消費を最小限に抑えられる。</li>
+        <li>データの<strong>分類（機密情報の自動タグ付け）</strong>、<strong>データ系統（lineage）の可視化</strong>（どのパイプラインを経てデータが加工・移動したか）、<strong>アクセスポリシーの一元管理</strong>も提供する。</li>
+        <li>Purview自体は分析エンジン（クエリ実行基盤）ではないため、実際にデータを集約してビッグデータ分析・機械学習モデルを構築する用途には使えない。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">Microsoft Purview vs Azure Synapse Analytics（似た文脈で出るが役割が違う）</div>
+        Purview　＝　<strong>「メタデータだけ」を集めてカタログ化</strong>する統治・検索の仕組み。ストレージ要件は最小限<br>
+        Synapse Analytics　＝　<strong>実データを集約するデータレイク＋分析エンジン（Sparkプール等）</strong>を提供し、その上で機械学習モデルの構築等を行う実行基盤
+      </div>
+      <div class="tip">⚠ 「すべてのデータベース内のデータを検索可能な単一カタログにしたい。ストレージ要件は最小限に」→ <strong>Purviewデータマップ</strong>。「複数データベースからのデータを集約した中央データレイクを用意し、機械学習モデルを構築できるビッグデータエンジンが必要」→ <strong>Azure Synapse Analytics</strong>。この2つは同じ問題文の中で「カタログ化」と「実データ集約・分析」という異なる要件として併記されることが多く、両方を正しく使い分ける設問パターンが頻出。</div>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================ -->
