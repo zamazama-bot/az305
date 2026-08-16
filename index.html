@@ -3111,6 +3111,28 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">IoT/大量テレメトリのリアルタイム処理パイプラインをどう組み立てるか</span>
+      <span class="arrow">→</span>
+      <span class="answer">Event Hubs（IoT Hub）→ Stream Analytics → Functions が典型構成</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">3段構成それぞれの役割</div>
+        <strong>①取り込み</strong>：Event Hubs（またはIoT Hub）が大量デバイス/送信元からのストリームを高スループットで受信・バッファリングする<br>
+        <strong>②処理</strong>：Stream Analyticsが、SQL風クエリでウィンドウ集計（例：5分間の平均値）・異常検知・フィルタリングなどをリアルタイムに実行する<br>
+        <strong>③後続アクション</strong>：Stream Analyticsの出力（Output）としてAzure Functionsを呼び出し、しきい値超過時のアラート送信・DB書き込み・他システム連携等のカスタムロジックを実行する
+      </div>
+      <ul>
+        <li>Stream Analyticsの出力（Output）はFunctionsだけでなく、<strong>Power BI（リアルタイムダッシュボード）／Blob Storage・ADLS（アーカイブ）／Cosmos DB・SQL DB（永続化）／Service Bus・Event Hubs（他システムへの連携）</strong>など複数を同時に指定できる。「集計結果を可視化しつつ、異常値だけFunctionsでアラート」のような並列出力構成も可能。</li>
+        <li>この3段構成は「取り込み（Event Hubs/IoT Hub）」「ストリーム処理（Stream Analytics）」「カスタムロジック（Functions）」という<strong>役割分担が明確な疎結合パイプライン</strong>であり、IoT以外の大量ログ/クリックストリーム分析にも同じ構成パターンが使われる。</li>
+      </ul>
+      <div class="tip">⚠ 試験では「大量のセンサーデータをリアルタイムで取り込み、異常検知して即座に通知したい」のような設問で、この3段構成のどこか1段を埋めさせる（例：「②に該当するのは？」）出題パターンが多い。取り込み段でデバイス個別のID管理・双方向通信が必要ならIoT Hub、そうでなければEvent Hubsで十分。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">サービス間の疎結合・イベント駆動アーキテクチャを実現したい</span>
       <span class="arrow">→</span>
       <span class="answer">Azure Event Grid</span>
