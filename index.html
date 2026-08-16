@@ -1714,6 +1714,22 @@
       <div class="tip">⚠ 「すべてのデータベース内のデータを検索可能な単一カタログにしたい。ストレージ要件は最小限に」→ <strong>Purviewデータマップ</strong>。「複数データベースからのデータを集約した中央データレイクを用意し、機械学習モデルを構築できるビッグデータエンジンが必要」→ <strong>Azure Synapse Analytics</strong>。この2つは同じ問題文の中で「カタログ化」と「実データ集約・分析」という異なる要件として併記されることが多く、両方を正しく使い分ける設問パターンが頻出。</div>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="keyword">複数のデータベースからの特定のデータを含む中央データレイクを提供する。ソリューションには、機械学習モデルを作成できるビッグデータエンジンが含まれている必要がある</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Synapse Analytics</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li>「複数データベースから<strong>特定のデータを集約した中央データレイク</strong>」＝ 単なるカタログ化ではなく実データそのものを一箇所に集める要件。</li>
+        <li>「<strong>機械学習モデルを作成できるビッグデータエンジン</strong>」＝ Sparkプールのようなコード実行基盤が必要という意味。Purviewのようなガバナンス専用サービスにはこの実行エンジンがない。</li>
+        <li>この2条件（実データ集約のデータレイク＋ML構築可能なビッグデータエンジン）を同時に満たすのが<strong>Azure Synapse Analytics</strong>（Sparkプール＋専用SQLプール＋パイプラインを統合したワークスペース）。Microsoft FabricやAzure Databricksも技術的には近い要件を満たせるが、この定番フレーズ自体は公式教材でSynapse Analyticsの説明として使われる。</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
 <!-- ============================================================ -->
