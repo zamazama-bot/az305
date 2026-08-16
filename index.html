@@ -1062,6 +1062,27 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">PostgreSQLで「行ベースのシャーディング」により書き込みを水平スケーリングしたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure Database for PostgreSQL Flexible Server の Elastic Clusters（Citus拡張機能）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Elastic Clusters</strong>は、OSSのCitus拡張機能をベースにしたPostgreSQL Flexible Serverのマネージド機能で、複数のFlexible Serverインスタンス（ノード）を束ねて1つの分散PostgreSQLクラスターとして扱える。</li>
+        <li><strong>分散テーブル（distributed tables）</strong>：テーブルの特定の列（distribution column）の値をハッシュ化し、複数ワーカーノードに<strong>行単位でシャーディング</strong>して配置する仕組み。データはノードをまたいで分散されるため、<strong>クエリ・書き込みの両方を複数ノードに並列分散でき、水平スケーリングが可能</strong>（通常のマネージドPostgreSQLは書き込みが単一プライマリに限定される点と対照的）。</li>
+        <li>行ベースのシャーディングに加え、スキーマ単位でノードに配置する<strong>スキーマベースシャーディング</strong>（マルチテナントSaaSでテナントごとにスキーマを分ける構成向け）も選択できる。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">名前に注意：Azure Cosmos DB for PostgreSQL</div>
+        「Azure Cosmos DB for PostgreSQL」という<strong>別名の製品も存在</strong>し、同じくCitus拡張機能ベースの分散テーブルで行ベースシャーディングを実現していた。<strong>名前に「Cosmos DB」と付くが、これはNoSQLのCosmos DB本体エンジンとは無関係の、PostgreSQL互換のリレーショナルデータベース</strong>である点に注意（試験の紛らわしい選択肢として登場しうる）。現在は新規デプロイが停止されており、後継である<strong>Flexible ServerのElastic Clusters</strong>への移行が案内されている。
+      </div>
+      <div class="tip">⚠ 「行ベースのシャーディング」「書き込みの水平スケーリング」「Citus」というキーワードが出たら、まずFlexible ServerのElastic Clustersを想起する。選択肢に「Cosmos DB for PostgreSQL」があっても、名前に惑わされず「PostgreSQL互換のリレーショナルDB」として同列に検討してよい（NoSQLのCosmos DBとは別物）。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">複数DBのコストを最小化しつつまとめて管理したい</span>
       <span class="arrow">→</span>
       <span class="answer">Azure SQL Database エラスティックプール</span>
