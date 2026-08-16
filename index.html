@@ -818,6 +818,23 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">エンドユーザー視点でアプリの死活・応答性を定期的に外部から検証したい（合成トランザクション監視）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Application Insightsの可用性テスト（標準テスト／カスタム可用性テスト）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>標準テスト（Standard test）</strong>：URLを指定するだけで、世界中の複数リージョンからHTTP(S)リクエストを定期送信し、応答コード・SSL証明書の有効性・応答時間を検証できるノーコードの合成監視。パブリックにインターネットから到達可能なエンドポイントが対象。</li>
+        <li><strong>カスタム可用性テスト（TrackAvailability API）</strong>：単純なURL到達性チェックだけでなく、<strong>複数手順にまたがる業務ロジックの検証</strong>（例：ログイン→検索→注文作成の一連のAPI呼び出しをすべて検証）や、<strong>インターネットから直接到達できない内部エンドポイント</strong>の監視が必要な場合に使う。自前のコードでテストを実装し、Application InsightsのSDKが提供する<code>TrackAvailability()</code>APIで結果（成功/失敗・応答時間・場所）を送信する。</li>
+        <li>カスタム可用性テストの実行基盤として、<strong>タイマートリガーのAzure Functions</strong>を使うのが定番パターン。サーバーレスで一定間隔（例：5分ごと）に自動実行でき、Application InsightsのSDKと接続文字列で簡単に統合できる。VNet統合すれば、パブリックに公開していない社内向けAPIの合成トランザクション監視も実現できる。</li>
+      </ul>
+      <div class="tip">⚠ 「単純なURL疎通確認だけでよい」→ 標準テスト（ノーコード）。「複数ステップの業務フローを検証したい／エンドポイントが非公開」→ タイマートリガーのAzure Functions＋TrackAvailability APIによるカスタム可用性テスト。旧来のURL PingテストやWeb Testレコーダーによるマルチステップテストは順次廃止され、標準テストへ一本化が進んでいる。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">Azureリソースの設定ミス・セキュリティリスクを継続的に評価したい</span>
       <span class="arrow">→</span>
       <span class="answer">Microsoft Defender for Cloud（旧 Security Center）</span>
