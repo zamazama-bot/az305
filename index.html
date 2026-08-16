@@ -3026,6 +3026,31 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">大量のIoTデバイスとクラウド間の双方向通信・デバイス管理を行いたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure IoT Hub（＋必要に応じてIoT Edge／IoT Central）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Azure IoT Hub</strong>：IoTデバイス群とクラウドをつなぐ中央ハブ。デバイス→クラウドのテレメトリ受信だけでなく、<strong>クラウド→デバイスへのコマンド送信（双方向通信）</strong>や、デバイスごとの個別ID・認証情報の管理（デバイスレジストリ）が中心的な特徴。</li>
+        <li><strong>デバイスツイン（Device Twins）</strong>：各デバイスの状態（構成・条件）をJSONで表現し、クラウド側が「望ましい状態（desired properties）」を書き込み、デバイス側が「実際の状態（reported properties）」を報告することで、非同期に状態を同期できる（デバイスがオフラインでも、次回接続時に反映される）。</li>
+        <li><strong>ダイレクトメソッド（Direct Methods）</strong>：デバイスがオンラインの間に、クラウドから同期的にコマンドを呼び出し即時応答を受け取る仕組み（例：デバイスの再起動を今すぐ実行）。</li>
+        <li><strong>Device Provisioning Service（DPS）</strong>：大量のデバイスを、手動登録なしに自動でIoT Hubへゼロタッチプロビジョニングする補助サービス。工場出荷時点でのデバイス大量展開に使う。</li>
+        <li><strong>Azure IoT Edge</strong>：IoT Hubで管理するロジック（コンテナー化されたモジュール）を、クラウドではなくデバイス側（ゲートウェイ／エッジ機器）で実行する仕組み。<strong>ネットワーク接続が不安定・オフラインでもローカルで処理を継続</strong>でき、接続が回復した時点でクラウドと同期する。大量データをクラウドへ送る前にローカルでフィルタリング・集約し、帯域幅を節約する用途にも使う。</li>
+        <li><strong>Azure IoT Central</strong>：IoT Hub等を土台にした、フルマネージドのSaaS型IoTアプリケーションプラットフォーム。バックエンドを自前で作り込まずに、GUI中心でIoTソリューションを素早く構築・運用したい場合に選ぶ。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">IoT Hub vs Event Hubs（似ているが別物）</div>
+        IoT Hub＝<strong>デバイス単位のID管理・双方向通信（クラウド→デバイスの制御）</strong>が可能。IoTシナリオに特化<br>
+        Event Hubs＝大量データの高速<strong>取り込み（一方向：デバイス/送信元→クラウドのみ）</strong>に特化。個々の送信元の認証・双方向コマンド送信の概念はない
+      </div>
+      <div class="tip">⚠ 「デバイスへコマンドを送りたい／デバイスごとに状態を管理したい」→ Event HubsではなくIoT Hub一択（Event Hubsはクラウドからデバイスへの送信経路を持たない）。「オフラインでも現場でリアルタイムに判断・処理したい」→ IoT Edgeでモジュールをデバイス側にデプロイ。「大量デバイスを自動的にIoT Hubへ登録したい」→ DPS。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">サービス間の疎結合・イベント駆動アーキテクチャを実現したい</span>
       <span class="arrow">→</span>
       <span class="answer">Azure Event Grid</span>
