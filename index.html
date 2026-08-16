@@ -1523,6 +1523,27 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">VM上のWebアプリだけをAzure App Serviceへ移行したい（VM自体はIaaSへ移行しない）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure MigrateのApp Service移行機能（VM移行とは別の専用ワークフロー）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <div class="compare">
+        <div class="compare-title">「VM（サーバー）の移行」と「Webアプリだけの移行」は別ワークフロー</div>
+        <strong>VM移行（Azure Migrate: Server Migration）</strong>：VM自体（OS・ミドルウェア含む全体）をAzure VMとしてリフト&シフトする。手順は「アプライアンスのデプロイ／Migrateエージェント展開」→「レプリケーション」→「テスト移行」→「カットオーバー」<br>
+        <strong>Webアプリのみの移行（Azure Migrate: App Service移行）</strong>：IIS上で稼働するASP.NET／ASP.NET CoreのWebアプリ<strong>だけ</strong>を検出し、コード・構成をApp Serviceへ移行する。VM本体はそのままオンプレミスに残る（対象はアプリ層のみ）
+      </div>
+      <ul>
+        <li>Azure Migrateの「App Service移行」機能は、VM単位ではなく<strong>Webアプリ単位</strong>で「検出（Discover）」→「評価（Assessment）」→「レプリケーション（コード/構成の移行）」という独自の手順で進む。VM全体のレプリケーションタスクやMigrateエージェントの展開は、この機能では不要（それらはVM自体を移行する場合の手順）。</li>
+        <li>1台のVM上に複数のWebアプリがホストされていても、アプリごとに個別のApp Serviceインスタンスへ移行できる。</li>
+      </ul>
+      <div class="tip">⚠ 設問に「VMは移行対象に含まず、Webアプリだけを移行する」という条件がある場合、選択肢に「レプリケーションタスクの実行（VM/サーバー向け）」や「Migrateエージェントの展開」が含まれていても<strong>それらはVM移行の手順であり不要</strong>。Webアプリ移行では「Webアプリの評価」「Webアプリのレプリケーション（コードのApp Serviceへのデプロイ）」のようなアプリ単位の手順のみが該当する。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">Azure Data Factoryでデータ移行／ETLパイプラインを構築する手順</span>
       <span class="arrow">→</span>
       <span class="answer">リンクサービス → （統合ランタイム）→ データセット → パイプライン → トリガー</span>
