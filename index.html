@@ -1501,6 +1501,28 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">オンプレのVMware環境をAzure上のVMware環境へ丸ごとリフト&シフトしたい（VM改修なし）</span>
+      <span class="arrow">→</span>
+      <span class="answer">Azure VMware Solution（AVS）＋ VMware HCXでライブマイグレーション</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Azure VMware Solution（AVS）</strong>：Azure上でネイティブのVMware環境（vSphere/vSAN/NSX）をホストするマネージドサービス。既存のVMware VMをコンバート不要でそのまま移行・運用できる。</li>
+        <li><strong>クラスターの最小ホスト数は3、1クラスターあたり最大16ホスト</strong>まで拡張可能（初回デプロイ時に最低3ホストが必要）。</li>
+        <li><strong>VMware HCX</strong>：オンプレのVMware環境とAVS間でVMをライブマイグレーション（無停止に近い形での移行）するための拡張ツール。</li>
+      </ul>
+      <div class="compare">
+        <div class="compare-title">HCX移行の接続方式：ExpressRoute vs Site-to-Site（S2S）VPN</div>
+        <strong>ExpressRoute</strong>＝専用線で帯域幅が広く低遅延・安定。大量VM移行や本番規模のHCXライブマイグレーションに<strong>推奨</strong>（Layer 2拡張を伴う移行では<strong>必須</strong>）<br>
+        <strong>Site-to-Site VPN</strong>＝インターネット経由でHCX接続自体はサポートされるが、帯域幅（通常1Gbps以下）や遅延の観点から、大量VM移行や本番規模の移行には不向き。少数VMの検証・小規模移行向け
+      </div>
+      <div class="tip">⚠ 「大量のVMを低遅延でHCXライブマイグレーションしたい」→ S2S VPNではなく<strong>ExpressRoute</strong>を使用する。VPNはHCX接続自体は技術的に可能だが、帯域幅・遅延の制約により大規模/本番移行のパフォーマンス要件を満たせない点が頻出の引っ掛けポイント。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">Azure Data Factoryでデータ移行／ETLパイプラインを構築する手順</span>
       <span class="arrow">→</span>
       <span class="answer">リンクサービス → （統合ランタイム）→ データセット → パイプライン → トリガー</span>
