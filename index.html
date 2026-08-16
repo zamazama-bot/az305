@@ -2602,6 +2602,24 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">同一アプリの複数Podレプリカを、同じNode／ゾーンに集中させず分散配置したい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Pod Anti-Affinity（またはtopologySpreadConstraints）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Pod Anti-Affinity（スケジューリング アンチアフィニティ）</strong>：指定したラベルを持つ他のPodと<strong>同じNode（またはゾーン等のトポロジー領域）に配置しない</strong>よう、Kubernetesスケジューラーに指示する仕組み。同一アプリのレプリカを分散させ、1つのNode／ゾーンの障害で全レプリカが同時に落ちる事態を防ぐ（可用性向上が主目的）。</li>
+        <li><strong>Pod Affinity</strong>：Anti-Affinityの逆で、指定したラベルを持つPodと<strong>同じNodeに意図的に集める</strong>仕組み（例：キャッシュとアプリを同じNodeに配置して通信レイテンシを下げる）。</li>
+        <li>強制度は2段階：<strong>requiredDuringSchedulingIgnoredDuringExecution</strong>（必須。満たせなければPodはスケジュールされない）と<strong>preferredDuringSchedulingIgnoredDuringExecution</strong>（努力目標。満たせなくてもスケジュールは実行される）。</li>
+        <li><strong>topologySpreadConstraints</strong>：Pod Anti-Affinityよりも新しく柔軟な均等分散の仕組み。Node数やゾーン数に応じて「各トポロジー領域あたり最大何個までの差を許容するか」を指定でき、単純な「分散配置」目的であればAnti-Affinityより推奨されることが多い。</li>
+      </ul>
+      <div class="tip">⚠ 「Pod（コンテナー）」の分散配置＝Anti-Affinity／topologySpreadConstraints。「Node（VM）」自体の分散配置＝可用性ゾーン設定やVMSSのFlexibleオーケストレーションの話であり、レイヤーが異なる点に注意。両方を組み合わせて初めて「Podが複数Node・複数ゾーンに分散配置される」ことが保証される。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">AKSクラスターの可用性とAPIサーバーへのアクセス制御</span>
       <span class="arrow">→</span>
       <span class="answer">可用性ゾーン＋プライベートクラスター／Authorized IP ranges</span>
