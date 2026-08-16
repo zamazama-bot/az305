@@ -1053,7 +1053,7 @@
         <li>OSS系DBのフルマネージドPaaS。バックアップ・HA・パッチ自動化。</li>
         <li><strong>Flexible Server 一択</strong>（Single Serverは MySQLが2024年9月、PostgreSQLが2025年3月に<strong>廃止済み</strong>）。</li>
         <li>⚠ <strong>Azure Database for MariaDB は2025年9月19日に廃止済み</strong>。新規作成は不可で、既存環境は MySQL Flexible Server への移行が必要。</li>
-        <li>ゾーン冗長HA：同一リージョン内の別ゾーンにスタンバイを配置し自動フェールオーバー（可用性ゾーン障害対策が必要な場合に指定）。</li>
+        <li>ゾーン冗長HA：同一リージョン内の別ゾーンにスタンバイを配置し自動フェールオーバー（可用性ゾーン障害対策が必要な場合に指定）。<strong>⚠ HA機能（同一ゾーン／ゾーン冗長のいずれも）は Burstable ティアでは非対応</strong>。有効化するには<strong>General Purpose または Memory Optimized</strong>ティアを選択する必要がある（Burstableは低コストな開発・低同時実行向けで、HAを必要としない小規模ワークロード用）。</li>
         <li>読み取りレプリカ：非同期レプリケーションの読み取り専用コピーを複数作成可能。分析・レポート用クエリをレプリカに逃がしてプライマリの負荷を下げる用途に使う。</li>
         <li>PostgreSQL Flexible Serverは拡張機能（PostGIS等）を許可リストから有効化して利用できる。</li>
       </ul>
