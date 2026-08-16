@@ -2515,6 +2515,24 @@
 
   <div class="card">
     <div class="card-header">
+      <span class="keyword">クラスター外部からHTTP(S)でアクセスさせ、パスやホスト名でルーティング・TLS終端（mTLS含む）を行いたい</span>
+      <span class="arrow">→</span>
+      <span class="answer">Ingress ＋ Ingressコントローラー（NGINX Ingress／Application Gateway Ingress Controller）</span>
+      <span class="badge badge-hot">頻出！</span>
+    </div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Service</strong>はクラスター内部（またはL4のシンプルな外部公開）向けの安定したアクセス経路にとどまる。<strong>Ingress</strong>は、その上位にあるL7（HTTP/HTTPS）のルーティングルール定義（パスベース・ホストベースのルーティング、TLS終端等）を表すKubernetesリソース。</li>
+        <li>Ingressリソース自体はルールの「定義」にすぎず、実際にトラフィックを処理するのは<strong>Ingressコントローラー</strong>（別途デプロイが必要な実行コンポーネント）。代表例：<strong>NGINX Ingress Controller</strong>（OSS、AKSの<strong>アプリケーションルーティングアドオン</strong>としてマネージドに追加可能）、<strong>Application Gateway Ingress Controller（AGIC）</strong>（既存のApplication GatewayをAKSのIngressとして使う）。</li>
+        <li><strong>mTLS（相互TLS認証）</strong>のようなL7でのTLS終端・クライアント証明書検証は、Ingressコントローラーのレベルで構成する。標準以外のポートで待ち受けるバックエンドサービスへのルーティングも、Ingressのルーティングルールとして柔軟に定義できる。</li>
+        <li>AKSクラスター上にIngressコントローラーを追加デプロイするだけで完結し、VNet再設計等の大規模なインフラ変更を伴わないため、開発工数・コストを抑えて実現しやすい。</li>
+      </ul>
+      <div class="tip">⚠ 「Service」と「Ingress」の違い：Serviceは<strong>どのPodにトラフィックを届けるか</strong>（L4的な安定アクセス）、Ingressは<strong>外部からどのURL/ホスト名でどのServiceにルーティングし、TLSをどう終端するか</strong>（L7のルーティング＋TLS）を扱う。mTLS・パスベースルーティング・非標準ポートへの対応というキーワードが出たら、Serviceだけでは不十分でIngress（コントローラー）が必要と判断する。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <span class="keyword">AKSでPod/Nodeの数やサイズを負荷に応じて自動的に増減させたい</span>
       <span class="arrow">→</span>
       <span class="answer">HPA（水平）／VPA（垂直）／Cluster Autoscaler（Node数）／Virtual Nodesを使い分ける</span>
